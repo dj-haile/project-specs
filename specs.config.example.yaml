@@ -1,0 +1,51 @@
+# =============================================================================
+# project-specs Configuration
+# =============================================================================
+# Copy this file to specs.config.yaml and customize for your project.
+# All values shown are defaults.
+
+# --- Project Info ---
+project_name: "my-project"
+project_description: "A brief description of what this project does"
+
+# --- Thoughts Directory ---
+# The thoughts/ directory stores plans, handoffs, ticket research, and PR
+# descriptions for cross-session continuity. Set to false if you don't want
+# a persistent document store (commands will ask where to save instead).
+thoughts_directory: true
+thoughts_path: "thoughts/shared"    # Relative to project root
+
+# --- Ticket System Integration ---
+# Configure your project management tool. Commands in commands/integrations/
+# read these values to interact with tickets.
+ticket_system: "linear"             # Options: linear, jira, asana, github-issues
+ticket_mcp_prefix: "mcp__linear"    # MCP tool prefix for your ticket system
+ticket_id_pattern: "ENG-\\d+"       # Regex to extract ticket IDs from branch names
+ticket_default_project: ""          # Default project/board for new tickets
+ticket_statuses:                    # Map generic statuses to your system's labels
+  todo: "Todo"
+  in_progress: "In Progress"
+  in_review: "In Review"
+  done: "Done"
+
+# --- Git & PR Conventions ---
+branch_prefix: "feat/"              # Default prefix for new branches
+commit_style: "conventional"        # Options: conventional, freeform
+pr_template_path: "thoughts/shared/pr_description.md"  # PR description template
+default_base_branch: "main"         # Base branch for PRs
+
+# --- Model Selection ---
+# Override which models are used for different task types.
+# These are suggestions — agents read this to pick the right model.
+models:
+  planning: "opus"                  # Deep reasoning, architecture decisions
+  analysis: "sonnet"                # Code analysis, research, implementation
+  quick: "haiku"                    # Simple lookups, formatting, classification
+
+# --- CI/CD ---
+ci_mode: false                      # true = non-interactive (no user prompts)
+ci_commit_prefix: "ci: "            # Prefix for CI-generated commits
+
+# --- Worktree ---
+worktree_base_path: "../worktrees"  # Where git worktrees are created
+worktree_auto_cleanup: true         # Remove worktrees after merge

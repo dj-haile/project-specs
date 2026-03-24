@@ -1,0 +1,177 @@
+# specs.config.yaml — Frontend App Example
+#
+# This is an example configuration for a React/Next.js frontend application.
+# Copy this file to your project root and customize as needed.
+#
+# All paths are relative to the project root.
+
+# Project Metadata
+# ================
+
+project_name: "my-frontend"
+description: "React/Next.js web application with TypeScript"
+version: "2.1.0"
+
+# Directory Structure
+# ===================
+
+source_directories:
+  - "src"
+  - "app"
+
+test_directories:
+  - "src/__tests__"
+  - "tests"
+
+ignore_directories:
+  - "node_modules"
+  - ".next"
+  - "dist"
+  - "build"
+  - ".venv"
+
+# Persistence
+# ===========
+
+# Enable thoughts/ directory for cross-session analysis and decisions.
+# Frontend teams often use this for component design decisions, accessibility notes, etc.
+thoughts_directory: true
+
+thoughts_config:
+  retention_days: 90
+  max_size_mb: 500
+
+# Ticket System Integration
+# ==========================
+
+# Which system manages tickets/issues: linear, jira, github-issues, or false (none)
+ticket_system: "jira"
+
+# MCP prefix for the ticket system connector
+ticket_mcp_prefix: "mcp__jira"
+
+# Regex pattern for matching ticket IDs in commit messages and branches.
+# Jira uses uppercase key codes like FE-123
+ticket_id_pattern: "FE-\\d+"
+
+# GitHub Repository (optional, for PR creation and review)
+# ========================================================
+
+github_repo: "org/my-frontend"
+
+# Git Workflow
+# ============
+
+# Prefix for feature branches
+branch_prefix: "feature/"
+
+# Commit convention: conventional, freeform
+commit_style: "conventional"
+
+# Default branch
+default_branch: "main"
+
+# AI Model Assignment
+# ===================
+
+models:
+  # Planning UI components and layouts
+  planning: "claude-opus-4"
+
+  # Code review, component analysis, accessibility checks
+  analysis: "claude-sonnet-4"
+
+  # Quick checks: file search, styling adjustments, dependencies
+  quick: "claude-haiku-3"
+
+# Validation Rules
+# ================
+
+# Test framework(s)
+test_frameworks:
+  - "vitest"
+  - "jest"
+
+# Linting and formatting tools
+linters:
+  - "eslint"
+  - "prettier"
+
+# Type checking
+type_checkers:
+  - "typescript"
+
+# Minimum test coverage for components
+coverage_threshold: 80
+
+# Accessibility
+# ==============
+
+# Enable axe accessibility checks
+accessibility_checks: true
+
+# Specific rules to enforce (a11y, wcag2a, wcag2aa, etc.)
+accessibility_level: "wcag2a"
+
+# Commit Requirements
+# ===================
+
+# Require clean working tree before creating plan
+require_clean_working_tree: true
+
+# Require all tests to pass before commit
+require_passing_tests: true
+
+# Require linting to pass (eslint, prettier)
+require_lint_pass: true
+
+# Naming Conventions
+# ==================
+
+naming:
+  # React component files: PascalCase
+  component_pattern: "^[A-Z][a-zA-Z0-9]*$"
+
+  # Utilities and hooks: camelCase
+  function_pattern: "^[a-z][a-zA-Z0-9]*$"
+
+  # Constants: UPPER_SNAKE_CASE
+  constant_pattern: "^[A-Z_][A-Z0-9_]*$"
+
+# Component Library
+# =================
+
+# If using a shared component library (Storybook, Chromatic, etc.)
+components:
+  library: "storybook"
+  source: "src/components"
+  stories_path: "src/components/**/*.stories.tsx"
+  chromatic_enabled: true
+
+# SEO and Meta
+# ============
+
+# Whether project generates static metadata (next/head, react-helmet)
+seo:
+  enabled: true
+  og_tags: true
+  structured_data: true
+
+# Logging
+# =======
+
+log_level: "info"
+log_timestamps: true
+log_usage: true
+
+# Browser Testing
+# ================
+
+# If using Playwright or Cypress for E2E tests
+e2e:
+  framework: "playwright"
+  headless: true
+  browsers:
+    - "chromium"
+    - "firefox"
+    - "webkit"
