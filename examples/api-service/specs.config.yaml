@@ -1,157 +1,44 @@
 # specs.config.yaml — API Service Example
 #
-# This is an example configuration for a typical REST API backend project.
+# REST API backend project with conventional commits and Linear for issue tracking.
 # Copy this file to your project root and customize as needed.
-#
-# All paths are relative to the project root.
-
-# Project Metadata
-# ================
 
 project_name: "my-api"
-description: "RESTful API service with PostgreSQL and Redis"
-version: "1.0.0"
+project_description: "RESTful API service with PostgreSQL and Redis"
 
-# Directory Structure
-# ===================
-
-source_directories:
-  - "src"
-  - "lib"
-
-test_directories:
-  - "tests"
-  - "test"
-
-ignore_directories:
-  - "node_modules"
-  - ".venv"
-  - "vendor"
-  - "build"
-  - "dist"
-
-# Persistence
-# ===========
-
-# Enable thoughts/ directory for cross-session analysis and decisions.
-# Set to true for larger teams or long-running projects; false for rapid iteration.
+# Thoughts Directory
+# Store plans, handoffs, and PR descriptions for cross-session continuity.
 thoughts_directory: true
-
-thoughts_config:
-  retention_days: 90
-  max_size_mb: 500
+thoughts_path: "thoughts/shared"
 
 # Ticket System Integration
-# ==========================
-
-# Which system manages tickets/issues: linear, jira, github-issues, or false (none)
+# Configure for Linear issue tracking
 ticket_system: "linear"
-
-# MCP prefix for the ticket system connector. For Linear:
-#   mcp__linear
-# For Jira:
-#   mcp__jira
-# For GitHub Issues:
-#   mcp__github
 ticket_mcp_prefix: "mcp__linear"
-
-# Regex pattern for matching ticket IDs in commit messages and branches.
-# Examples:
-#   Linear: API-\d+
-#   Jira:   API-\d+
-#   GitHub: #\d+
 ticket_id_pattern: "API-\\d+"
+ticket_default_project: "backend"
+ticket_statuses:
+  todo: "Todo"
+  in_progress: "In Progress"
+  in_review: "In Review"
+  done: "Done"
 
-# GitHub Repository (optional, for PR creation and review)
-# ========================================================
-
-github_repo: "org/my-api"
-
-# Git Workflow
-# ============
-
-# Prefix for feature branches. Examples: feat/, feature/, dev/
+# Git & PR Conventions
 branch_prefix: "feat/"
-
-# Commit convention: conventional, freeform
-# conventional: enforces format like "feat(auth): add JWT support"
-# freeform: no enforced format
 commit_style: "conventional"
+pr_template_path: "thoughts/shared/pr_description.md"
+default_base_branch: "main"
 
-# Default branch (usually main or master)
-default_branch: "main"
-
-# AI Model Assignment
-# ===================
-
+# Model Selection
 models:
-  # Planning and architecture decisions (usually Opus for high-quality analysis)
-  planning: "claude-opus-4"
+  planning: "opus"
+  analysis: "sonnet"
+  quick: "haiku"
 
-  # General analysis, code review, testing (usually Sonnet for balance)
-  analysis: "claude-sonnet-4"
+# CI/CD
+ci_mode: false
+ci_commit_prefix: "ci: "
 
-  # Quick checks: file search, lint, small edits (usually Haiku for speed)
-  quick: "claude-haiku-3"
-
-# Validation Rules
-# ================
-
-# Test framework(s) to run during validate_plan
-test_frameworks:
-  - "pytest"
-  - "unittest"
-
-# Linting tools to check
-linters:
-  - "pylint"
-  - "flake8"
-
-# Type checking tools
-type_checkers:
-  - "mypy"
-
-# Code coverage threshold (%)
-coverage_threshold: 75
-
-# Commit Requirements
-# ===================
-
-# Require clean working tree before creating plan
-require_clean_working_tree: true
-
-# Require all tests to pass before commit
-require_passing_tests: true
-
-# Require test coverage above threshold
-require_coverage: true
-
-# Naming Conventions
-# ==================
-
-# Patterns for function, class, variable names (for linting and analysis)
-naming:
-  function_pattern: "^[a-z_][a-z0-9_]*$"
-  class_pattern: "^[A-Z][a-zA-Z0-9]*$"
-  constant_pattern: "^[A-Z_][A-Z0-9_]*$"
-
-# Documentation
-# ==============
-
-# How API documentation is generated
-docs:
-  tool: "openapi"  # openapi, swagger, sphinx, etc.
-  source: "src/openapi.yaml"
-  output: "docs/api"
-
-# Logging
-# =======
-
-# Log level for agent/command output: debug, info, warning, error
-log_level: "info"
-
-# Include timestamps in logs
-log_timestamps: true
-
-# Include Claude API usage (tokens) in logs
-log_usage: true
+# Worktree Configuration
+worktree_base_path: "../worktrees"
+worktree_auto_cleanup: true

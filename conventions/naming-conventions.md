@@ -185,36 +185,24 @@ Located at the project root.
 ### Structure
 ```yaml
 # specs.config.yaml at project root
+project_name: "my-project"
+project_description: "Project description"
 
-project:
-  name: my-project
-  description: Project description
+thoughts_directory: true
+thoughts_path: "thoughts/shared"
 
-agents:
-  enabled: true
-  directory: agents/
+ticket_system: "linear"
+ticket_mcp_prefix: "mcp__linear"
+ticket_id_pattern: "ENG-\\d+"
 
-commands:
-  enabled: true
-  directory: commands/
-
-skills:
-  enabled: true
-  directory: skills/
-
-thoughts:
-  enabled: true
-  directory: thoughts/
+branch_prefix: "feat/"
+commit_style: "conventional"
+default_base_branch: "main"
 
 models:
-  default: sonnet
-  commands:
-    create_plan: opus
-    research_codebase: opus
-
-tickets:
-  enabled: true
-  pattern: "ENG-\\d+"
+  planning: "opus"
+  analysis: "sonnet"
+  quick: "haiku"
 ```
 
 ## Thoughts Directory

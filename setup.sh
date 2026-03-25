@@ -175,11 +175,11 @@ fi
 
 # Copy specs.config.yaml if not present
 if [[ -f "$SCRIPT_DIR/specs.config.example.yaml" ]]; then
-  if [[ ! -f "$CLAUDE_DIR/specs.config.yaml" ]]; then
-    cp "$SCRIPT_DIR/specs.config.example.yaml" "$CLAUDE_DIR/specs.config.yaml"
-    print_success "Created specs.config.yaml"
+  if [[ ! -f "$TARGET_PATH/specs.config.yaml" ]]; then
+    cp "$SCRIPT_DIR/specs.config.example.yaml" "$TARGET_PATH/specs.config.yaml"
+    print_success "Created specs.config.yaml at project root"
   else
-    print_warning "specs.config.yaml already exists, skipping"
+    print_warning "specs.config.yaml already exists at project root, skipping"
   fi
 else
   print_warning "specs.config.example.yaml not found in source"
@@ -225,7 +225,7 @@ echo "Installed to:"
 echo "  $CLAUDE_DIR/"
 echo
 echo "Next steps:"
-echo "  1. Review and customize: $CLAUDE_DIR/specs.config.yaml"
+echo "  1. Review and customize: $TARGET_PATH/specs.config.yaml"
 echo "  2. Create your first skill: $CLAUDE_DIR/skills/my-skill/SKILL.md"
 echo "  3. Configure agents in your project's specs.config.yaml"
 echo

@@ -4,20 +4,19 @@
 
 ## Quick Start
 
-1. **Clone or link this directory into your project:**
+1. **Clone project-specs somewhere accessible:**
    ```bash
-   git clone https://github.com/anthropics/project-specs <your-project>/.claude-specs
+   git clone https://github.com/dj-haile/project-specs ~/.project-specs
    ```
 
-2. **Run setup.sh to initialize:**
+2. **Run setup.sh to install into your project:**
    ```bash
-   ./.claude-specs/setup.sh
+   ~/.project-specs/setup.sh /path/to/your-project
    ```
 
-3. **Configure specs.config.yaml:**
+3. **Customize specs.config.yaml** (created at your project root by setup.sh):
    ```bash
-   cp .claude-specs/specs.config.example.yaml ./specs.config.yaml
-   # Edit with your project details
+   $EDITOR /path/to/your-project/specs.config.yaml
    ```
 
 ## Architecture Overview
@@ -101,7 +100,7 @@ Skills are reusable operations that commands invoke. To create a new skill:
 3. Implement logic in your skill's command or Python script
 4. Call from commands via the standard skill interface
 
-See [skills/_template/](./skills/_template/) for a complete example and [SKILL.md spec](./SKILL.md.spec).
+See [skills/_template/SKILL.md](./skills/_template/SKILL.md) for a complete annotated example.
 
 ## Workflow Examples
 

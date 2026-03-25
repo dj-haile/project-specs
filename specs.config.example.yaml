@@ -42,6 +42,11 @@ models:
   analysis: "sonnet"                # Code analysis, research, implementation
   quick: "haiku"                    # Simple lookups, formatting, classification
 
+# --- Debug ---
+# Paths for the /debug command to investigate. Leave empty to be prompted.
+log_directory: ""                   # Path to application logs (e.g., "logs/" or "/var/log/myapp/")
+database_path: ""                   # Path to local database file (e.g., "data/app.db")
+
 # --- CI/CD ---
 ci_mode: false                      # true = non-interactive (no user prompts)
 ci_commit_prefix: "ci: "            # Prefix for CI-generated commits

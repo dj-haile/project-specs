@@ -114,18 +114,11 @@ The `thoughts/` directory is entirely optional. Control it in `specs.config.yaml
 
 ```yaml
 # Enable thoughts directory for this project
-thoughts:
-  enabled: true
-  directory: thoughts/
-
-  # Auto-create suggested subdirectories
-  auto_create: true
-
-  # Include shared/ in git commits
-  include_in_git: true
+thoughts_directory: true
+thoughts_path: "thoughts/shared"    # Relative to project root
 ```
 
-If `thoughts.enabled: false`, commands and agents do not reference or create thought files.
+If `thoughts_directory: false`, commands will ask the user where to save documents instead of using the thoughts/ directory.
 
 ## Best Practices
 

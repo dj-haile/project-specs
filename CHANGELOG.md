@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-03-24
 
 ### Added
-- Initial release extracted from dj-haile/skills-app
+- Initial release of reusable Claude Code spec framework
 - 6 reusable agents (codebase-analyzer, codebase-locator, codebase-pattern-finder, thoughts-analyzer, thoughts-locator, web-search-researcher)
 - 11 core commands (create_plan, iterate_plan, research_codebase, implement_plan, validate_plan, commit, describe_pr, debug, create_handoff, resume_handoff, local_review)
 - 7 integration commands (ticket_plan, ticket_research, ticket_impl, ticket_oneshot, ticket_manage, founder_mode, create_worktree)
@@ -22,5 +22,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Consolidated 3-variant commands (create_plan, iterate_plan, research_codebase) into single config-driven files
 - Parameterized Linear-specific commands into generic ticket_* commands
-- Removed all HumanLayer dependencies
+- Removed all external process manager dependencies
 - Inlined worktree creation logic (no external script dependency)

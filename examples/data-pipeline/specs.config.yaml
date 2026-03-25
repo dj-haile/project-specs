@@ -1,183 +1,45 @@
 # specs.config.yaml — Data Pipeline Example
 #
-# This is an example configuration for an ETL/ML data pipeline project.
+# ETL/ML data pipeline project with freeform commits and Asana for task tracking.
 # Copy this file to your project root and customize as needed.
-#
-# All paths are relative to the project root.
-
-# Project Metadata
-# ================
 
 project_name: "data-pipeline"
-description: "ETL and ML feature pipeline with dbt and Airflow"
-version: "3.2.1"
+project_description: "ETL and ML feature pipeline with dbt and Airflow"
 
-# Directory Structure
-# ===================
-
-source_directories:
-  - "src"
-  - "dbt"
-  - "pipelines"
-  - "models"
-
-test_directories:
-  - "tests"
-  - "dbt/tests"
-
-ignore_directories:
-  - "venv"
-  - ".venv"
-  - "node_modules"
-  - "target"
-  - "__pycache__"
-  - ".dbt"
-
-# Persistence
-# ===========
-
-# Data pipeline teams often run rapid iterations. thoughts_directory set to false
-# for smaller teams or faster feedback loops. Larger data teams may set to true.
+# Thoughts Directory
+# Disabled for rapid iteration; data teams can enable for larger projects.
 thoughts_directory: false
+thoughts_path: "thoughts/shared"
 
 # Ticket System Integration
-# ==========================
+# Configure for Asana task management
+ticket_system: "asana"
+ticket_mcp_prefix: "mcp__asana"
+ticket_id_pattern: "pipeline-\\d+"
+ticket_default_project: "data-engineering"
+ticket_statuses:
+  todo: "Not Started"
+  in_progress: "In Progress"
+  in_review: "In Review"
+  done: "Completed"
 
-# Use GitHub Issues for lightweight issue tracking
-ticket_system: "github-issues"
-
-# MCP prefix for GitHub
-ticket_mcp_prefix: "mcp__github"
-
-# GitHub Issues use # followed by number
-ticket_id_pattern: "#\\d+"
-
-# GitHub Repository
-# ==================
-
-github_repo: "org/data-pipeline"
-
-# Git Workflow
-# ============
-
-# Data teams often use shorter prefixes
-branch_prefix: "data/"
-
-# Commit convention: freeform for rapid iteration
-# Many data teams prefer simple, descriptive commits over strict conventions
+# Git & PR Conventions
+# Use pipeline/ prefix for data work
+branch_prefix: "pipeline/"
 commit_style: "freeform"
+pr_template_path: "thoughts/shared/pr_description.md"
+default_base_branch: "main"
 
-# Default branch
-default_branch: "main"
-
-# AI Model Assignment
-# ===================
-
+# Model Selection
 models:
-  # Planning complex transformations and data lineage
-  planning: "claude-opus-4"
+  planning: "opus"
+  analysis: "sonnet"
+  quick: "haiku"
 
-  # Code review, SQL analysis, performance profiling
-  analysis: "claude-sonnet-4"
+# CI/CD
+ci_mode: false
+ci_commit_prefix: "ci: "
 
-  # Quick checks: file search, query validation, test runs
-  quick: "claude-haiku-3"
-
-# Validation Rules
-# ================
-
-# Test framework(s)
-test_frameworks:
-  - "pytest"
-  - "dbt test"
-
-# SQL linting and formatting
-linters:
-  - "sqlfluff"
-  - "pylint"
-
-# Data quality checks
-data_quality:
-  enabled: true
-  checks_path: "dbt/tests"
-
-# Code coverage threshold (%)
-coverage_threshold: 70
-
-# Commit Requirements
-# ===================
-
-# Less strict for data work: experiments often require quick commits
-require_clean_working_tree: false
-
-# Data tests should pass before merge
-require_passing_tests: true
-
-# Don't require full test coverage; data work is exploratory
-require_coverage: false
-
-# Data-Specific Configuration
-# =============================
-
-# dbt project configuration
-dbt:
-  enabled: true
-  project_path: "dbt"
-  profiles_dir: "~/.dbt"
-  target: "dev"
-
-# Airflow/Orchestration
-airflow:
-  enabled: true
-  dags_folder: "pipelines/dags"
-  environment: "dev"
-
-# Data warehouse connection (for analysis)
-data_warehouse:
-  type: "snowflake"  # or postgres, bigquery, redshift, etc.
-  # Connection details should come from environment variables, not this file
-
-# SQL and Query Conventions
-# ==========================
-
-sql:
-  # SQL dialect: ansi, snowflake, bigquery, postgres
-  dialect: "snowflake"
-
-  # Formatting tool
-  formatter: "sqlfluff"
-
-  # Maximum query timeout (seconds) for testing
-  query_timeout: 300
-
-# Data Lineage
-# ============
-
-# Track data lineage and dependencies
-lineage:
-  enabled: true
-  tool: "dbt"  # dbt tracks lineage natively
-
-# Logging
-# =======
-
-log_level: "info"
-log_timestamps: true
-log_usage: true
-
-# Performance Profiling
-# =====================
-
-# Enable query performance analysis during validation
-profiling:
-  enabled: true
-  record_execution_time: true
-  slow_query_threshold_ms: 5000
-
-# Experiment Tracking
-# ===================
-
-# If using MLflow or Weights & Biases
-experiment_tracking:
-  enabled: false  # Set to true if running ML experiments
-  # framework: "mlflow"  # or "wandb"
+# Worktree Configuration
+worktree_base_path: "../worktrees"
+worktree_auto_cleanup: true
