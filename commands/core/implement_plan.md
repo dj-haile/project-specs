@@ -47,6 +47,24 @@ If you encounter a mismatch:
   How should I proceed?
   ```
 
+
+## Scope Discipline
+
+**Touch only what the plan specifies.** This is non-negotiable.
+
+- If a change requires modifying a file not listed in the plan, STOP.
+- Present the deviation: what file, why it's needed, what happens if you don't.
+- Wait for explicit approval before touching it.
+- If approved, note the deviation in the plan file itself.
+
+Do not:
+- Refactor adjacent code that "could be better"
+- Fix unrelated TODOs you encounter
+- Modernize imports or patterns in files you're passing through
+- "Clean up" code outside the plan's scope
+
+A focused PR that does one thing is mergeable. A PR that does one thing plus three drive-by improvements gets reverted.
+
 ## Verification Approach
 
 After implementing a phase, run the appropriate automated verification commands from the plan's success criteria.
@@ -74,9 +92,21 @@ After running automated checks:
   Let me know when manual testing is complete so I can proceed to Phase [N+1].
   ```
 
-If instructed to execute multiple phases consecutively, skip the pause until the last phase. Otherwise, assume you are just doing one phase.
+Phase completion is gated on verification. There are no exceptions to this sequence. After completing all automated verification for a phase, you must present results and wait for human confirmation before starting the next phase. A phase that passes automated checks but skips manual verification is not complete.
 
 Do not check off items in the manual testing steps until confirmed by the user.
+
+
+## Common Shortcuts to Avoid
+
+When implementing a plan, you will be tempted to rationalize skipping steps. These are the most common excuses and why they're wrong:
+
+| Excuse | Rebuttal |
+|--------|----------|
+| "This change is small enough to do without phase-by-phase verification." | Small changes cause large outages. Run verification after every phase regardless of size. |
+| "These phases are closely related, so I'll implement them together." | Phase boundaries exist because verification between them catches compounding errors. Implement one at a time. |
+| "The plan is slightly outdated so I'll adapt as I go." | If the plan doesn't match reality, STOP and present the deviation. Don't silently rewrite the plan while implementing. |
+| "I need to refactor this adjacent file to make my change work." | If a file isn't in the plan, don't touch it. Present the dependency and let the human decide. |
 
 ## If You Get Stuck
 

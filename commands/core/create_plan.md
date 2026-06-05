@@ -14,6 +14,8 @@ You are tasked with creating detailed implementation plans through an interactiv
 3. If `thoughts_directory: false` or config missing, ask the user where to save documents
 4. Note the `ticket_id_pattern` for extracting ticket IDs from branch names or user input
 
+5. **Check for existing spec document**: If a spec was created via `/spec`, read it first. Use its acceptance criteria as the plan's success criteria and its scope boundaries as implementation constraints. Do not re-derive requirements the spec already defines.
+
 ## Initial Response
 
 When this command is invoked:
@@ -298,6 +300,18 @@ After structure approval:
    - Add/remove scope items
 
 3. **Continue refining** until the user is satisfied
+
+
+## Common Shortcuts to Avoid
+
+When creating a plan, you will be tempted to rationalize skipping steps. These are the most common excuses and why they're wrong:
+
+| Excuse | Rebuttal |
+|--------|----------|
+| "I have enough context to start planning without researching the codebase." | You don't. Spawn the research agents. Plans built on assumptions fail during implementation. |
+| "This task is too simple to need phases." | If it's truly simple, phases are cheap. If it's not (and it usually isn't), you just saved a failed implementation. |
+| "The user seems to want this fast, so I'll skip the structure review." | Speed without structure produces rework. Present the outline, get buy-in, then move fast on the right plan. |
+| "I'll leave these open questions for the implementation phase." | No. Open questions in a plan become wrong assumptions in code. Resolve or ask now. |
 
 ## Important Guidelines
 

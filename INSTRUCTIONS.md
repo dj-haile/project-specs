@@ -62,6 +62,7 @@ project-specs/
 │   ├── thoughts-directory.md          # The thoughts/ convention (optional but recommended)
 │   ├── workflow-patterns.md           # research → plan → implement → review → handoff → debug
 │   ├── model-selection.md             # When to use opus vs sonnet vs haiku
+│   ├── model-assumptions.md           # Tag harness components with the model assumptions they encode
 │   └── naming-conventions.md          # File naming, frontmatter patterns, _nt suffix history
 │
 └── examples/                          # Example configurations for different project types
@@ -121,11 +122,35 @@ ticket_id_pattern: "ENG-\\d+"     # Regex for ticket IDs in branch names
 
 Document it in `conventions/thoughts-directory.md` as a recommended pattern with clear benefits (cross-session continuity, handoff context, plan storage), but make every command work without it. This is what your `_nt` variants already do — we're just making it the default flexibility rather than separate files.
 
-### 4. Skills are excluded but templated
+### 4. Model-assumptions convention
+
+Add `conventions/model-assumptions.md` to document which harness components encode model-dependent assumptions vs. which are model-independent. This comes from Anthropic's own finding (Mar 2026) that harness components become dead weight as models improve — sprint decomposition was essential for Sonnet 4.5 but unnecessary for Opus 4.6.
+
+**Model-independent patterns** (survive model upgrades, don't tag):
+- Structured handoff artifacts (create_handoff, resume_handoff)
+- Typed output contracts (JSON schemas, validation)
+- Tool gating (allowlists, schema validation)
+- Generation/verification separation (separate review passes)
+- The three-layer architecture itself (agents/commands/skills)
+- The thoughts/ directory convention
+
+**Model-dependent patterns** (tag with assumption + model version in `specs.config.yaml`):
+```yaml
+# Model-dependent tuning (re-evaluate on model upgrade)
+context_strategy: "compaction"     # "reset" for models with context anxiety (e.g., Sonnet 4.5)
+compression_threshold: 0.6         # may need adjustment per model's lost-in-the-middle behavior
+planning_model: "opus"             # strongest reasoning for plan quality
+analysis_model: "sonnet"           # sufficient for code analysis
+# Last calibrated: Opus 4.6 / Sonnet 4.5, March 2026
+```
+
+The convention file should include a "re-evaluation checklist" — when you upgrade models, walk through each model-dependent config value and test whether the assumption still holds. Extend postmortem reviews to ask: "are any of our harness constraints now unnecessary?"
+
+### 5. Skills are excluded but templated
 
 The 5 skills-app skills (vp-orchestrator, project-tracker, data-query, visualize, predict) stay in skills-app. The generic repo includes only a `_template/SKILL.md` showing the proper structure, frontmatter, and conventions so users can create their own project-specific skills.
 
-### 5. The setup script handles installation
+### 6. The setup script handles installation
 
 `setup.sh` should:
 1. Check if `.claude/` already exists (don't clobber)
@@ -143,7 +168,7 @@ The 5 skills-app skills (vp-orchestrator, project-tracker, data-query, visualize
 ./setup.sh /path/to/my-project --update     # Update existing installation
 ```
 
-### 6. AGENTS.md follows ETH Zurich guidance
+### 7. AGENTS.md follows ETH Zurich guidance
 
 Per our research finding: limit to non-inferable details only. The AGENTS.md should cover:
 - The three-layer architecture concept (not obvious from files alone)
@@ -152,7 +177,7 @@ Per our research finding: limit to non-inferable details only. The AGENTS.md sho
 - Model selection rationale (why opus for planning, sonnet for analysis)
 - What NOT to do (don't modify agents/, don't create skills without SKILL.md frontmatter)
 
-### 7. Semantic versioning
+### 8. Semantic versioning
 
 ```
 Major (2.0.0) = Breaking changes to command interfaces or config schema

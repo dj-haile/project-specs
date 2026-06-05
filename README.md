@@ -24,7 +24,7 @@
 project-specs is built on three tightly coupled layers:
 
 - **Agents** (agents/) — Orchestrators that read specs.config.yaml and dispatch work to commands. Six standard agents handle codebase analysis, pattern discovery, thought management, and web research.
-- **Commands** (commands/) — Reusable workflows that compose skills and enforce consistent patterns. 11 core commands (create_plan, implement_plan, validate_plan, etc.) plus 7 integration commands for ticket systems and team workflows.
+- **Commands** (commands/) — Reusable workflows that compose skills and enforce consistent patterns. 12 core commands (create_plan, implement_plan, validate_plan, etc.) plus 7 integration commands for ticket systems and team workflows.
 - **Skills** (skills/) — Atomic, reusable operations (file search, code review, test execution) invoked by commands. Skills are versioned and namespaced.
 
 ## Available Commands
@@ -33,6 +33,7 @@ project-specs is built on three tightly coupled layers:
 
 | Command | Description |
 |---------|-------------|
+| `spec` | Define requirements and acceptance criteria before planning |
 | `create_plan` | Analyze codebase and create structured implementation plan |
 | `iterate_plan` | Refine an existing plan based on new constraints or findings |
 | `research_codebase` | Deep-dive analysis of specific patterns, modules, or architecture decisions |
@@ -91,6 +92,15 @@ If **thoughts_directory: true** in your config, project-specs creates and manage
 
 See [conventions/thoughts-directory.md](./conventions/thoughts-directory.md) for structure and best practices.
 
+
+## Anti-Rationalization Tables
+
+Core commands (`create_plan`, `implement_plan`, `validate_plan`) include **"Common Shortcuts to Avoid"** tables — pre-written rebuttals to common excuses agents produce to skip workflow steps. LLMs are skilled at rationalization; these tables counter that by placing the rebuttal directly in the command file where the shortcut would occur.
+
+Each table lists 3–4 excuse/rebuttal pairs specific to that command's workflow. For example, `implement_plan` includes rebuttals for combining phases, skipping verification on small changes, and touching files outside the plan's scope.
+
+These tables are based on patterns identified in [Addy Osmani's Agent Skills research](https://addyosmani.com/blog/agent-skills/) and connect to the broader principle that behavioral contracts outperform prose directives for agent compliance.
+
 ## Creating Custom Skills
 
 Skills are reusable operations that commands invoke. To create a new skill:
@@ -106,7 +116,7 @@ See [skills/_template/SKILL.md](./skills/_template/SKILL.md) for a complete anno
 
 Common workflows are documented in [conventions/workflow-patterns.md](./conventions/workflow-patterns.md):
 
-- **Ticket-to-Code** — From ticket creation to merged PR
+- **Spec-First — Requirements → plan → implement → validate
 - **Iterative Planning** — Multi-round refinement before implementation
 - **Debugging in Production** — Rapid error reproduction and fix
 - **Codebase Onboarding** — New team member analysis and context-building
@@ -121,3 +131,7 @@ Current version: **1.0.0**
 ## License
 
 MIT
+
+## Usage Guide
+
+For detailed examples showing how to use all features — including the spec-first workflow, anti-rationalization tables, scope discipline, and verification gates — see [examples/usage-guide.md](./examples/usage-guide.md).

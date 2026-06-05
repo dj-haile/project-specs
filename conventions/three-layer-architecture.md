@@ -157,6 +157,33 @@ Includes context in findings
 - The skill describes methodology, patterns, or best practices
 - It's project-specific, not generic to all projects
 
+
+## Progressive Disclosure
+
+Do not load all commands and conventions into agent context at session start. Context is finite and attention degrades as context grows.
+
+**How loading works in project-specs:**
+- **Commands** are loaded on invocation — the slash command triggers loading
+- **Conventions** should be referenced, not pre-loaded
+- **Skills** are loaded when a command calls them, not at startup
+- **Agents** load only when spawned by a command
+
+**Guidelines for file size:**
+- If a convention file exceeds 500 lines, split it into focused sub-files with a router index
+- A 200-line focused document outperforms a 2,000-line comprehensive one because the agent actually follows the focused version
+- Each file should cover one concept and be scannable in under 5 seconds
+
+**When adding new conventions:**
+- One concept per file
+- Title should be scannable (agent decides in <1 second whether to read it)
+- Include a 1-line summary at the top before any detail
+- Prefer examples over prose — agents follow examples more reliably than instructions
+
+**When adding new commands:**
+- Keep commands under 300 lines where possible
+- If a command grows beyond that, extract reusable sections into skills
+- Anti-rationalization tables, scope rules, and verification gates add lines but earn their keep — don't count them toward the "too long" threshold
+
 ## Configuration
 
 All three layers are configured in `specs.config.yaml`:
