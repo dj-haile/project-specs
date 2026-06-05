@@ -41,5 +41,6 @@ provider (or a degraded environment) that sets `subagents: false`.
 - Produce specific file:line references.
 
 When a command says *"spawn the **codebase-locator** agent (see
-[subagent-fallback](../../conventions/subagent-fallback.md))"*, this contract is
-what that parenthetical refers to.
+subagent-fallback)"* — the link being `../../conventions/subagent-fallback.md`
+relative to the command's location — this contract is what that parenthetical
+refers to.

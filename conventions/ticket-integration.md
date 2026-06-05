@@ -35,5 +35,6 @@ three current providers (Claude, Codex, Cursor) support MCP, but a project may
 still choose `cli` or `none` regardless of provider.
 
 When a command says *"use `{ticket_mcp_prefix}__update_issue` (see
-[ticket-integration](../../conventions/ticket-integration.md))"*, this table is
-what resolves the call for the project's configured mode.
+ticket-integration)"* — the link being `../../conventions/ticket-integration.md`
+relative to the command's location — this table is what resolves the call for the
+project's configured mode.

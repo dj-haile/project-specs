@@ -1,6 +1,8 @@
-# project-specs — Claude Code Spec Framework
+# project-specs — Provider-Agnostic Spec Framework
 
-**project-specs** is a three-layer architecture for Claude Code projects that standardizes how agents orchestrate commands, which in turn invoke reusable skills. It provides a structured, parameterized approach to code analysis, planning, implementation, and validation workflows across any codebase, with first-class support for ticket systems, branch workflows, and cross-session persistence.
+**project-specs** is a three-layer architecture for AI coding-agent projects that standardizes how agents orchestrate commands, which in turn invoke reusable skills. It provides a structured, parameterized approach to code analysis, planning, implementation, and validation workflows across any codebase, with first-class support for ticket systems, branch workflows, and cross-session persistence.
+
+**Claude Code is the reference implementation.** The same neutral source also installs to **OpenAI Codex CLI** and **Cursor** via `setup.sh --provider=<name>` — see [Supported Providers](#supported-providers) and [conventions/provider-portability.md](./conventions/provider-portability.md).
 
 ## Quick Start
 
@@ -11,7 +13,9 @@
 
 2. **Run setup.sh to install into your project:**
    ```bash
-   ~/.project-specs/setup.sh /path/to/your-project
+   ~/.project-specs/setup.sh /path/to/your-project                 # Claude Code (default)
+   ~/.project-specs/setup.sh /path/to/your-project --provider=codex   # OpenAI Codex CLI
+   ~/.project-specs/setup.sh /path/to/your-project --provider=cursor  # Cursor
    ```
 
 3. **Customize specs.config.yaml** (created at your project root by setup.sh):
@@ -26,6 +30,18 @@ project-specs is built on three tightly coupled layers:
 - **Agents** (agents/) — Orchestrators that read specs.config.yaml and dispatch work to commands. Six standard agents handle codebase analysis, pattern discovery, thought management, and web research.
 - **Commands** (commands/) — Reusable workflows that compose skills and enforce consistent patterns. 12 core commands (create_plan, implement_plan, validate_plan, etc.) plus 7 integration commands for ticket systems and team workflows.
 - **Skills** (skills/) — Atomic, reusable operations (file search, code review, test execution) invoked by commands. Skills are versioned and namespaced.
+
+## Supported Providers
+
+A single neutral source (`agents/`, `commands/`, `skills/`) installs to each provider. Per-provider details live in `providers/<name>/manifest.yaml`; `setup.sh --provider=<name>` reads it.
+
+| Provider | Install location | Format | Subagents | Model selection |
+|----------|------------------|--------|-----------|-----------------|
+| **Claude Code** (reference) | `.claude/` | markdown (copy) | yes | tiers → opus/sonnet/haiku |
+| **OpenAI Codex CLI** | `.codex/agents/` + `.agents/skills/` + `AGENTS.md` | transformed (Skills + TOML) | yes | auto-recommended (`gpt-5.x`) |
+| **Cursor** | `.cursor/` | markdown (copy) | yes | UI-only (not file-pinnable) |
+
+Two coupling points degrade gracefully by convention: subagent spawning ([subagent-fallback](./conventions/subagent-fallback.md)) and ticket integration ([ticket-integration](./conventions/ticket-integration.md)). `--provider=claude` (the default) is byte-identical to the framework's original behavior, so existing Claude Code installs are unaffected unless you opt in. Full details: [conventions/provider-portability.md](./conventions/provider-portability.md).
 
 ## Available Commands
 
@@ -73,14 +89,16 @@ project-specs is built on three tightly coupled layers:
 
 All parameterization lives in **specs.config.yaml** at your project root. Key parameters:
 
+- **provider** — Target coding agent (claude, codex, cursor); default claude
 - **project_name** — Human-readable project identifier
 - **thoughts_directory** — Enable cross-session persistence (true/false)
 - **ticket_system** — Integration target (linear, jira, github-issues)
-- **ticket_mcp_prefix** — MCP prefix for ticket system (e.g., mcp__linear)
+- **ticket_integration** — How to reach the ticket system (mcp, cli, none)
+- **ticket_mcp_prefix** — MCP prefix when ticket_integration=mcp (e.g., mcp__linear)
 - **ticket_id_pattern** — Regex for ticket IDs (e.g., API-\\d+)
 - **branch_prefix** — Prefix for feature branches (e.g., feat/)
 - **commit_style** — Commit convention (conventional, freeform)
-- **models** — Model assignment (planning=opus, analysis=sonnet, quick=haiku)
+- **models** — Semantic tier → model map (planning/analysis/quick); see [provider-portability](./conventions/provider-portability.md)
 
 See [specs.config.example.yaml](./specs.config.example.yaml) for all available options.
 

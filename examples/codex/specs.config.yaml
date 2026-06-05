@@ -1,0 +1,51 @@
+# specs.config.yaml — OpenAI Codex CLI Example
+#
+# Same framework, installed for Codex via: setup.sh <project> --provider=codex
+# Codex transforms commands into Skills (.agents/skills/) and agents into TOML
+# (.codex/agents/), and reads AGENTS.md at the project root.
+
+project_name: "my-codex-project"
+project_description: "A project driven by the Codex CLI"
+
+# --- Provider ---
+provider: "codex"                   # selects providers/codex/manifest.yaml
+
+# --- Thoughts Directory ---
+thoughts_directory: true
+thoughts_path: "thoughts/shared"
+
+# --- Ticket System Integration ---
+# Codex supports MCP, so mcp mode works; switch to cli/none if you prefer.
+ticket_system: "linear"
+ticket_integration: "mcp"           # mcp | cli | none
+ticket_mcp_prefix: "mcp__linear"
+ticket_cli: ""
+ticket_id_pattern: "ENG-\\d+"
+ticket_default_project: ""
+ticket_statuses:
+  todo: "Todo"
+  in_progress: "In Progress"
+  in_review: "In Review"
+  done: "Done"
+
+# --- Git & PR Conventions ---
+branch_prefix: "feat/"
+commit_style: "conventional"
+pr_template_path: "thoughts/shared/pr_description.md"
+default_base_branch: "main"
+
+# --- Model Selection ---
+# Leave tiers empty to let Codex use its current recommended model. Pin a
+# gpt-5.x id only if you need determinism (e.g. planning: "gpt-5.5").
+models:
+  planning: ""
+  analysis: ""
+  quick: ""
+
+# --- CI/CD ---
+ci_mode: false
+ci_commit_prefix: "ci: "
+
+# --- Worktree ---
+worktree_base_path: "../worktrees"
+worktree_auto_cleanup: true

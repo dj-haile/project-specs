@@ -19,6 +19,7 @@ These are process-level constraints that don't depend on model capabilities:
 - **Kill switch and rate limiting** (batch-and-confirm on destructive operations)
 - **Source attribution on memory entries** (metadata tagging regardless of model)
 - **Vault-mediated credentials** (agent never sees API keys)
+- **Provider manifests** (provider-specific install/format/capability data lives in `providers/<p>/manifest.yaml`, keeping command/agent bodies neutral — a structural separation independent of any model)
 
 ---
 
@@ -33,6 +34,31 @@ These are process-level constraints that don't depend on model capabilities:
 | Model routing cost tiers | Haiku $0.80 / Sonnet $3 / Opus $5 / Opus >200K $10 | Pricing as of Mar 2026 | Cost overruns from routing everything to Opus |
 | Multi-hop reasoning from stubs | Nano models fail at reconstructing from compressed context | Context-Bench: nano <45%, Sonnet 4.5 74%, GPT-5 73% | Silent quality degradation after compression |
 | Restorable compression stub format | Agents can reconstruct from source URL + title + 3 key findings | Current frontier models (Sonnet 4.5, Opus 4.6) | Over-sparse stubs that models can't use; over-rich stubs that defeat compression |
+
+---
+
+## Provider-Dependent Patterns (re-evaluate on every provider add/upgrade)
+
+These assumptions depend on the *coding-agent provider* (Claude Code, Codex,
+Cursor, …) rather than the underlying model. They are captured as data in
+`providers/<provider>/manifest.yaml` and driven by the conventions noted below.
+See [provider-portability.md](./provider-portability.md).
+
+| Component | Assumption | Calibrated For (Jun 2026) | Failure Mode If Wrong |
+|-----------|-----------|---------------------------|-----------------------|
+| Subagent spawning | Provider can spawn parallel autonomous sub-tasks | Claude (Task), Codex (`.codex/agents`), Cursor (`.cursor/agents`) all support it | Command hits "spawn the agent" with no such capability → silent no-op or error. Mitigated by [subagent-fallback](./subagent-fallback.md). |
+| MCP availability | Provider exposes MCP tools for ticket ops | All three support MCP | `ticket_integration: mcp` fails. Mitigated by `cli`/`none` modes in [ticket-integration](./ticket-integration.md). |
+| `tools:` frontmatter gating | Provider honors a per-agent tool allowlist | Claude only (`tool_frontmatter: true`) | Other providers ignore the allowlist → agents run with looser tool access. Accepted, documented. |
+| Install path + discovery | Provider discovers files at a known dir | Claude `.claude/`, Codex `.codex/`+`.agents/skills/`, Cursor `.cursor/` | Files installed where the provider won't find them. Encoded in `install.base_dir`/subdirs. |
+| Command invocation syntax | How users invoke a command | Claude/Cursor `slash`, Codex `skill` | Cross-references read wrong; mitigated by invocation-neutral phrasing. |
+| Format transform | Provider reads the source format as-authored | `copy` (Claude/Cursor markdown) vs `skill+toml` (Codex) | Codex rejects raw markdown commands/agents → installer must generate SKILL.md + TOML. |
+| Model pinnability | A file/config can pin the model | Claude/Codex `true`, Cursor `false` (UI-only) | Tier→model mapping silently ignored on Cursor. Tiers treated as advisory there. |
+| Codex model ids ⚠️ | `gpt-5.x` line; default is auto-"recommended" | churns fast — do NOT hardcode | Pinned id goes stale. Leave empty unless determinism needed. |
+
+**On provider add/upgrade:** walk this table, confirm each row against the
+provider's current docs (and a live install for the ⚠️ rows — Codex model ids and
+MCP tool-name namespacing were not fully confirmable from docs alone), and update
+the manifest + "Calibrated For" notes.
 
 ---
 
