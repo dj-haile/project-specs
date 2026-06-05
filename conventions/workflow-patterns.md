@@ -329,3 +329,42 @@ workflows:
   debug: true
   founder_mode: true
 ```
+
+---
+
+## 6. Spec-First Workflow
+
+**Requirements definition before planning** to catch assumptions early.
+
+### Flow
+
+```
+User: /spec [feature description or ticket reference]
+  ↓
+Spec Command: Research codebase, define requirements, acceptance criteria
+  ↓
+Output: thoughts/specs/YYYY-MM-DD_requirements.md
+  ↓
+---
+User: /create_plan [referencing spec document]
+  ↓
+Plan Command: Uses spec's acceptance criteria as success criteria
+  ↓
+Output: thoughts/plans/YYYY-MM-DD_plan.md
+  ↓
+---
+User: /implement_plan → /validate_plan → /commit → /describe_pr
+```
+
+### When to Use
+- Features where requirements aren't fully understood
+- Work where scope creep is a risk
+- Tasks involving multiple stakeholders with different expectations
+- Anytime you find yourself saying "let me just start coding and figure it out"
+
+### Key Commands
+- `/spec` - Define what success looks like
+- `/create_plan` - Design how to get there (uses spec as input)
+
+### Why This Matters
+Starting at `/create_plan` merges requirements discovery and implementation planning into one step. This means the agent optimizes for "get to the plan" and rushes past assumptions it should challenge. The `/spec` command forces a deliberate pause to define what we're building before deciding how.

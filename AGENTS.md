@@ -95,6 +95,40 @@ model = config['models']['analysis']  # Use Sonnet for validate_plan
 model = config['models']['quick']      # Use Haiku for file search
 ```
 
+
+## Workflow Selection
+
+Given a task, use this decision tree to pick the right entry point:
+
+```
+Has requirements been defined?
+  ├─ NO → /spec (define requirements first, then proceed to /create_plan)
+  └─ YES (or requirements are clear)
+       │
+       Has a ticket/issue ID?
+       ├─ YES → /ticket_plan (research + plan from ticket context)
+       │    ├─ Want fully automated end-to-end? → /ticket_oneshot
+       │    └─ Want rapid iteration? → /founder_mode
+       ├─ NO, but need a structured plan → /create_plan
+       │    └─ Already have a plan? → /implement_plan
+       ├─ Need to understand the codebase first? → /research_codebase
+       ├─ Reviewing someone else's work? → /local_review
+       └─ Debugging a specific error? → /debug
+```
+
+**If unclear, start with /spec.** It's always safe to define requirements first. Five minutes of requirements definition prevents hours of building the wrong thing.
+
+**Quick reference for common scenarios:**
+
+| Scenario | Recommended Flow |
+|----------|-----------------|
+| New feature, requirements unclear | `/spec` → `/create_plan` → `/implement_plan` → `/validate_plan` |
+| Ticket assigned, well-defined | `/ticket_plan` → `/implement_plan` → `/validate_plan` → `/commit` |
+| Urgent bug fix | `/debug` → `/implement_plan` → `/validate_plan` → `/commit` |
+| Quick prototype | `/founder_mode` (documents retroactively) |
+| Resuming someone else's work | `/resume_handoff` → pick up from where they left off |
+| Need to understand before acting | `/research_codebase` → decide next step based on findings |
+
 ## What NOT to Do
 
 ### Don't Modify agents/ Directory

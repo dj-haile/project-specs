@@ -137,6 +137,17 @@ If you were part of the implementation:
 - Focus validation on work done in this session
 - Be honest about any shortcuts or incomplete items
 
+
+## Common Shortcuts to Avoid
+
+When validating a plan, you will be tempted to rationalize incomplete verification. These are the most common excuses and why they're wrong:
+
+| Excuse | Rebuttal |
+|--------|----------|
+| "Tests pass, so the implementation is correct." | Passing tests are evidence, not proof. Did you verify user-visible behavior? Did you check for regressions in related features? |
+| "This deviation from the plan is an improvement, not a problem." | Document it anyway. Undocumented deviations compound. The next person reading the plan will be confused. |
+| "Manual testing isn't needed for backend-only changes." | Backend changes surface as user-visible behavior somewhere. Identify where and verify. |
+
 ## Important Guidelines
 
 1. **Be thorough but practical** - Focus on what matters
