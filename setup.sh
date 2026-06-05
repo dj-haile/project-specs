@@ -328,6 +328,27 @@ if [[ "$TRANSFORM" == "copy" && -n "$SKILLS_SUBDIR" ]]; then
   mkdir -p "$INSTALL_DIR/$SKILLS_SUBDIR"
 fi
 
+# --- Install convention docs the commands link to ----------------------------
+# Commands reference ../../conventions/<doc>.md (relative to commands/<group>/).
+# Those links only resolve if conventions/ is installed alongside the commands.
+# For copy providers (Claude/Cursor) commands live at <base>/commands/<group>/,
+# so ../../conventions resolves to <base>/conventions. For Codex, generated
+# skills live at <skills_base>/<name>/SKILL.md, so ../../conventions resolves to
+# <skills_base>/../conventions (i.e. alongside the skills root's parent).
+if [[ -d "$SCRIPT_DIR/conventions" ]]; then
+  if [[ "$TRANSFORM" == "skill+toml" ]]; then
+    # Skills install under $TARGET_PATH/$SKILLS_SUBDIR/<name>/SKILL.md
+    # ../../conventions from there → $TARGET_PATH/$(dirname SKILLS_SUBDIR)/conventions
+    CONV_DEST="$TARGET_PATH/$(dirname "$SKILLS_SUBDIR")/conventions"
+  else
+    CONV_DEST="$INSTALL_DIR/conventions"
+  fi
+  rm -rf "$CONV_DEST"
+  mkdir -p "$(dirname "$CONV_DEST")"
+  cp -r "$SCRIPT_DIR/conventions" "$CONV_DEST"
+  print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+fi
+
 # --- Provider-specific artifacts --------------------------------------------
 
 # Root instructions file (e.g. Codex/Cursor AGENTS.md)
