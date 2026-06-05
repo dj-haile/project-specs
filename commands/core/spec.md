@@ -1,6 +1,6 @@
 ---
 description: Define requirements and acceptance criteria before planning
-model: opus
+model: planning
 ---
 
 # Spec
@@ -82,10 +82,10 @@ Anything unresolved. **This section must be empty before passing to /create_plan
 ### Step 1: Understand the Problem
 
 1. **Read all provided context** — tickets, documents, code references
-2. **Spawn research agents** to investigate the codebase:
-   - Use **codebase-locator** to find affected files and modules
-   - Use **codebase-analyzer** to understand current behavior
-   - If `thoughts_directory: true`, use **thoughts-locator** to find prior work on this area
+2. **Research the codebase** (capability-gated — see [subagent-fallback](../../conventions/subagent-fallback.md)): if `capabilities.subagents: true`, spawn these agents in parallel; if `false`, perform the same research inline and sequentially per each agent's definition file.
+   - **codebase-locator** — find affected files and modules
+   - **codebase-analyzer** — understand current behavior
+   - If `thoughts_directory: true`, **thoughts-locator** — find prior work on this area
 3. **Identify the real problem** — tickets describe symptoms, not root causes. Dig deeper.
 
 ### Step 2: Define Requirements

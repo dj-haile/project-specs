@@ -44,8 +44,16 @@ pr_template_path: "thoughts/shared/pr_description.md"  # PR description template
 default_base_branch: "main"         # Base branch for PRs
 
 # --- Model Selection ---
-# Override which models are used for different task types.
-# These are suggestions — agents read this to pick the right model.
+# Commands and agents declare a SEMANTIC TIER in their frontmatter
+# (model: planning | analysis | quick) rather than a literal model name. This
+# block maps each tier to a concrete model for THIS project/provider, so you can
+# retune globally in one place — e.g. set analysis: "opus" to make all research
+# and analysis work use opus.
+#
+# Defaults below are for Claude Code. For other providers, the per-provider
+# defaults come from providers/<provider>/manifest.yaml (Codex auto-selects a
+# recommended model; Cursor model selection is UI-only). Values here override
+# the manifest defaults when set.
 models:
   planning: "opus"                  # Deep reasoning, architecture decisions
   analysis: "sonnet"                # Code analysis, research, implementation

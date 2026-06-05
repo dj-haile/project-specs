@@ -1,7 +1,7 @@
 ---
 title: ticket_plan
 description: Create implementation plan for highest priority ticket ready for spec
-model: opus
+model: planning
 ---
 
 # Ticket Plan
@@ -12,7 +12,9 @@ Create an implementation plan for the highest priority ticket ready for spec fro
 
 Read configuration from `specs.config.yaml`:
 - `ticket_system`: The ticket management system (linear, jira, asana, github-issues)
-- `ticket_mcp_prefix`: MCP tool prefix for this system (e.g., mcp__linear, mcp__jira)
+- `ticket_integration`: How to reach the ticket system — `mcp`, `cli`, or `none` (see [ticket-integration](../../conventions/ticket-integration.md))
+- `ticket_mcp_prefix`: MCP tool prefix when `ticket_integration: mcp` (e.g., mcp__linear, mcp__jira)
+- `ticket_cli`: CLI command when `ticket_integration: cli` (e.g., linear-cli)
 - `ticket_id_pattern`: Regex pattern for identifying ticket IDs
 - `ticket_statuses`: Map of generic statuses to system-specific labels (e.g., ready_for_spec)
 - `thoughts_directory`: Whether to support thoughts document sync

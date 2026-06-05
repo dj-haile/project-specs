@@ -1,7 +1,7 @@
 ---
 title: create_worktree
 description: Create worktree and launch implementation session for a plan
-model: sonnet
+model: analysis
 ---
 
 # Create Worktree
@@ -14,7 +14,8 @@ Read configuration from `specs.config.yaml`:
 - `ticket_id_pattern`: Regex pattern for identifying ticket IDs (e.g., "ENG-\\d+")
 - `worktree_base_path`: Base directory for creating worktrees (e.g., "../worktrees")
 - `ticket_system`: The ticket management system (for reference)
-- `ticket_mcp_prefix`: MCP tool prefix for this system
+- `ticket_integration`: How to reach the ticket system — `mcp`, `cli`, or `none` (see [ticket-integration](../../conventions/ticket-integration.md))
+- `ticket_mcp_prefix`: MCP tool prefix when `ticket_integration: mcp`
 
 ## Process
 

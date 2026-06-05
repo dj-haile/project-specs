@@ -1,6 +1,6 @@
 ---
 description: Implement technical plans with phase-by-phase verification
-model: opus
+model: planning
 ---
 
 # Implement Plan
