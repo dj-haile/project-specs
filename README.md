@@ -6,6 +6,23 @@
 
 ## Quick Start
 
+### Prerequisites
+
+`setup.sh` reads provider manifests (`providers/<name>/manifest.yaml`) using a
+small embedded Python helper, so the installer needs:
+
+- **bash** (the install script)
+- **python3** with **PyYAML** — present on most systems; install PyYAML if missing:
+  ```bash
+  python3 -m pip install pyyaml
+  ```
+  (The installer exits with this exact hint if PyYAML is not found.)
+
+No `yq` or other tools are required. These are install-time only — the framework
+itself (commands, agents) has no runtime dependency on them.
+
+### Install
+
 1. **Clone project-specs somewhere accessible:**
    ```bash
    git clone https://github.com/dj-haile/project-specs ~/.project-specs
@@ -18,10 +35,19 @@
    ~/.project-specs/setup.sh /path/to/your-project --provider=cursor  # Cursor
    ```
 
+   The installer copies `agents/`, `commands/`, and the `conventions/` they
+   reference into the provider's location, writes a `specs.config.yaml` at your
+   project root (with `provider` pre-set), and optionally creates a `thoughts/`
+   directory. For Codex it transforms commands into Skills and agents into TOML;
+   see [Supported Providers](#supported-providers).
+
 3. **Customize specs.config.yaml** (created at your project root by setup.sh):
    ```bash
    $EDITOR /path/to/your-project/specs.config.yaml
    ```
+   Set `provider`, map model tiers under `models:`, and choose
+   `ticket_integration` (`mcp`/`cli`/`none`). See
+   [conventions/provider-portability.md](./conventions/provider-portability.md).
 
 ## Architecture Overview
 
