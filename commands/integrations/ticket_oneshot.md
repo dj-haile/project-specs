@@ -1,7 +1,7 @@
 ---
 title: ticket_oneshot
 description: Research, plan, and implement a ticket in one automated flow
-model: opus
+model: planning
 ---
 
 # Ticket Oneshot
@@ -12,7 +12,9 @@ Research, plan, and implement a ticket in one continuous automated flow. This co
 
 Read configuration from `specs.config.yaml`:
 - `ticket_system`: The ticket management system (linear, jira, asana, github-issues)
-- `ticket_mcp_prefix`: MCP tool prefix for this system (e.g., mcp__linear, mcp__jira)
+- `ticket_integration`: How to reach the ticket system — `mcp`, `cli`, or `none` (see [ticket-integration](../../conventions/ticket-integration.md))
+- `ticket_mcp_prefix`: MCP tool prefix when `ticket_integration: mcp` (e.g., mcp__linear, mcp__jira)
+- `ticket_cli`: CLI command when `ticket_integration: cli` (e.g., linear-cli)
 - `ticket_id_pattern`: Regex pattern for identifying ticket IDs
 - `ticket_statuses`: Map of generic statuses to system-specific labels
 - `worktree_base_path`: Base directory for creating worktrees (e.g., ../worktrees)

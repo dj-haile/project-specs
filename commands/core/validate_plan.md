@@ -1,6 +1,6 @@
 ---
 description: Validate implementation against plan, verify success criteria, identify issues
-model: opus
+model: planning
 ---
 
 # Validate Plan
@@ -43,7 +43,7 @@ If starting fresh or need more context:
    - Note all success criteria (automated and manual)
    - Identify key functionality to verify
 
-3. **Spawn parallel research tasks** to discover implementation:
+3. **Discover implementation** (capability-gated — see [subagent-fallback](../../conventions/subagent-fallback.md)): if `capabilities.subagents: true`, run the tasks below as parallel sub-tasks; if `false`, perform each one inline and sequentially. Either way the verification output is the same.
    ```
    Task 1 - Verify code changes:
    Find all modified files related to [feature].

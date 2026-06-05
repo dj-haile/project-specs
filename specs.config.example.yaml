@@ -8,6 +8,13 @@
 project_name: "my-project"
 project_description: "A brief description of what this project does"
 
+# --- Provider ---
+# Which coding-agent provider this project targets. setup.sh reads the matching
+# providers/<provider>/manifest.yaml for install location, format transform, and
+# model-tier defaults. Default is "claude" — existing Claude Code installs are
+# unaffected unless you re-run setup.sh with a different --provider.
+provider: "claude"                  # Options: claude, codex, cursor
+
 # --- Thoughts Directory ---
 # The thoughts/ directory stores plans, handoffs, ticket research, and PR
 # descriptions for cross-session continuity. Set to false if you don't want
@@ -19,7 +26,9 @@ thoughts_path: "thoughts/shared"    # Relative to project root
 # Configure your project management tool. Commands in commands/integrations/
 # read these values to interact with tickets.
 ticket_system: "linear"             # Options: linear, jira, asana, github-issues
-ticket_mcp_prefix: "mcp__linear"    # MCP tool prefix for your ticket system
+ticket_integration: "mcp"           # How commands reach the ticket system: mcp, cli, none
+ticket_mcp_prefix: "mcp__linear"    # Used when ticket_integration: mcp (MCP tool prefix)
+ticket_cli: ""                      # Used when ticket_integration: cli (e.g. "linear-cli")
 ticket_id_pattern: "ENG-\\d+"       # Regex to extract ticket IDs from branch names
 ticket_default_project: ""          # Default project/board for new tickets
 ticket_statuses:                    # Map generic statuses to your system's labels
@@ -35,8 +44,16 @@ pr_template_path: "thoughts/shared/pr_description.md"  # PR description template
 default_base_branch: "main"         # Base branch for PRs
 
 # --- Model Selection ---
-# Override which models are used for different task types.
-# These are suggestions — agents read this to pick the right model.
+# Commands and agents declare a SEMANTIC TIER in their frontmatter
+# (model: planning | analysis | quick) rather than a literal model name. This
+# block maps each tier to a concrete model for THIS project/provider, so you can
+# retune globally in one place — e.g. set analysis: "opus" to make all research
+# and analysis work use opus.
+#
+# Defaults below are for Claude Code. For other providers, the per-provider
+# defaults come from providers/<provider>/manifest.yaml (Codex auto-selects a
+# recommended model; Cursor model selection is UI-only). Values here override
+# the manifest defaults when set.
 models:
   planning: "opus"                  # Deep reasoning, architecture decisions
   analysis: "sonnet"                # Code analysis, research, implementation

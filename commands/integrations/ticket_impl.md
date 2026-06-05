@@ -1,7 +1,7 @@
 ---
 title: ticket_impl
 description: Implement highest priority ticket with worktree setup
-model: sonnet
+model: analysis
 ---
 
 # Ticket Implementation
@@ -12,7 +12,9 @@ Implement the highest priority ticket by setting up a worktree and launching an 
 
 Read configuration from `specs.config.yaml`:
 - `ticket_system`: The ticket management system (linear, jira, asana, github-issues)
-- `ticket_mcp_prefix`: MCP tool prefix for this system (e.g., mcp__linear, mcp__jira)
+- `ticket_integration`: How to reach the ticket system — `mcp`, `cli`, or `none` (see [ticket-integration](../../conventions/ticket-integration.md))
+- `ticket_mcp_prefix`: MCP tool prefix when `ticket_integration: mcp` (e.g., mcp__linear, mcp__jira)
+- `ticket_cli`: CLI command when `ticket_integration: cli` (e.g., linear-cli)
 - `ticket_id_pattern`: Regex pattern for identifying ticket IDs
 - `ticket_statuses`: Map of generic statuses to system-specific labels (e.g., in_development)
 - `worktree_base_path`: Base directory for creating worktrees (e.g., ../worktrees)

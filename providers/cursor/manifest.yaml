@@ -1,0 +1,35 @@
+# providers/cursor/manifest.yaml
+# Cursor (Anysphere). Verified against cursor.com/docs (Jun 2026). Cursor reads
+# markdown commands/agents/skills, so install is a plain copy (like Claude).
+# Rules (.cursor/rules/*.mdc) require a different format the framework does not
+# currently emit, so rules are out of scope here.
+provider: cursor
+display_name: "Cursor"
+
+install:
+  base_dir: ".cursor"
+  config_format: "markdown"         # commands/agents are markdown
+  agents_subdir: "agents"           # .cursor/agents/*.md — subagent defs (md + YAML frontmatter)
+  commands_subdir: "commands"       # .cursor/commands/*.md — reusable prompts, invoked with /
+  skills_subdir: "skills"           # .cursor/skills/<name>/SKILL.md
+  rules_subdir: "rules"             # .cursor/rules/*.mdc — MUST be .mdc; NOT emitted (out of scope)
+  root_instructions: "AGENTS.md"    # plain-markdown alternative, also supported
+  settings_template: null
+  mcp_config: ".cursor/mcp.json"    # MCP config is JSON here
+  transform: "copy"                 # markdown copy; no transform needed
+
+command_invocation: "slash"          # /command in the Agent input
+
+models:
+  # Cursor model selection is UI-only (Settings → Models). NOT pinnable via a
+  # project config file for the main agent. Per-subagent `model:` frontmatter is
+  # the ONLY file-configurable pin. Tiers below are advisory only.
+  planning: ""
+  analysis: ""
+  quick: ""
+
+capabilities:
+  subagents: true                    # .cursor/agents/ — incl. background/parallel
+  mcp: true                          # .cursor/mcp.json
+  tool_frontmatter: false            # no per-agent tools: allowlist
+  model_pinnable: false              # main-agent model is UI-only; tiers advisory at most

@@ -1,0 +1,32 @@
+# providers/codex/manifest.yaml
+# OpenAI Codex CLI. Verified against developers.openai.com/codex +
+# github.com/openai/codex (Jun 2026). NOTE: Codex deprecated custom prompts in
+# favor of Skills, and uses TOML for config/subagents — so installing here is a
+# TRANSFORM (generate SKILL.md + TOML), not a plain copy.
+provider: codex
+display_name: "OpenAI Codex CLI"
+
+install:
+  base_dir: ".codex"                 # project config dir (config.toml; trusted projects only)
+  config_format: "toml"             # Codex uses TOML, NOT yaml — config.toml
+  agents_subdir: "agents"           # .codex/agents/ — subagent defs as TOML files
+  skills_subdir: ".agents/skills"   # NOTE: .agents/skills/<name>/SKILL.md, NOT .codex/skills
+  commands_dest: "skills"           # custom prompts DEPRECATED → commands install as skills
+  root_instructions: "AGENTS.md"    # global ~/.codex + project tree; 32 KiB cap
+  settings_template: null           # no permissions-file equivalent; documented instead
+  transform: "skill+toml"           # commands → SKILL.md folders; agents → TOML
+
+command_invocation: "skill"          # invoked via /skills or $skill-name (not slash-prompt)
+
+models:
+  # Codex defaults to the current "recommended" model when unset — do NOT hardcode.
+  # Empty = let Codex pick; users may pin a gpt-5.x id for determinism.
+  planning: ""                       # e.g. "gpt-5.5" to pin
+  analysis: ""
+  quick: ""                          # e.g. "gpt-5.4-mini" for cheap subagent work
+
+capabilities:
+  subagents: true                    # ~/.codex/agents/ or .codex/agents/ (TOML); explicit spawn
+  mcp: true                          # [mcp_servers.<name>] in config.toml
+  tool_frontmatter: false            # no per-agent tools: allowlist like Claude
+  model_pinnable: true               # model = "..." in config.toml / per-subagent

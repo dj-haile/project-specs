@@ -1,0 +1,50 @@
+# specs.config.yaml — Cursor Example
+#
+# Same framework, installed for Cursor via: setup.sh <project> --provider=cursor
+# Cursor reads markdown commands/agents/skills directly (.cursor/). Model
+# selection is done in the Cursor UI (Settings → Models), not in this file.
+
+project_name: "my-cursor-project"
+project_description: "A project driven by the Cursor agent"
+
+# --- Provider ---
+provider: "cursor"                  # selects providers/cursor/manifest.yaml
+
+# --- Thoughts Directory ---
+thoughts_directory: true
+thoughts_path: "thoughts/shared"
+
+# --- Ticket System Integration ---
+ticket_system: "github-issues"
+ticket_integration: "mcp"           # mcp | cli | none
+ticket_mcp_prefix: "mcp__github"
+ticket_cli: ""
+ticket_id_pattern: "#\\d+"
+ticket_default_project: ""
+ticket_statuses:
+  todo: "Todo"
+  in_progress: "In Progress"
+  in_review: "In Review"
+  done: "Done"
+
+# --- Git & PR Conventions ---
+branch_prefix: "feat/"
+commit_style: "conventional"
+pr_template_path: "thoughts/shared/pr_description.md"
+default_base_branch: "main"
+
+# --- Model Selection ---
+# Cursor model is chosen in the UI and cannot be pinned from a config file.
+# These tiers are advisory only and have no effect on Cursor's main agent.
+models:
+  planning: ""
+  analysis: ""
+  quick: ""
+
+# --- CI/CD ---
+ci_mode: false
+ci_commit_prefix: "ci: "
+
+# --- Worktree ---
+worktree_base_path: "../worktrees"
+worktree_auto_cleanup: true

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Multi-provider support** (Claude Code, OpenAI Codex CLI, Cursor) from a single neutral source. Claude Code remains the reference implementation.
+- **Provider manifests** (`providers/<name>/manifest.yaml`): declarative per-provider install location, format transform, model-tier defaults, and capability flags (subagents, MCP, tool-frontmatter, model-pinnability).
+- **`setup.sh --provider=<name>`**: manifest-driven installer. Reads manifests via an embedded `python3`/PyYAML helper (no `yq` dependency). For Codex it transforms commands into Skills (`.agents/skills/<name>/SKILL.md`) and agents into TOML (`.codex/agents/`), and writes `AGENTS.md`. Installs the `conventions/` the commands reference so links resolve in target projects.
+- **Capability-gated subagent fallback** (`conventions/subagent-fallback.md`): core commands spawn research agents in parallel when `capabilities.subagents: true`, else perform the same research inline/sequentially. Referenced from `create_plan`, `spec`, `research_codebase`, `validate_plan`.
+- **Ticket integration modes** (`conventions/ticket-integration.md`): `ticket_integration: mcp|cli|none` with `ticket_cli` for the CLI mode; integration commands resolve ticket ops accordingly.
+- **Provider portability convention** (`conventions/provider-portability.md`): manifest schema, capability gating, model-tier resolution, format transforms, and how to add a provider.
+- **Provider-Dependent Patterns** table in `conventions/model-assumptions.md` for re-evaluating provider assumptions on add/upgrade.
+- **Example configs** for `codex` and `cursor` under `examples/`.
+- Prerequisites section in README (bash + python3/PyYAML, install-time only).
+
+### Changed
+- **Model frontmatter → semantic tiers**: commands/agents declare `model: planning|analysis|quick` instead of literal `opus|sonnet|haiku`. The `models:` block in `specs.config.yaml` (and per-provider manifest defaults) maps tiers to concrete models, so model choice is retuned in one place.
+- `specs.config.yaml` gains `provider`, `ticket_integration`, and `ticket_cli` keys.
+- README retitled "Provider-Agnostic Spec Framework"; added Supported Providers section.
+- **Backward compatible:** `--provider=claude` (the default) installs byte-identically to prior behavior; existing Claude Code projects are unaffected unless they opt into another provider or re-run setup.
+
 - **Anti-rationalization tables** ("Common Shortcuts to Avoid") in core commands: `create_plan`, `implement_plan`, `validate_plan`, and the new `spec` command. Pre-written rebuttals to common excuses agents use to skip workflow steps. Based on patterns from [Addy Osmani's Agent Skills research](https://addyosmani.com/blog/agent-skills/).
 - **Spec command** (`commands/core/spec.md`): New `/spec` command that produces a requirements specification with acceptance criteria before `/create_plan`. Separates "what are we building" from "how are we building it."
 - **Scope discipline** in `implement_plan.md`: Hard rule requiring the agent to STOP and present deviations before modifying any file not listed in the plan.

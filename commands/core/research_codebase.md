@@ -1,6 +1,6 @@
 ---
 description: Document codebase as-is through comprehensive parallel research
-model: opus
+model: planning
 ---
 
 # Research Codebase
@@ -47,9 +47,9 @@ Then wait for the user's research query.
    - Create a research plan using TodoWrite to track all subtasks
    - Consider which directories, files, or architectural patterns are relevant
 
-3. **Spawn parallel sub-agent tasks for comprehensive research:**
-   - Create multiple Task agents to research different aspects concurrently
-   - We now have specialized agents that know how to do specific research tasks:
+3. **Run comprehensive research** (capability-gated — see [subagent-fallback](../../conventions/subagent-fallback.md)):
+   - If `capabilities.subagents: true`, spawn multiple agents concurrently to research different aspects. If `false`, do NOT spawn — work through the same agents inline and sequentially, following each agent's definition file; the output must be equivalent.
+   - We have specialized agents that know how to do specific research tasks:
 
    **For codebase research:**
    - Use the **codebase-locator** agent to find WHERE files and components live

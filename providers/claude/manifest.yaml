@@ -1,0 +1,28 @@
+# providers/claude/manifest.yaml
+# Reference implementation. Claude Code reads markdown commands/agents directly
+# from .claude/, so install is a plain copy (no format transform needed).
+provider: claude
+display_name: "Claude Code"
+
+install:
+  base_dir: ".claude"                 # relative to project root
+  config_format: "markdown"          # commands/agents are markdown as-authored
+  agents_subdir: "agents"            # → .claude/agents/
+  commands_subdir: "commands"        # → .claude/commands/
+  skills_subdir: "skills"            # → .claude/skills/
+  root_instructions: null            # no root instruction file; uses CLAUDE.md if present
+  settings_template: "settings.local.json"   # provider-specific permissions artifact
+  transform: "copy"                  # copy | skill+toml — Claude is a straight copy
+
+command_invocation: "slash"          # users invoke as /create_plan
+
+models:                              # semantic tier → concrete model id
+  planning: "opus"                   # deep reasoning, architecture
+  analysis: "sonnet"                 # code analysis, research, implementation
+  quick: "haiku"                     # simple lookups, formatting
+
+capabilities:
+  subagents: true                    # parallel autonomous subagents (Task)
+  mcp: true                          # MCP tool integration available
+  tool_frontmatter: true             # honors `tools:` allowlist in frontmatter
+  model_pinnable: true               # model selectable via frontmatter/config

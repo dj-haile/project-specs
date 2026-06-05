@@ -1,6 +1,6 @@
 ---
 description: Create detailed implementation plans through interactive research and iteration
-model: opus
+model: planning
 ---
 
 # Implementation Plan
@@ -54,12 +54,15 @@ Then wait for the user's input.
    - **CRITICAL**: DO NOT spawn sub-tasks before reading these files yourself in the main context
    - **NEVER** read files partially - if a file is mentioned, read it completely
 
-2. **Spawn initial research tasks to gather context**:
-   Before asking the user any questions, use specialized agents to research in parallel:
+2. **Research the codebase to gather context** (capability-gated — see [subagent-fallback](../../conventions/subagent-fallback.md)):
+   Before asking the user any questions, gather context with these specialized
+   agents. If `capabilities.subagents: true`, spawn them in parallel; if
+   `false`, perform the same research inline and sequentially by following each
+   agent's definition file.
 
-   - Use the **codebase-locator** agent to find all files related to the task
-   - Use the **codebase-analyzer** agent to understand how the current implementation works
-   - If `thoughts_directory: true`, use the **thoughts-locator** agent to find any existing thoughts documents about this feature
+   - **codebase-locator** — find all files related to the task
+   - **codebase-analyzer** — understand how the current implementation works
+   - If `thoughts_directory: true`, **thoughts-locator** — find any existing thoughts documents about this feature
 
    These agents will:
    - Find relevant source files, configs, and tests
@@ -107,8 +110,8 @@ After getting initial clarifications:
 
 2. **Create a research todo list** using TodoWrite to track exploration tasks
 
-3. **Spawn parallel sub-tasks for comprehensive research**:
-   - Create multiple Task agents to research different aspects concurrently
+3. **Run comprehensive research** (capability-gated — see [subagent-fallback](../../conventions/subagent-fallback.md)):
+   - If `capabilities.subagents: true`, spawn multiple agents concurrently to research different aspects; if `false`, work through them inline and sequentially per each agent's definition file.
    - Use the right agent for each type of research:
 
    **For deeper investigation:**
@@ -408,6 +411,8 @@ When creating a plan, you will be tempted to rationalize skipping steps. These a
 - Include migration strategy
 
 ## Sub-task Spawning Best Practices
+
+*Applies when `capabilities.subagents: true`. When subagents are unavailable, follow the same intent inline per [subagent-fallback](../../conventions/subagent-fallback.md).*
 
 When spawning research sub-tasks:
 

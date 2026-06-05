@@ -76,11 +76,18 @@ thoughts/
 
 project-specs assigns models to tiers of work:
 
-| Tier | Model | Use Case |
-|------|-------|----------|
+| Tier | Model (Claude Code) | Use Case |
+|------|---------------------|----------|
 | **Planning** | claude-opus | Create and iterate plans; architectural decisions; long-context analysis |
 | **Analysis** | claude-sonnet | Code review, pattern discovery, testing; general-purpose work |
 | **Quick** | claude-haiku | Lint checks, file searches, small edits; fast turnaround |
+
+Commands and agents declare the **tier** (`model: planning|analysis|quick`) in
+frontmatter, never a literal model. The concrete model per tier comes from
+`specs.config.yaml` (`models:`) and the active provider's manifest. The mapping
+above is for Claude Code; on Codex the tier resolves to its recommended model and
+on Cursor model selection is UI-only. See
+[conventions/provider-portability.md](./conventions/provider-portability.md).
 
 This tiering balances cost, latency, and quality:
 
