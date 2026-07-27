@@ -172,9 +172,60 @@ Once aligned on approach:
 
 2. **Get feedback on structure** before writing details
 
-### Step 4: Detailed Plan Writing
+### Step 4: Program Design (for medium and large tasks)
 
-After structure approval:
+For tasks beyond simple oneshot changes, produce a **program design artifact** before writing the detailed plan. This is the layer between architecture ("which services talk to each other") and code ("here are the file changes"). It captures the shape of the code so the reviewer can catch structural problems before 800 lines of implementation make them expensive to fix.
+
+The program design artifact has three parts:
+
+1. **Call-stack tree diff** — Show the control flow that will change, using `+` for new call frames and `-` for removed ones. This lets the reviewer see at a glance how the call graph is being restructured:
+   ```
+   handleRequest()
+     → validateInput()
+   + → resolvePermissions()    # new: moved out of middleware
+     → executeQuery()
+   -   → legacyTransform()     # removed: replaced by pipeline
+   +   → pipeline.run()        # new: streaming pipeline
+   +     → stage1.process()
+   +     → stage2.process()
+     → formatResponse()
+   ```
+
+2. **File-tree diff** — Show what files are being created, renamed, modified, or deleted. This keeps the reviewer in touch with the layout of the codebase:
+   ```
+   src/
+   + api/permissions.ts          # new: extracted from middleware
+   ~ api/handlers/query.ts       # modified: swap legacy for pipeline
+   - api/transforms/legacy.ts    # deleted: replaced by pipeline stages
+   + pipeline/
+   +   runner.ts                 # new: streaming pipeline orchestrator
+   +   stages/
+   +     stage1.ts
+   +     stage2.ts
+   ```
+
+3. **Key types and method signatures** — For the main new functions, write the types and signatures without the implementation. These are decisions you'd otherwise make implicitly during code review, at the most expensive possible moment to change your mind:
+   ```typescript
+   interface PipelineStage<TIn, TOut> {
+     name: string;
+     process(input: TIn, ctx: PipelineContext): Promise<TOut>;
+   }
+
+   function createPipeline(stages: PipelineStage[]): Pipeline;
+   function resolvePermissions(userId: string, resource: Resource): Promise<PermissionSet>;
+   ```
+
+**When to include this step:**
+- ~40% of tasks are small enough to skip this — oneshot with 1–2 rounds of feedback.
+- Medium tasks: combine this with the architecture overview in one plan doc.
+- Large tasks: this gets its own review before implementation begins.
+- Pure refactors: skip the product/requirements step but still do program design.
+
+Present the program design to the user for review before writing the detailed implementation plan. Disagreements about code shape cost minutes here and hours during code review.
+
+### Step 5: Detailed Plan Writing
+
+After structure and program design approval:
 
 1. **Determine plan storage location**:
    - Read `specs.config.yaml` to get `thoughts_path` value
@@ -213,7 +264,18 @@ After structure approval:
 
 [High-level strategy and reasoning]
 
-## Phase 1: [Descriptive Name]
+## Program Design (include for medium/large tasks)
+
+### Call-Stack Changes
+[Call-stack tree diff showing control flow changes with +/- markers]
+
+### File-Tree Changes
+[File-tree diff showing new (+), modified (~), and deleted (-) files]
+
+### Key Types & Signatures
+[Types and method signatures for the main new functions — no implementation]
+
+## Slice 1: [Descriptive Name — tracer bullet through full stack]
 
 ### Overview
 [What this phase accomplishes]
@@ -282,7 +344,7 @@ After structure approval:
 - Similar implementation: `[file:line]`
 ````
 
-### Step 5: Review
+### Step 6: Review
 
 1. **Present the draft plan location**:
    ```
@@ -315,6 +377,8 @@ When creating a plan, you will be tempted to rationalize skipping steps. These a
 | "This task is too simple to need phases." | If it's truly simple, phases are cheap. If it's not (and it usually isn't), you just saved a failed implementation. |
 | "The user seems to want this fast, so I'll skip the structure review." | Speed without structure produces rework. Present the outline, get buy-in, then move fast on the right plan. |
 | "I'll leave these open questions for the implementation phase." | No. Open questions in a plan become wrong assumptions in code. Resolve or ask now. |
+| "Program design is overkill for this task." | If you're changing more than 3 files or introducing a new abstraction, the call-stack and file-tree diffs take 5 minutes. Skipping them means the reviewer discovers your structural decisions inside a 500-line PR, where changing your mind costs hours. |
+| "I'll build all the database layers first, then the API, then the frontend." | That's horizontal slicing. You'll produce 2K lines before anything works end-to-end. Build a vertical tracer bullet through the full stack first, reviewed at 100-200 lines. |
 
 ## Important Guidelines
 
@@ -390,19 +454,22 @@ When creating a plan, you will be tempted to rationalize skipping steps. These a
 
 ## Common Patterns
 
-### For Database Changes:
-- Start with schema/migration
-- Add store methods
-- Update business logic
-- Expose via API
-- Update clients
+### Vertical Slices (preferred for all non-trivial work)
 
-### For New Features:
-- Research existing patterns first
-- Start with data model
-- Build backend logic
-- Add API endpoints
-- Implement UI last
+Plan implementation as **vertical slices** — each slice cuts through the full stack and produces a working, reviewable increment of 100–200 lines:
+
+1. **First slice: tracer bullet.** Build one thin path through the entire stack — API contract with mock data → frontend consuming it → service layer → DB migration → business logic → error handling. This proves the integration works end-to-end before you build out breadth.
+2. **Subsequent slices** add cases, edge handling, and breadth to the working tracer bullet.
+
+**Do NOT plan horizontal slices** (all DB migrations first, then all services, then all API endpoints, then all frontend). Horizontal slicing is what agents naturally produce, and it results in 2,000+ lines of code before anything works end-to-end — unreviewable, untestable, and impossible to course-correct mid-flight.
+
+| Horizontal (avoid) | Vertical (prefer) |
+|---|---|
+| Phase 1: All migrations | Slice 1: One entity, full stack, mock data |
+| Phase 2: All store methods | Slice 2: Real data + validation for that entity |
+| Phase 3: All API endpoints | Slice 3: Second entity, full stack |
+| Phase 4: All frontend | Slice 4: Edge cases + error handling |
+| Review: 2K+ lines, nothing works yet | Review: 100-200 lines per slice, each one works |
 
 ### For Refactoring:
 - Document current behavior

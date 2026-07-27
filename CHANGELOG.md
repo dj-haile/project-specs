@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Program design step** in `create_plan.md`: New Step 4 between plan structure and detailed writing. For medium and large tasks, requires three artifacts before implementation begins: call-stack tree diff (control flow changes with +/- markers), file-tree diff (new/modified/deleted files), and key types + method signatures. These surface structural decisions where they cost minutes to change, not inside the PR where they cost hours.
+- **Vertical slice execution** in `create_plan.md`: Replaced the horizontal-slice "Common Patterns" (all DB first, then all services, then all API, then all frontend) with vertical-slice guidance. Each implementation slice cuts through the full stack and produces a reviewable 100–200 line increment. First slice is always a tracer bullet proving end-to-end integration.
+- Anti-rationalization entries for skipping program design and for defaulting to horizontal slices.
+- Program Design section added to the plan template (call-stack changes, file-tree changes, key types & signatures).
+
+### Added (prior)
 - **Multi-provider support** (Claude Code, OpenAI Codex CLI, Cursor) from a single neutral source. Claude Code remains the reference implementation.
 - **Provider manifests** (`providers/<name>/manifest.yaml`): declarative per-provider install location, format transform, model-tier defaults, and capability flags (subagents, MCP, tool-frontmatter, model-pinnability).
 - **`setup.sh --provider=<name>`**: manifest-driven installer. Reads manifests via an embedded `python3`/PyYAML helper (no `yq` dependency). For Codex it transforms commands into Skills (`.agents/skills/<name>/SKILL.md`) and agents into TOML (`.codex/agents/`), and writes `AGENTS.md`. Installs the `conventions/` the commands reference so links resolve in target projects.
