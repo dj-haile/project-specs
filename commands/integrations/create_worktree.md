@@ -1,5 +1,5 @@
 ---
-title: create_worktree
+name: create_worktree
 description: Create worktree and launch implementation session for a plan
 model: analysis
 ---

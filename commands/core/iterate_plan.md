@@ -1,4 +1,5 @@
 ---
+name: iterate_plan
 description: Iterate on existing implementation plans with thorough research and updates
 model: planning
 ---

@@ -58,6 +58,16 @@ Example:
 - "Invoked by: other skills that need code structure analysis"
 - "User-facing: Yes (can be called directly)"
 
+## When NOT to Use
+
+Just as important as when to use it. Explicit exclusions prevent bad routing — an agent
+choosing between two similar skills relies on this section.
+
+Examples:
+- "Do NOT use for Python projects — use python-analyzer instead"
+- "Do NOT use when the change is a single-line fix; the overhead isn't justified"
+- "Do NOT use in CI environments; this skill requires interactive confirmation"
+
 ## Prerequisites
 
 What must be true for this skill to work?
@@ -164,6 +174,33 @@ Examples:
 - "Requires stable filesystem; skips symlinks to avoid loops"
 - "Do NOT invoke other skills that would cause circular dependency"
 - "Edge case: Projects with mixed encoding (UTF-8, Latin-1) may fail"
+
+## Common Rationalizations
+
+Pre-written rebuttals to the excuses an agent will generate to skip this skill's rigor.
+Place the rebuttal where the shortcut would occur. (Same pattern as the command-level
+"Common Shortcuts to Avoid" tables — see README.)
+
+| Excuse | Rebuttal |
+|--------|----------|
+| "[Common excuse to skip a step]" | "[Why that's wrong, concretely]" |
+| "[Another excuse]" | "[Rebuttal]" |
+
+## Red Flags
+
+Observable symptoms — in the agent's own output — that it has drifted off this skill's
+process. Write them as things the agent can self-detect:
+
+- "You are [doing X] without having [done required step Y] first"
+- "Your output contains [symptom] which this skill explicitly prohibits"
+
+## Verification
+
+How the agent proves it followed this skill, not just claims it did. Every item must be
+checkable from observable evidence (command output, file contents, diffs):
+
+- [ ] [Concrete, observable completion check]
+- [ ] [Another check]
 
 ## Notes for Skill Authors
 

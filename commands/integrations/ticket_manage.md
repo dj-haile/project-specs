@@ -1,5 +1,5 @@
 ---
-title: ticket_manage
+name: ticket_manage
 description: Manage tickets - create, update, comment, and follow workflow patterns
 model: planning
 ---

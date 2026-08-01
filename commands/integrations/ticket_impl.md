@@ -1,5 +1,5 @@
 ---
-title: ticket_impl
+name: ticket_impl
 description: Implement highest priority ticket with worktree setup
 model: analysis
 ---

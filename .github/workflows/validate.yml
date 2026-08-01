@@ -1,0 +1,75 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  structural:
+    name: Structural validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install PyYAML
+        run: python3 -m pip install pyyaml
+      - name: Validate frontmatter, tiers, sections, configs, manifests, links
+        run: python3 scripts/validate.py
+
+  install-smoke-test:
+    name: Installer smoke test (${{ matrix.provider }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [claude, codex, cursor]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install PyYAML
+        run: python3 -m pip install pyyaml
+      - name: Run installer against a fresh project
+        run: |
+          mkdir -p /tmp/test-project
+          bash setup.sh /tmp/test-project --provider=${{ matrix.provider }} --copy --yes
+      - name: Assert expected install layout
+        run: |
+          set -e
+          cd /tmp/test-project
+          test -f specs.config.yaml || { echo "MISSING: specs.config.yaml"; exit 1; }
+          grep -q "provider" specs.config.yaml || { echo "specs.config.yaml missing provider key"; exit 1; }
+          case "${{ matrix.provider }}" in
+            claude)
+              test -d .claude || { echo "MISSING: .claude/"; exit 1; }
+              ls .claude/commands/*.md >/dev/null 2>&1 || ls .claude/commands/**/*.md >/dev/null 2>&1 || { echo "MISSING: commands in .claude/"; exit 1; }
+              ;;
+            codex)
+              test -d .agents/skills || test -d .codex || { echo "MISSING: codex install dirs"; exit 1; }
+              ;;
+            cursor)
+              test -d .cursor || { echo "MISSING: .cursor/"; exit 1; }
+              ;;
+          esac
+          echo "Install layout OK for provider=${{ matrix.provider }}"
+      - name: Validate transformed frontmatter still parses (codex)
+        if: matrix.provider == 'codex'
+        run: |
+          python3 - << 'EOF'
+          import pathlib, re, sys, yaml
+          root = pathlib.Path('/tmp/test-project')
+          bad = 0
+          for f in root.rglob('SKILL.md'):
+              m = re.match(r'^---\n(.*?)\n---\n', f.read_text(), re.S)
+              if not m:
+                  print(f"no frontmatter: {f}"); bad += 1; continue
+              try:
+                  yaml.safe_load(m.group(1))
+              except yaml.YAMLError as e:
+                  print(f"invalid frontmatter in {f}: {e}"); bad += 1
+          sys.exit(1 if bad else 0)
+          EOF

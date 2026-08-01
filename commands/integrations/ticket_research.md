@@ -1,5 +1,5 @@
 ---
-title: ticket_research
+name: ticket_research
 description: Research highest priority ticket needing investigation
 model: planning
 ---

@@ -1,5 +1,5 @@
 ---
-title: founder_mode
+name: founder_mode
 description: Create ticket and PR for experimental features after implementation
 model: planning
 ---

@@ -1,4 +1,5 @@
 ---
+name: create_plan
 description: Create detailed implementation plans through interactive research and iteration
 model: planning
 ---
@@ -526,3 +527,23 @@ Based on the documentation, I understand we need to improve error handling in th
 
 [Interactive process continues...]
 ```
+
+## Red Flags
+
+Observable signs that you are drifting off this workflow:
+
+- You are writing plan phases before reading the files those phases will touch
+- A phase has no success criteria, or its criteria can't be checked without human judgment
+- The plan references a spec's acceptance criteria loosely ("meets requirements") instead of mapping each one to a phase
+- You are planning changes to files you haven't opened
+- The plan keeps growing to cover "while we're at it" work outside the spec's scope
+
+## Verification
+
+Before presenting the plan as final:
+
+- [ ] Every file the plan modifies has actually been read in this session
+- [ ] Every phase has verifiable success criteria (a command to run, or a concrete observable outcome)
+- [ ] Every acceptance criterion from the spec maps to at least one phase
+- [ ] Open questions and unresolved assumptions are listed at the top, not buried
+- [ ] The plan is saved to the configured location and its path reported to the user

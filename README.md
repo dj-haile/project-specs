@@ -145,6 +145,22 @@ Each table lists 3–4 excuse/rebuttal pairs specific to that command's workflow
 
 These tables are based on patterns identified in [Addy Osmani's Agent Skills research](https://addyosmani.com/blog/agent-skills/) and connect to the broader principle that behavioral contracts outperform prose directives for agent compliance.
 
+## Validation & CI
+
+The framework validates itself. `scripts/validate.py` checks every agent and command for valid frontmatter, semantic model tiers (never literal model names), required behavioral sections, parseable configs and manifests, and unbroken cross-references:
+
+```bash
+python3 scripts/validate.py
+```
+
+CI (`.github/workflows/validate.yml`) runs this on every pull request, plus an installer smoke test that runs `setup.sh --yes` against a fresh project for all three providers and asserts the expected install layout. This protects the core promise — one neutral source installs everywhere — automatically.
+
+For scripted or CI installs, `setup.sh` accepts `--yes` to run non-interactively (overwrites an existing install, skips optional prompts).
+
+## Definition of Done
+
+[references/definition-of-done.md](./references/definition-of-done.md) is a standing, project-wide checklist that every change must clear — distinct from per-task acceptance criteria. `validate_plan` and `local_review` apply it as their final gate. Projects can extend it via a `definition_of_done` key in specs.config.yaml.
+
 ## Creating Custom Skills
 
 Skills are reusable operations that commands invoke. To create a new skill:

@@ -3,6 +3,8 @@
 # ETL/ML data pipeline project with freeform commits and Asana for task tracking.
 # Copy this file to your project root and customize as needed.
 
+provider: "claude"
+
 project_name: "data-pipeline"
 project_description: "ETL and ML feature pipeline with dbt and Airflow"
 

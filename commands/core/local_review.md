@@ -2,6 +2,7 @@
 name: local_review
 description: Set up worktree for reviewing colleague's branch
 context: core
+model: analysis
 ---
 
 # Local Review Setup
@@ -337,6 +338,7 @@ git worktree unlock ./.worktrees/feature-auth
 - **Read commits in order**: Understand the thought process
 - **Check test coverage**: Are the changes adequately tested?
 - **Consider alternatives**: Is this the best approach?
+- **Apply the [Definition of Done](../../references/definition-of-done.md)**: The standing checklist is the review bar; a change that fails it is not approvable regardless of code quality
 - **Provide constructive feedback**: Explain why, suggest improvements
 - **Be specific**: Reference line numbers and code sections
 - **Appreciate good work**: Highlight things done well
