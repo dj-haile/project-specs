@@ -62,6 +62,32 @@ If starting fresh or need more context:
    Return: Integration validation results
    ```
 
+### Step 1.5: Adversarial Plan Review (capability-gated)
+
+Before validating the implementation against the plan, subject **the plan
+itself** to a fresh-context skeptic. A plan that was wrong to begin with will
+pass a validation that only checks "did we build what the plan said." This step
+catches plans built on unverified assumptions, uncheckable success criteria, or
+scope that drifted from the spec.
+
+Capability-gated — see [subagent-fallback](../../conventions/subagent-fallback.md):
+
+- **If `capabilities.subagents: true`**: spawn the **plan-skeptic** agent (see
+  [agents/plan-skeptic.md](../../agents/plan-skeptic.md)) as a sub-task. Pass it
+  the plan path and the spec/requirements it claims to satisfy. It returns
+  numbered objections by severity (blocking/concern/note) with `file:line`
+  evidence, or an explicit "no blocking objections" verdict.
+- **If `capabilities.subagents: false`**: perform the same review inline and
+  sequentially by following the procedure in `agents/plan-skeptic.md` yourself —
+  same hunt-list, same output format, same file:line evidence. Only the
+  execution differs.
+
+Fold the skeptic's objections into the validation report (see the "Plan Review
+Findings" block in Step 3). **Blocking** objections mean the plan — not just the
+implementation — needs attention; surface them prominently rather than validating
+against a plan that is itself unsound. This step reviews the plan's soundness; it
+does not replace validating the implementation against it.
+
 ### Step 2: Systematic Validation
 
 For each phase in the plan:
@@ -90,6 +116,12 @@ Create comprehensive validation summary:
 
 ```markdown
 ## Validation Report: [Plan Name]
+
+### Plan Review Findings (from plan-skeptic — Step 1.5)
+- [blocking] [Objection with file:line evidence] — must resolve before trusting the plan
+- [concern] [Objection] — conscious trade-off needed
+- [note] [Objection]
+_(or: "No blocking objections to the plan.")_
 
 ### Implementation Status
 ✓ Phase 1: [Name] - Fully implemented
