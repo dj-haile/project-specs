@@ -2,6 +2,12 @@
 # SKILL.md Frontmatter — Required fields
 # This YAML block defines metadata about the skill that Claude Code and other tools use.
 
+metadata:
+  internal: true                 # This is a TEMPLATE, not a real skill. `internal: true`
+                                 # hides it from the vercel-labs/skills CLI's discovery
+                                 # (`npx skills add ...`) so nobody installs the template.
+                                 # Remove this when copying the template to author a real skill.
+
 name: my-skill-name              # kebab-case, unique within this project
                                  # Used for: skill invocation, references, logging
                                  # Must not contain spaces or special characters
