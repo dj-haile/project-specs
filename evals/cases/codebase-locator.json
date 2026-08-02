@@ -1,0 +1,14 @@
+{
+  "command": "codebase-locator",
+  "trigger": {
+    "positive": [
+      { "prompt": "list all files and directories related to billing", "top_k": 1 },
+      { "prompt": "just tell me where the files and directories for auth are located", "top_k": 1 },
+      { "prompt": "which files contain the retry handler", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "show me existing examples of retry logic I can model after", "owner": "codebase-pattern-finder" },
+      { "prompt": "analyze how the payment processing implementation works in detail", "owner": "codebase-analyzer" }
+    ]
+  }
+}

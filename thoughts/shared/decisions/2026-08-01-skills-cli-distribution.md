@@ -1,8 +1,8 @@
 # Decision: skills-CLI distribution (`npx skills add dj-haile/project-specs`)
 
 **Date:** 2026-08-01
-**Status:** DECIDED — **GO, agents-first.** Implemented in the same PR: the six
-research agents are exported to `skills/.curated/` via `scripts/build_skills.py`,
+**Status:** DECIDED — **GO, agents-first.** Implemented in the same PR: the
+read-only agents are exported to `skills/.curated/` via `scripts/build_skills.py`,
 with a `skills-drift` CI guard. The framework-coupled commands are deferred (see
 "Recommended design" and the scope note below). The owner delegated the call.
 **Scope:** Handoff item 3 (marked optional). Goal was to make project-specs
@@ -11,15 +11,17 @@ CLI, which reaches 70+ agent tools.
 
 ## Decision & scope (agents-first)
 
-We export **only the six read-only research agents** — they are self-contained
-(no `specs.config.yaml`, no three-layer assumptions, no `conventions/`
-cross-links), so they work as standalone skills in an arbitrary tool. The
-**commands are intentionally excluded**: dropped into a random agent tool they
-would reference config and conventions that don't exist, a poor installed
-experience. The transform extends to commands trivially later if wanted (the
-generator already handles the shape). This sidesteps cost #2 below almost
-entirely (agents have essentially no convention links) and keeps the distributed
-surface small and high-quality.
+We export **only the read-only agents** — the six research agents plus
+`plan-skeptic` (added after this doc's first draft; also read-only and portable —
+"skeptically review my plan" works standalone). They are self-contained (no
+`specs.config.yaml`, no three-layer assumptions, no `conventions/` cross-links),
+so they work as standalone skills in an arbitrary tool. The **commands are
+intentionally excluded**: dropped into a random agent tool they would reference
+config and conventions that don't exist, a poor installed experience. The
+transform extends to commands trivially later if wanted (the generator already
+handles the shape). This sidesteps cost #2 below almost entirely (agents have
+essentially no convention links) and keeps the distributed surface small and
+high-quality.
 
 ## TL;DR
 

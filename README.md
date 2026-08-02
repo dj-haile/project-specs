@@ -49,13 +49,14 @@ itself (commands, agents) has no runtime dependency on them.
    `ticket_integration` (`mcp`/`cli`/`none`). See
    [conventions/provider-portability.md](./conventions/provider-portability.md).
 
-### Install the research agents as skills (any agent tool)
+### Install the read-only agents as skills (any agent tool)
 
-The six read-only **research agents** (`codebase-locator`,
+The **read-only agents** — the six research agents (`codebase-locator`,
 `codebase-pattern-finder`, `codebase-analyzer`, `thoughts-locator`,
-`thoughts-analyzer`, `web-search-researcher`) are also published as standalone
-Skills under `skills/.curated/`, installable into 70+ agent tools via the
-[vercel-labs/skills](https://github.com/vercel-labs/skills) CLI:
+`thoughts-analyzer`, `web-search-researcher`) plus `plan-skeptic` — are also
+published as standalone Skills under `skills/.curated/`, installable into 70+
+agent tools via the [vercel-labs/skills](https://github.com/vercel-labs/skills)
+CLI:
 
 ```bash
 npx skills add dj-haile/project-specs
@@ -71,7 +72,7 @@ agent sources by `scripts/build_skills.py` (CI enforces they stay in sync).
 
 project-specs is built on three tightly coupled layers:
 
-- **Agents** (agents/) — Orchestrators that read specs.config.yaml and dispatch work to commands. Six standard agents handle codebase analysis, pattern discovery, thought management, and web research.
+- **Agents** (agents/) — Orchestrators that read specs.config.yaml and dispatch work to commands. Seven standard agents handle codebase analysis, pattern discovery, thought management, web research, and adversarial plan review.
 - **Commands** (commands/) — Reusable workflows that compose skills and enforce consistent patterns. 12 core commands (create_plan, implement_plan, validate_plan, etc.) plus 7 integration commands for ticket systems and team workflows.
 - **Skills** (skills/) — Atomic, reusable operations (file search, code review, test execution) invoked by commands. Skills are versioned and namespaced.
 
@@ -128,6 +129,7 @@ Two coupling points degrade gracefully by convention: subagent spawning ([subage
 | `thoughts-analyzer` | Analyzes thought files for insights and cross-session learning |
 | `thoughts-locator` | Searches thought directory for relevant prior decisions and context |
 | `web-search-researcher` | Researches third-party libraries, frameworks, and best practices |
+| `plan-skeptic` | Adversarial fresh-context reviewer of an implementation plan before coding; returns objections by severity (used by `validate_plan`) |
 
 ## Configuration
 
@@ -171,7 +173,17 @@ The framework validates itself. `scripts/validate.py` checks every agent and com
 python3 scripts/validate.py
 ```
 
-CI (`.github/workflows/validate.yml`) runs this on every pull request, plus an installer smoke test that runs `setup.sh --yes` against a fresh project for all three providers and asserts the expected install layout. This protects the core promise — one neutral source installs everywhere — automatically.
+The framework also evals its own routing. `scripts/run_evals.py` builds a stemmed TF‑IDF index over every command/agent `name` + `description` and asserts that natural user phrasings route to the right command (positive cases in top‑_k_), don't steal a neighbor's prompt (negative cases), and that no two descriptions collide. It's deterministic (Python + PyYAML only — no Node, no network) so it runs in CI unchanged:
+
+```bash
+python3 scripts/run_evals.py
+# Debug a phrasing:
+python3 scripts/run_evals.py --explain "create a plan for the top ticket"
+```
+
+A failing eval means a description needs sharpening, not that the test is wrong — see [evals/README.md](./evals/README.md).
+
+CI (`.github/workflows/validate.yml`) runs `validate.py` and `run_evals.py` on every pull request, plus an installer smoke test that runs `setup.sh --yes` against a fresh project for all three providers and asserts the expected install layout. This protects the core promise — one neutral source installs everywhere — automatically.
 
 For scripted or CI installs, `setup.sh` accepts `--yes` to run non-interactively (overwrites an existing install, skips optional prompts).
 

@@ -1,0 +1,11 @@
+{
+  "command": "implement_plan",
+  "trigger": {
+    "positive": [
+      { "prompt": "implement the plan phase by phase with verification", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "research plan and implement the next ticket end to end automatically", "owner": "ticket_oneshot" }
+    ]
+  }
+}

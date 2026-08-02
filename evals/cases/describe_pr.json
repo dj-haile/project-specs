@@ -1,0 +1,11 @@
+{
+  "command": "describe_pr",
+  "trigger": {
+    "positive": [
+      { "prompt": "generate a PR description from the repository template", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "document an experimental feature I already shipped by creating a ticket and PR", "owner": "founder_mode" }
+    ]
+  }
+}

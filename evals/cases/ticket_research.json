@@ -1,0 +1,13 @@
+{
+  "command": "ticket_research",
+  "trigger": {
+    "positive": [
+      { "prompt": "research the top priority ticket that needs investigation", "top_k": 1 },
+      { "prompt": "investigate the highest priority ticket that needs research", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "document how the authentication code works across the codebase", "owner": "research_codebase" },
+      { "prompt": "create a plan for the highest priority ticket ready for spec", "owner": "ticket_plan" }
+    ]
+  }
+}
