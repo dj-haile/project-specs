@@ -1,0 +1,13 @@
+{
+  "command": "ticket_plan",
+  "trigger": {
+    "positive": [
+      { "prompt": "create a plan for the highest priority ticket ready for spec", "top_k": 1 },
+      { "prompt": "plan the top priority ticket that is ready to be specced", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "create an implementation plan for adding OAuth login", "owner": "create_plan" },
+      { "prompt": "research the top priority ticket that needs investigation", "owner": "ticket_research" }
+    ]
+  }
+}

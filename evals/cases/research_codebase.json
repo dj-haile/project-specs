@@ -1,0 +1,12 @@
+{
+  "command": "research_codebase",
+  "trigger": {
+    "positive": [
+      { "prompt": "document how the authentication code works across the codebase through parallel research", "top_k": 1 },
+      { "prompt": "research and document the current codebase as it is today", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "research the top priority ticket that needs investigation", "owner": "ticket_research" }
+    ]
+  }
+}

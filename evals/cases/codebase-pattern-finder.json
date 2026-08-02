@@ -1,0 +1,13 @@
+{
+  "command": "codebase-pattern-finder",
+  "trigger": {
+    "positive": [
+      { "prompt": "show me existing examples of retry logic I can model after", "top_k": 1 },
+      { "prompt": "find similar implementations of pagination I can model after", "top_k": 1 },
+      { "prompt": "give me concrete example code I can copy for rate limiting", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "list all files and directories related to billing", "owner": "codebase-locator" }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "command": "founder_mode",
+  "trigger": {
+    "positive": [
+      { "prompt": "document an experimental feature I already shipped by creating a ticket and PR", "top_k": 1 },
+      { "prompt": "retroactively create a ticket and PR for the experimental feature after implementation", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "research plan and implement the next ticket end to end automatically", "owner": "ticket_oneshot" }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "command": "spec",
+  "trigger": {
+    "positive": [
+      { "prompt": "define the requirements and acceptance criteria before we plan", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "create an implementation plan for adding OAuth login", "owner": "create_plan" }
+    ]
+  }
+}

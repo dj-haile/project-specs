@@ -153,7 +153,17 @@ The framework validates itself. `scripts/validate.py` checks every agent and com
 python3 scripts/validate.py
 ```
 
-CI (`.github/workflows/validate.yml`) runs this on every pull request, plus an installer smoke test that runs `setup.sh --yes` against a fresh project for all three providers and asserts the expected install layout. This protects the core promise — one neutral source installs everywhere — automatically.
+The framework also evals its own routing. `scripts/run_evals.py` builds a stemmed TF‑IDF index over every command/agent `name` + `description` and asserts that natural user phrasings route to the right command (positive cases in top‑_k_), don't steal a neighbor's prompt (negative cases), and that no two descriptions collide. It's deterministic (Python + PyYAML only — no Node, no network) so it runs in CI unchanged:
+
+```bash
+python3 scripts/run_evals.py
+# Debug a phrasing:
+python3 scripts/run_evals.py --explain "create a plan for the top ticket"
+```
+
+A failing eval means a description needs sharpening, not that the test is wrong — see [evals/README.md](./evals/README.md).
+
+CI (`.github/workflows/validate.yml`) runs `validate.py` and `run_evals.py` on every pull request, plus an installer smoke test that runs `setup.sh --yes` against a fresh project for all three providers and asserts the expected install layout. This protects the core promise — one neutral source installs everywhere — automatically.
 
 For scripted or CI installs, `setup.sh` accepts `--yes` to run non-interactively (overwrites an existing install, skips optional prompts).
 
