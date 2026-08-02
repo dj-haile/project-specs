@@ -1,0 +1,12 @@
+{
+  "command": "ticket_oneshot",
+  "trigger": {
+    "positive": [
+      { "prompt": "research plan and implement the next ticket end to end automatically", "top_k": 1 },
+      { "prompt": "do the whole ticket in one automated flow from research to implementation", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "document an experimental feature I already shipped by creating a ticket and PR", "owner": "founder_mode" }
+    ]
+  }
+}

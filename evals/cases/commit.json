@@ -1,0 +1,8 @@
+{
+  "command": "commit",
+  "trigger": {
+    "positive": [
+      { "prompt": "write a git commit message for these staged changes", "top_k": 1 }
+    ]
+  }
+}
