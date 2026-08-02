@@ -49,6 +49,25 @@ itself (commands, agents) has no runtime dependency on them.
    `ticket_integration` (`mcp`/`cli`/`none`). See
    [conventions/provider-portability.md](./conventions/provider-portability.md).
 
+### Install the read-only agents as skills (any agent tool)
+
+The **read-only agents** — the six research agents (`codebase-locator`,
+`codebase-pattern-finder`, `codebase-analyzer`, `thoughts-locator`,
+`thoughts-analyzer`, `web-search-researcher`) plus `plan-skeptic` — are also
+published as standalone Skills under `skills/.curated/`, installable into 70+
+agent tools via the [vercel-labs/skills](https://github.com/vercel-labs/skills)
+CLI:
+
+```bash
+npx skills add dj-haile/project-specs
+```
+
+This is a lightweight alternative to `setup.sh` for the agents only — it does
+**not** install the commands (which are framework-coupled and expect
+`specs.config.yaml` + `conventions/`) and does not carry model-tier selection.
+For the full framework, use `setup.sh` above. The skills are generated from the
+agent sources by `scripts/build_skills.py` (CI enforces they stay in sync).
+
 ## Architecture Overview
 
 project-specs is built on three tightly coupled layers:

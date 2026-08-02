@@ -133,6 +133,23 @@ def check_yaml_file(path: Path, required_keys: set):
             err(rel, f"missing required key: {k}")
 
 
+def check_skill(path: Path):
+    """Every SKILL.md must have name + description (the vercel-labs/skills
+    community shape), unless it is marked internal (e.g. the template)."""
+    rel = path.relative_to(ROOT)
+    fm, _body = parse_frontmatter(path)
+    if fm is None:
+        err(rel, "SKILL.md missing or invalid YAML frontmatter block")
+        return
+    meta = fm.get("metadata")
+    if isinstance(meta, dict) and meta.get("internal") is True:
+        return  # hidden from CLI discovery; not a distributable skill
+    for field in ("name", "description"):
+        if field not in fm or not fm[field]:
+            err(rel, f"SKILL.md missing required field: {field} "
+                     f"(or set metadata.internal: true to exclude it)")
+
+
 def check_links(path: Path):
     """Relative markdown links must resolve to real files."""
     rel = path.relative_to(ROOT)
@@ -165,6 +182,11 @@ def main():
     for f in sorted((ROOT / "providers").rglob("manifest.yaml")):
         check_yaml_file(f, REQUIRED_MANIFEST_KEYS)
 
+    # Skills (hand-authored templates + generated skills/.curated) — must carry
+    # the community name+description shape, or be explicitly marked internal.
+    for f in sorted((ROOT / "skills").rglob("SKILL.md")):
+        check_skill(f)
+
     # Cross-file links in top-level docs, conventions, and commands
     link_files = (
         [ROOT / "README.md", ROOT / "AGENTS.md", ROOT / "INSTRUCTIONS.md"]
@@ -184,7 +206,7 @@ def main():
         print(f"\n{len(warnings)} warning(s):\n")
         print("\n".join(warnings))
     if not errors:
-        print(f"validate.py: OK — {checked} agent/command files, configs, manifests, and links all valid")
+        print(f"validate.py: OK — {checked} agent/command files, configs, manifests, skills, and links all valid")
     sys.exit(1 if errors else 0)
 
 
