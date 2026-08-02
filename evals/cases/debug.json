@@ -1,0 +1,8 @@
+{
+  "command": "debug",
+  "trigger": {
+    "positive": [
+      { "prompt": "debug why the job fails by checking logs and git history", "top_k": 1 }
+    ]
+  }
+}

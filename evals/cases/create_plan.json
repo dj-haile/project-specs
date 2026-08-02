@@ -1,0 +1,13 @@
+{
+  "command": "create_plan",
+  "trigger": {
+    "positive": [
+      { "prompt": "create an implementation plan for adding OAuth login", "top_k": 1 },
+      { "prompt": "design a detailed plan through research and iteration for the caching refactor", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "create a plan for the highest priority ticket ready for spec", "owner": "ticket_plan" },
+      { "prompt": "research plan and implement the next ticket end to end automatically", "owner": "ticket_oneshot" }
+    ]
+  }
+}

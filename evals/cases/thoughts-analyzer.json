@@ -1,0 +1,12 @@
+{
+  "command": "thoughts-analyzer",
+  "trigger": {
+    "positive": [
+      { "prompt": "deep dive and summarize a past research doc in thoughts", "top_k": 1 },
+      { "prompt": "analyze and deep dive a research topic from a thoughts document", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "discover which documents exist in the thoughts directory about caching", "owner": "thoughts-locator" }
+    ]
+  }
+}
