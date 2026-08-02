@@ -53,7 +53,7 @@ itself (commands, agents) has no runtime dependency on them.
 
 project-specs is built on three tightly coupled layers:
 
-- **Agents** (agents/) — Orchestrators that read specs.config.yaml and dispatch work to commands. Six standard agents handle codebase analysis, pattern discovery, thought management, and web research.
+- **Agents** (agents/) — Orchestrators that read specs.config.yaml and dispatch work to commands. Seven standard agents handle codebase analysis, pattern discovery, thought management, web research, and adversarial plan review.
 - **Commands** (commands/) — Reusable workflows that compose skills and enforce consistent patterns. 12 core commands (create_plan, implement_plan, validate_plan, etc.) plus 7 integration commands for ticket systems and team workflows.
 - **Skills** (skills/) — Atomic, reusable operations (file search, code review, test execution) invoked by commands. Skills are versioned and namespaced.
 
@@ -110,6 +110,7 @@ Two coupling points degrade gracefully by convention: subagent spawning ([subage
 | `thoughts-analyzer` | Analyzes thought files for insights and cross-session learning |
 | `thoughts-locator` | Searches thought directory for relevant prior decisions and context |
 | `web-search-researcher` | Researches third-party libraries, frameworks, and best practices |
+| `plan-skeptic` | Adversarial fresh-context reviewer of an implementation plan before coding; returns objections by severity (used by `validate_plan`) |
 
 ## Configuration
 
