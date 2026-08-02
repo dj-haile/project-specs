@@ -1,4 +1,5 @@
 ---
+name: research_codebase
 description: Document codebase as-is through comprehensive parallel research
 model: planning
 ---
@@ -129,7 +130,7 @@ Then wait for the user's research query.
      ## Detailed Findings
 
      ### [Component/Area 1]
-     - Description of what exists ([file.ext:line](link))
+     - Description of what exists ([file.ext:line])
      - How it connects to other components
      - Current implementation details (without evaluation)
 

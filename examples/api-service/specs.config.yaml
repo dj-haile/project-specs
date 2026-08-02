@@ -3,6 +3,8 @@
 # REST API backend project with conventional commits and Linear for issue tracking.
 # Copy this file to your project root and customize as needed.
 
+provider: "claude"
+
 project_name: "my-api"
 project_description: "RESTful API service with PostgreSQL and Redis"
 

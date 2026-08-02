@@ -2,6 +2,7 @@
 name: commit
 description: Create git commits with clear, atomic messages
 context: core
+model: quick
 ---
 
 # Commit Changes

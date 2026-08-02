@@ -1,4 +1,5 @@
 ---
+name: validate_plan
 description: Validate implementation against plan, verify success criteria, identify issues
 model: planning
 ---
@@ -158,6 +159,8 @@ When validating a plan, you will be tempted to rationalize incomplete verificati
 
 ## Validation Checklist
 
+Apply the standing [Definition of Done](../../references/definition-of-done.md) as the final gate — it covers the fixed, project-wide bar. The list below covers plan-specific verification. Both must pass.
+
 Always verify:
 - [ ] All phases marked complete are actually done
 - [ ] Automated tests pass
@@ -178,3 +181,23 @@ Recommended workflow:
 The validation works best after implementation is complete and code is ready for review.
 
 Remember: Good validation catches issues before they reach production. Be constructive but thorough in identifying gaps or improvements.
+
+## Red Flags
+
+Observable signs that you are drifting off this workflow:
+
+- You are confirming phases as complete by reading the plan's checkboxes instead of the actual code
+- You skipped running an automated check because "implementation already ran it"
+- Your validation report contains only successes — real validation almost always surfaces at least minor issues or observations
+- You are validating against the plan but never opened the original spec's acceptance criteria
+- You are softening findings to avoid contradicting the implementation session
+
+## Verification
+
+A validation run is itself complete only when:
+
+- [ ] Every automated check (tests, lint, types) was executed fresh in this session with results captured
+- [ ] Each plan phase was verified against actual code, with file:line evidence
+- [ ] Each spec acceptance criterion has an explicit pass/fail verdict
+- [ ] The standing [Definition of Done](../../references/definition-of-done.md) checklist was applied
+- [ ] Findings are reported honestly, ordered by severity, including "no issues found" only when genuinely true

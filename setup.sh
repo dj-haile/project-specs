@@ -33,6 +33,7 @@ USAGE:
   ./setup.sh /path/to/project --copy             Copy (independent snapshot)
   ./setup.sh /path/to/project --update           Update existing installation
   ./setup.sh /path/to/project --provider=NAME    Install for a provider (claude|codex|cursor)
+  ./setup.sh /path/to/project --yes              Non-interactive: overwrite if exists, skip optional prompts (CI)
   ./setup.sh --help                              Show this help
 
 PROVIDERS:
@@ -113,6 +114,7 @@ fi
 TARGET_PATH=""
 MODE="copy"
 PROVIDER="claude"
+ASSUME_YES=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -120,6 +122,7 @@ for arg in "$@"; do
     --copy)           MODE="copy" ;;
     --link)           MODE="link" ;;
     --update)         MODE="update" ;;
+    --yes|-y)         ASSUME_YES=true ;;
     --provider=*)     PROVIDER="${arg#--provider=}" ;;
     --*)              print_error "Unknown flag: $arg"; exit 1 ;;
     *)
@@ -192,8 +195,12 @@ if [[ -d "$INSTALL_DIR" ]]; then
     print_warning "$BASE_DIR/ already exists, updating..."
   else
     print_warning "$BASE_DIR/ already exists"
-    read -p "Continue and overwrite? (y/N) " -n 1 -r
-    echo
+    if [[ "$ASSUME_YES" == true ]]; then
+      REPLY="y"
+    else
+      read -p "Continue and overwrite? (y/N) " -n 1 -r
+      echo
+    fi
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
       print_status "Cancelled"
       exit 0
@@ -412,8 +419,13 @@ fi
 # Optional: Create thoughts/ directory structure
 THOUGHTS_DIR=""
 print_status "Create thoughts/ directory structure for collaboration?"
-read -p "Create thoughts/ (y/N) " -n 1 -r
-echo
+if [[ "$ASSUME_YES" == true ]]; then
+  REPLY="n"
+  print_status "(--yes: skipping thoughts/ creation; enable later in specs.config.yaml)"
+else
+  read -p "Create thoughts/ (y/N) " -n 1 -r
+  echo
+fi
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   THOUGHTS_DIR="$TARGET_PATH/thoughts/shared"
   mkdir -p "$THOUGHTS_DIR/plans"

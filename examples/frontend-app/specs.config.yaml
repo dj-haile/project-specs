@@ -3,6 +3,8 @@
 # React/Next.js frontend application with freeform commits and Jira for issue tracking.
 # Copy this file to your project root and customize as needed.
 
+provider: "claude"
+
 project_name: "my-frontend"
 project_description: "React/Next.js web application with TypeScript"
 

@@ -2,6 +2,7 @@
 name: debug
 description: Debug issues by investigating logs, database state, and git history
 context: core
+model: analysis
 ---
 
 # Debug Issues

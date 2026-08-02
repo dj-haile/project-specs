@@ -1,4 +1,5 @@
 ---
+name: implement_plan
 description: Implement technical plans with phase-by-phase verification
 model: planning
 ---
@@ -125,3 +126,23 @@ If the plan has existing checkmarks:
 - Verify previous work only if something seems off
 
 Remember: You're implementing a solution, not just checking boxes. Keep the end goal in mind and maintain forward momentum.
+
+## Red Flags
+
+Observable signs that you are drifting off this workflow:
+
+- You are editing a file that is not listed in the plan, without having stopped to ask
+- You have completed two phases without running any verification in between
+- You are marking a checkbox complete based on "should work" rather than an observed result
+- You hit a plan/reality mismatch and adapted silently instead of presenting the issue
+- Your diff is growing with cleanups and refactors the plan never asked for
+
+## Verification
+
+Before declaring implementation complete:
+
+- [ ] Every phase's success criteria were checked and passed — with observed output, not assumption
+- [ ] All checkboxes in the plan file reflect actual state (nothing checked optimistically)
+- [ ] Any deviation from the plan is noted in the plan file with the user's approval recorded
+- [ ] No files outside the plan's scope were modified
+- [ ] Tests and checks specified by the plan were run in this session, and their results reported

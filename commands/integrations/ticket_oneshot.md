@@ -1,5 +1,5 @@
 ---
-title: ticket_oneshot
+name: ticket_oneshot
 description: Research, plan, and implement a ticket in one automated flow
 model: planning
 ---

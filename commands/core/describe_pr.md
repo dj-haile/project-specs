@@ -2,6 +2,7 @@
 name: describe_pr
 description: Generate comprehensive PR descriptions following repository templates
 context: core
+model: quick
 ---
 
 # Generate PR Description

@@ -1,5 +1,5 @@
 ---
-title: ticket_plan
+name: ticket_plan
 description: Create implementation plan for highest priority ticket ready for spec
 model: planning
 ---

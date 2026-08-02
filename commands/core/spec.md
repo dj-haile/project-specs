@@ -1,4 +1,5 @@
 ---
+name: spec
 description: Define requirements and acceptance criteria before planning
 model: planning
 ---
@@ -90,10 +91,21 @@ Anything unresolved. **This section must be empty before passing to /create_plan
 
 ### Step 2: Define Requirements
 
-1. **Write the problem statement** based on research, not just the ticket text
-2. **Define acceptance criteria** — at least 3, preferably 5+
-3. **Draw scope boundaries** — list at least 3 things that are out of scope
-4. **Surface assumptions** — list at least 5, verify as many as possible through code research
+1. **Surface assumptions FIRST, before writing any spec content.** Silent assumptions are the most dangerous form of misunderstanding — the spec's entire purpose is to catch them before code exists. Present them in this exact format and wait for the user's response:
+
+   ```
+   ASSUMPTIONS I'M MAKING:
+   1. [e.g., This is a web app, not native mobile]
+   2. [e.g., Auth is session-based, per existing middleware in src/auth/]
+   3. [e.g., PostgreSQL, based on the Prisma schema]
+   → Correct me now, or I'll proceed with these.
+   ```
+
+   Do not silently fill in an ambiguous requirement with a guess. Either verify it through code research, or put it in this block.
+2. **Write the problem statement** based on research, not just the ticket text
+3. **Define acceptance criteria** — at least 3, preferably 5+
+4. **Draw scope boundaries** — list at least 3 things that are out of scope
+5. **Verify remaining assumptions** — at least 5 total, verified through code research where possible
 
 ### Step 3: Validate with the User
 
@@ -158,3 +170,23 @@ When `/create_plan` is invoked after `/spec`:
 4. Assumptions marked "needs confirmation" must be resolved before planning proceeds
 
 The handoff is: **spec defines what success looks like; plan defines how to get there.**
+
+## Red Flags
+
+Observable signs that you are drifting off this workflow. If you notice any of these in your own output, stop and correct course:
+
+- You are describing HOW to build something (class names, file paths, libraries) — that's implementation, not requirements
+- An acceptance criterion contains words like "better", "improved", or "faster" with no measurable threshold
+- You have written more than two requirements without asking the user a single clarifying question
+- You are filling in an ambiguous requirement with a guess instead of listing it as an assumption
+- The spec has no explicit out-of-scope section
+
+## Verification
+
+Before declaring the spec complete, confirm every item below. If any fails, the spec is not done:
+
+- [ ] Every acceptance criterion has a clear pass/fail test (automated preferred, manual acceptable)
+- [ ] The "Assumptions I'm Making" block was presented to the user and confirmed or corrected
+- [ ] Scope boundaries state what is explicitly OUT of scope, not just what's in
+- [ ] No implementation decisions appear anywhere in the document
+- [ ] The spec file is saved to the configured location and its path reported to the user
