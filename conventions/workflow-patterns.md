@@ -37,6 +37,23 @@ Validation: Ensure implementation matches plan, identify gaps
 Output: Validation report
   ↓
 ---
+Optional — if the change crosses the stacking thresholds
+(see conventions/pr-decomposition.md):
+
+User: /stack_pr [optional: layer hints]
+  ↓
+Stack Command: Analyze diff, decompose into reviewable layers,
+  create stacked branches (each layer committed to its own branch)
+  ↓
+Output: Stack of branches + stack map, each layer with scoped
+  review questions
+  ↓
+User: /describe_pr [creates one PR per stack layer]
+  ↓
+Output: Stack of ready-to-review PRs, each based on the layer below
+
+Otherwise, single-PR path:
+
 User: /commit [with validation context]
   ↓
 Commit Command: Generate semantic commit message, create commit
@@ -62,8 +79,9 @@ Output: Ready-to-merge PR with context
 - `/create_plan` - Design the approach
 - `/implement_plan` - Execute the plan
 - `/validate_plan` - Verify correctness
-- `/commit` - Persist changes
-- `/describe_pr` - Document and create PR
+- `/stack_pr` - Decompose large changes into stacked, reviewable branches (optional)
+- `/commit` - Persist changes (single-PR path)
+- `/describe_pr` - Document and create PR (one per layer when a stack exists)
 
 ---
 
