@@ -129,6 +129,14 @@ The stakes domain comes from the plan's binding row and is **read, never re-deri
 - Stakes `none` and evidence degraded → labeled, not blocked.
 - Stakes anything else and the only evidence is degraded → the blocking verdict for that criterion. Name the domain that matched, and give the remediation: set `test_group_command` in `specs.config.yaml` and re-take the evidence.
 
+**Sampled re-run.** Derive the re-run set from [criterion-binding](../../conventions/criterion-binding.md) §6 — the deterministic sample plus every criterion whose text or bound group moved since the last recorded validation — and show the derivation in the report: the sorted group list, the hash, and the index it produced. Never pick the sample by hand or by preference; a chosen sample is not a sampled re-run. For each selected record, run its stored command against its stored code state and compare the outcome with the stored result:
+
+- Agreement → the criterion keeps the verdict its records earned.
+- The command cannot be re-run at that code state → the evidence is absent and the criterion takes the blocking verdict.
+- The outcome contradicts the record → the evidence is absent and the criterion blocks. Report the contradiction; do not overwrite the record with a fresh run and call it settled.
+
+**Reproducibility.** The pairing half of this report — one record per criterion, the red and green verdicts, and which group the sample selected — comes out identical on a second run or under a second validator given the same artifacts. Findings that rest on judgment may differ between runs; this half may not. Save the report to the validations location in §4 with `validated_at_code_state:` set to the state you validated, so the next run can compute its touched set.
+
 Read the records; do not infer them from the implementation session's narrative. These verdicts sit on top of the standing obligations rather than replacing them — the full suite must still pass and the [Definition of Done](../../references/definition-of-done.md) still applies, whatever the records say.
 
 ### Step 3: Generate Validation Report
@@ -162,6 +170,7 @@ _A green pipeline is not a verdict — the pairing gate accounting below decides
 | `AC-2` | automated | none | — | — | — | gate-blocked |
 
 Overall gate result: [success | blocked | incomplete]
+Re-run set: [groups] · sample: [group] (hash [first 8 hex] → index [i]) · [agrees | not re-runnable | contradicts]
 
 ### Code Review Findings
 
@@ -214,6 +223,7 @@ When validating a plan, you will be tempted to rationalize incomplete verificati
 | "Both records are there, so that criterion passes." | Open them. Three elements on each, and a green code state that differs from the red one. An incomplete record is an absent record, and absent red evidence blocks. |
 | "The group has no red record but the change is obviously correct." | Obvious correctness is the claim the gate is here to test. A group that never failed leaves the criterion blocked, however convincing the diff looks. |
 | "The evidence is degraded but the suite went red and green, so it counts the same." | It does not, and the report has to say so. Show the strength and the reason; on a criterion whose stakes domain is not `none`, degraded evidence is the pairing gate's blocking verdict, not a footnote. |
+| "I re-ran the group I had doubts about — that covers the sampling requirement." | It does not. The pairing gate's sample is derived from the artifacts and shown, not chosen. A hand-picked re-run tells the next validator nothing about whether they would have landed on the same group. |
 | "This criterion reads high-stakes to me, so I'll upgrade its domain in the report." | The domain is the plan's column. Re-deriving it here makes two validators disagree on the same artifacts. If the row is wrong, say the row is wrong — do not quietly substitute your own reading. |
 
 ## Important Guidelines
@@ -262,6 +272,8 @@ Observable signs that you are drifting off this workflow:
 - You marked a criterion's evidence acceptable without opening the record — whether the three elements are present, and whether red and green sit at different code states, is checked, never assumed
 - Your report shows a degraded record without its reason, or reads as though a full-suite run and a run of the bound group alone were the same thing
 - You worked out a criterion's stakes domain yourself instead of reading the plan's column, or let degraded evidence through on a criterion whose domain is not `none`
+- You chose which group to re-run instead of deriving it, or left the derivation out of the report so a reader cannot land on the same group
+- A re-run disagreed with its record and you refreshed the record instead of treating that evidence as absent
 
 ## Verification
 
@@ -278,3 +290,4 @@ A validation run is itself complete only when:
 - [ ] Every bound group that never failed produced the blocking verdict, with criterion and group named in the report
 - [ ] Every degraded record is shown with its reason and is nowhere presented as equal to evidence from the bound group alone
 - [ ] Each criterion's stakes domain was taken from the plan's binding row, and degraded evidence on any non-`none` domain produced the pairing gate's blocking verdict with the domain and the remediation named
+- [ ] The re-run set was derived by the convention's rule, its derivation shown, and every selected record re-run at its stored code state; evidence that could not be re-run or that contradicted its record was treated as absent and blocked
