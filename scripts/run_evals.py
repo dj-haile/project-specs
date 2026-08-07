@@ -18,16 +18,23 @@ What it does:
          the owner must outrank the command (the prompt belongs to the owner)
   3. Flags near-duplicate descriptions: any two whose TF-IDF cosine exceeds
      COLLISION_THRESHOLD are reported as a routing hazard.
+  4. Requires every core routed command to own a case file with at least one
+     positive and one negative case, so a core command cannot ship unrouted.
 
 A failure here almost always means "fix the description," not "fix the eval" —
 see evals/README.md.
+
+Every check is a named entry in CHECKS and is individually runnable, so a
+single acceptance criterion can be bound to exactly one of them.
 
 Requires: python3 + PyYAML (same prerequisites as setup.sh — no new deps).
 No Node, no network, no randomness — fully deterministic.
 
 Exit codes: 0 = all clear, 1 = one or more failures.
 Usage:
-  python3 scripts/run_evals.py [--quiet]
+  python3 scripts/run_evals.py [--quiet]                      # every check
+  python3 scripts/run_evals.py --list-checks                  # names, one per line
+  python3 scripts/run_evals.py --check <name>                 # exactly one check
   python3 scripts/run_evals.py --explain "your prompt here"   # debug: show ranking
 """
 
@@ -51,6 +58,9 @@ CASES_DIR = ROOT / "evals" / "cases"
 # colliding — too alike to route between reliably. Tuned so genuinely distinct
 # neighbors (create_plan vs ticket_plan) pass while true duplicates fail.
 COLLISION_THRESHOLD = 0.72
+
+# The core commands the framework routes to by name. Each must own a case file.
+CORE_ROUTED = {"spec", "create_plan", "implement_plan", "validate_plan"}
 
 # Words too common to carry routing signal. Kept small and generic on purpose;
 # domain words like "plan", "ticket", "codebase" are NOT stopwords — they route.
@@ -265,6 +275,55 @@ def check_collisions(idx: Index):
     return failures
 
 
+def check_core_command_coverage(idx=None):
+    """Every name in CORE_ROUTED must have evals/cases/<name>.json carrying at
+    least one positive and at least one negative case. A core command with no
+    case file has no evidence that anyone's phrasing reaches it."""
+    failures = []
+    for name in sorted(CORE_ROUTED):
+        rel = f"evals/cases/{name}.json"
+        cf = CASES_DIR / f"{name}.json"
+        if not cf.exists():
+            failures.append(
+                f"  FAIL  {rel}: missing — every core routed command needs a case file"
+            )
+            continue
+        try:
+            case = json.loads(cf.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failures.append(f"  FAIL  {rel}: invalid JSON: {e}")
+            continue
+        trigger = case.get("trigger") or {}
+        if not trigger.get("positive"):
+            failures.append(f"  FAIL  {rel}: no positive case")
+        if not trigger.get("negative"):
+            failures.append(f"  FAIL  {rel}: no negative case")
+    return failures
+
+
+# --- Check registry ---------------------------------------------------------
+# Keyed by the group name used in a plan's Criterion Bindings table, so
+# `python3 scripts/run_evals.py --check <name>` runs exactly one bound group.
+
+_stats = {"passes": 0, "case_files": 0}
+
+
+def _run_cases(idx: Index):
+    """run_cases with the registry's uniform (idx) -> failures signature; the
+    counts it also returns are stashed for the summary line."""
+    failures, passes, n_files = run_cases(idx)
+    _stats["passes"] = passes
+    _stats["case_files"] = n_files
+    return failures
+
+
+CHECKS = {
+    "check_cases":                 _run_cases,
+    "check_collisions":            check_collisions,
+    "check_core_command_coverage": check_core_command_coverage,
+}
+
+
 def explain(idx: Index, prompt: str):
     print(f"\nRanking for: \"{prompt}\"\n")
     for i, (name, score) in enumerate(idx.rank(prompt)[:10]):
@@ -274,6 +333,12 @@ def explain(idx: Index, prompt: str):
 
 def main():
     quiet = "--quiet" in sys.argv
+
+    if "--list-checks" in sys.argv:
+        for name in CHECKS:
+            print(name)
+        sys.exit(0)
+
     idx = build_index()
 
     if "--explain" in sys.argv:
@@ -284,9 +349,28 @@ def main():
         print("ERROR: --explain requires a prompt argument")
         sys.exit(1)
 
-    case_failures, passes, n_files = run_cases(idx)
-    collision_failures = check_collisions(idx)
-    failures = case_failures + collision_failures
+    if "--check" in sys.argv:
+        i = sys.argv.index("--check")
+        if i + 1 >= len(sys.argv):
+            print("ERROR: --check requires a check name — see --list-checks")
+            sys.exit(1)
+        name = sys.argv[i + 1]
+        if name not in CHECKS:
+            print(f"ERROR: unknown check '{name}' — see --list-checks")
+            sys.exit(1)
+        failures = CHECKS[name](idx)
+        if failures:
+            print(f"\nrun_evals.py [{name}]: {len(failures)} failure(s)\n")
+            print("\n".join(failures))
+            print()
+        elif not quiet:
+            print(f"run_evals.py [{name}]: OK")
+        sys.exit(1 if failures else 0)
+
+    failures = []
+    for fn in CHECKS.values():
+        failures += fn(idx)
+    passes, n_files = _stats["passes"], _stats["case_files"]
 
     if failures:
         print(f"\nrun_evals.py: {len(failures)} failure(s) "
