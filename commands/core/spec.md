@@ -48,13 +48,17 @@ What's broken or missing, and for whom. Be specific — "users can't X" not "X n
 What success looks like from the user's perspective. Describe the end state, not the implementation.
 
 ### 3. Acceptance Criteria
-Specific, testable conditions using given/when/then format:
+Specific, testable conditions. Each criterion carries a stable identifier and exactly one verification mode:
 
 ```
-Given [precondition]
-When [action]
-Then [expected result]
+**AC-1 — [short title].**
+`mode: automated`
+Given [precondition] when [action] then [expected result].
 ```
+
+Assign identifiers and modes per [criterion-binding](../../conventions/criterion-binding.md) §1, which owns the identifier scheme, the parse rule, and the extra elements a `manual-only` criterion carries. Modes come from the closed set `automated` | `manual-only`, one per criterion — zero, two, or an unrecognized value makes the spec incomplete.
+
+Stay solution-neutral: name no test, file path, or framework in any criterion. Downstream, `/create_plan` binds each `automated` criterion to one test group; the spec supplies the identifier and the mode, nothing more.
 
 Every criterion must be verifiable. Prefer automatable criteria where possible. If a criterion can't be tested, it's not a real requirement — rewrite it until it is.
 
@@ -159,6 +163,7 @@ When defining requirements, you will be tempted to rationalize skipping rigor. T
 | "We can figure out scope as we go." | Undefined scope is how a 2-day task becomes a 2-week task. Define boundaries now. |
 | "The user knows what they want." | The user knows the problem. The spec translates that into verifiable outcomes. |
 | "This is too small to need a spec." | If it's truly small, the spec takes 5 minutes. If it's not (and it usually isn't), you just saved a failed implementation. |
+| "I'll write the criteria now and label the modes later." | An unlabeled criterion is invisible to the pairing gate: nothing binds it, nothing accounts for it, and it can be dropped silently. Assign the identifier and the mode as you write each criterion. |
 
 ## Integration with create_plan
 
@@ -180,12 +185,15 @@ Observable signs that you are drifting off this workflow. If you notice any of t
 - You have written more than two requirements without asking the user a single clarifying question
 - You are filling in an ambiguous requirement with a guess instead of listing it as an assumption
 - The spec has no explicit out-of-scope section
+- A criterion has no identifier or no mode line, or names a test — the pairing gate cannot read it, and naming tests here is the plan's job
 
 ## Verification
 
 Before declaring the spec complete, confirm every item below. If any fails, the spec is not done:
 
 - [ ] Every acceptance criterion has a clear pass/fail test (automated preferred, manual acceptable)
+- [ ] Every criterion carries a unique identifier and exactly one mode line, so the pairing gate can bind and account for it
+- [ ] No criterion names a test, a file path, or a framework — the pairing gate binds tests in the plan, never in the spec
 - [ ] The "Assumptions I'm Making" block was presented to the user and confirmed or corrected
 - [ ] Scope boundaries state what is explicitly OUT of scope, not just what's in
 - [ ] No implementation decisions appear anywhere in the document

@@ -216,6 +216,14 @@ After structure and program design approval:
 
 [Explicitly list out-of-scope items to prevent scope creep]
 
+## Criterion Bindings
+
+| Criterion | Test group | Invocation | Stakes domain | Phase |
+|---|---|---|---|---|
+| `AC-1` | `path/to/file::group_name` | `[command running exactly that group]` | `none` | 1 |
+
+[One row per `automated` criterion, no group repeated. List `manual-only` criteria under `## Manual-Only Criteria` instead.]
+
 ## Implementation Approach
 
 [High-level strategy and reasoning]
@@ -249,6 +257,7 @@ After structure and program design approval:
 ### Success Criteria:
 
 #### Automated Verification:
+- [ ] Run each test group this phase binds in `## Criterion Bindings` (pairing gate)
 - [ ] Run your project's build/test commands to verify compilation and unit tests
 - [ ] Confirm type checking passes (if applicable)
 - [ ] Run linting/formatting checks (if applicable)
@@ -300,6 +309,8 @@ After structure and program design approval:
 - Similar implementation: `[file:line]`
 ````
 
+3. **Bind every automated criterion before the plan is complete.** Fill `## Criterion Bindings` per [criterion-binding](../../conventions/criterion-binding.md) §2–§3: one individually runnable named test group per `automated` criterion, no group serving two criteria, an invocation that runs exactly that group, and a stakes-domain value on every row. If any `automated` criterion is still unbound, do **not** declare the plan complete — report the unbound identifiers and stop.
+
 ### Step 6: Review
 
 1. **Present the draft plan location**:
@@ -335,6 +346,7 @@ When creating a plan, you will be tempted to rationalize skipping steps. These a
 | "I'll leave these open questions for the implementation phase." | No. Open questions in a plan become wrong assumptions in code. Resolve or ask now. |
 | "Program design is overkill for this task." | If you're changing more than 3 files or introducing a new abstraction, the call-stack and file-tree diffs take 5 minutes. Skipping them means the reviewer discovers your structural decisions inside a 500-line PR, where changing your mind costs hours. |
 | "I'll build all the database layers first, then the API, then the frontend." | That's horizontal slicing. You'll produce 2K lines before anything works end-to-end. Build a vertical tracer bullet through the full stack first, reviewed at 100-200 lines. |
+| "Every criterion maps to a phase, so the plan is done." | A phase is a unit of work, not a check. The pairing gate wants one named test group per automated criterion; a criterion that only maps to a phase is still unbound and can be dropped without anything going red. |
 
 ## Important Guidelines
 
@@ -448,6 +460,7 @@ Observable signs that you are drifting off this workflow:
 - The plan references a spec's acceptance criteria loosely ("meets requirements") instead of mapping each one to a phase
 - You are planning changes to files you haven't opened
 - The plan keeps growing to cover "while we're at it" work outside the spec's scope
+- An automated criterion has no row in `## Criterion Bindings`, or two criteria share one group — either way the pairing gate is unsatisfied
 
 ## Verification
 
@@ -456,5 +469,7 @@ Before presenting the plan as final:
 - [ ] Every file the plan modifies has actually been read in this session
 - [ ] Every phase has verifiable success criteria (a command to run, or a concrete observable outcome)
 - [ ] Every acceptance criterion from the spec maps to at least one phase
+- [ ] Every automated criterion has exactly one binding row, no group repeats, and every row carries a stakes domain — the pairing gate's requirement
+- [ ] The plan was never declared complete while the pairing gate reported an unbound automated criterion
 - [ ] Open questions and unresolved assumptions are listed at the top, not buried
 - [ ] The plan is saved to the configured location and its path reported to the user

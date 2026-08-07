@@ -110,6 +110,12 @@ For each phase in the plan:
    - Are there missing validations?
    - Could the implementation break existing functionality?
 
+### Step 2.5: Per-Criterion Accounting
+
+Build the accounting from the **spec's** criterion list, never from the plan's restatement of it. A criterion the plan never mentions still gets a record, marked unbound. Emit exactly one record per criterion — no omissions, no merges — carrying identifier, mode, bound test group from the plan (or `none`), red status, green status, evidence strength, and verdict.
+
+Take the verdict vocabulary and the overall-result rule from [criterion-binding](../../conventions/criterion-binding.md) §7. Two consequences to apply directly: an `automated` criterion with no bound group is blocked, and the report names its identifier; and the overall result is not success while any such criterion exists, however green the plan's own check list came back.
+
 ### Step 3: Generate Validation Report
 
 Create comprehensive validation summary:
@@ -132,6 +138,15 @@ _(or: "No blocking objections to the plan.")_
 ✓ Build passes: [command used]
 ✓ Tests pass: [command used]
 ✗ Linting issues: [command used] (3 warnings)
+_A green pipeline is not a verdict — the pairing gate accounting below decides the overall result._
+
+### Acceptance Criteria Accounting
+| Criterion | Mode | Bound group | Red | Green | Strength | Verdict |
+|---|---|---|---|---|---|---|
+| `AC-1` | automated | `path/to/file::group_name` | ✓ | ✓ | single-group | pass |
+| `AC-2` | automated | none | — | — | — | gate-blocked |
+
+Overall gate result: [success | blocked | incomplete]
 
 ### Code Review Findings
 
@@ -180,6 +195,7 @@ When validating a plan, you will be tempted to rationalize incomplete verificati
 | "Tests pass, so the implementation is correct." | Passing tests are evidence, not proof. Did you verify user-visible behavior? Did you check for regressions in related features? |
 | "This deviation from the plan is an improvement, not a problem." | Document it anyway. Undocumented deviations compound. The next person reading the plan will be confused. |
 | "Manual testing isn't needed for backend-only changes." | Backend changes surface as user-visible behavior somewhere. Identify where and verify. |
+| "Every check the plan named passed, so I'll report success." | The plan's check list does not decide the result — the pairing gate does. One unbound criterion makes the run blocked no matter how green everything else came back. |
 
 ## Important Guidelines
 
@@ -223,6 +239,7 @@ Observable signs that you are drifting off this workflow:
 - Your validation report contains only successes — real validation almost always surfaces at least minor issues or observations
 - You are validating against the plan but never opened the original spec's acceptance criteria
 - You are softening findings to avoid contradicting the implementation session
+- You built the criterion accounting from the plan's phases rather than the spec's list — the pairing gate exists to catch the criteria the plan forgot
 
 ## Verification
 
@@ -233,3 +250,5 @@ A validation run is itself complete only when:
 - [ ] Each spec acceptance criterion has an explicit pass/fail verdict
 - [ ] The standing [Definition of Done](../../references/definition-of-done.md) checklist was applied
 - [ ] Findings are reported honestly, ordered by severity, including "no issues found" only when genuinely true
+- [ ] The pairing gate accounting holds exactly one record per spec criterion, built from the spec itself, with nothing omitted or merged
+- [ ] Any unbound automated criterion produced the pairing gate's blocking result, and the run was never reported as success while one remained

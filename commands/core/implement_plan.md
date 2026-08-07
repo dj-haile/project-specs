@@ -76,6 +76,8 @@ After implementing a phase, run the appropriate automated verification commands 
 - Run your project's type checking (if applicable)
 - Run your project's linting/formatting checks (if applicable)
 
+**The pairing gate.** Before checking off a plan item, confirm every `automated` criterion that item satisfies has a binding row in the plan's `## Criterion Bindings` table, and run that bound group. An item whose criterion is unbound cannot be checked off: report the unbound identifier and stop, per [criterion-binding](../../conventions/criterion-binding.md).
+
 After running automated checks:
 - Fix any issues before proceeding
 - Update your progress in both the plan and your todos
@@ -108,6 +110,7 @@ When implementing a plan, you will be tempted to rationalize skipping steps. The
 | "These phases are closely related, so I'll implement them together." | Phase boundaries exist because verification between them catches compounding errors. Implement one at a time. |
 | "The plan is slightly outdated so I'll adapt as I go." | If the plan doesn't match reality, STOP and present the deviation. Don't silently rewrite the plan while implementing. |
 | "I need to refactor this adjacent file to make my change work." | If a file isn't in the plan, don't touch it. Present the dependency and let the human decide. |
+| "The criterion is clearly satisfied — I'll tick the box and sort the binding out later." | Ticking an unbound criterion is the exact move the pairing gate exists to stop. Get the binding into the plan first, run the group, then check the box. |
 
 ## If You Get Stuck
 
@@ -136,6 +139,7 @@ Observable signs that you are drifting off this workflow:
 - You are marking a checkbox complete based on "should work" rather than an observed result
 - You hit a plan/reality mismatch and adapted silently instead of presenting the issue
 - Your diff is growing with cleanups and refactors the plan never asked for
+- You are checking off an item whose acceptance criterion has no binding row — the pairing gate is being walked past
 
 ## Verification
 
@@ -146,3 +150,4 @@ Before declaring implementation complete:
 - [ ] Any deviation from the plan is noted in the plan file with the user's approval recorded
 - [ ] No files outside the plan's scope were modified
 - [ ] Tests and checks specified by the plan were run in this session, and their results reported
+- [ ] No item was checked off while the pairing gate showed its automated criterion unbound
