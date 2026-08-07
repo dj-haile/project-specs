@@ -162,3 +162,16 @@ recorded_at: "2026-08-07T18:18:26Z"
 Added as each criterion's satisfying change lands: `AC-29` in Phase 2, `AC-27`
 and `AC-28` in Phase 3, `AC-22` and `AC-24` in Phase 9. Each green record must
 carry a `code_state` different from its red record's.
+
+## AC-29 — green
+
+```yaml
+criterion: AC-29
+group: "scripts/validate.py::check_command_size_budget"
+command: "python3 scripts/validate.py --check check_command_size_budget"
+code_state: "git:37b4ea7"
+result: "exit 0 — all four core commands within ceilings (create_plan.md 460/500)"
+strength: single-group
+recorded_at: "2026-08-07"
+phase: 2
+```
