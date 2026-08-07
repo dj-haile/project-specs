@@ -44,7 +44,8 @@ Read configuration from `specs.config.yaml`:
    - All experimental feature code should be committed to a feature branch
    - Commits should follow project conventions
    - Include the ticket ID in commit messages using `ticket_id_pattern` format once the ticket exists
-2. Use `/describe_pr` command to generate a comprehensive pull request:
+2. Apply the standing [Definition of Done](../../references/definition-of-done.md) checklist to the experimental work — every item must pass before the PR is created. If any item fails, resolve it first, or record the failure explicitly on the ticket as a known limitation; do not open a PR with silent gaps
+3. Use `/describe_pr` command to generate a comprehensive pull request:
    - Title should match the experimental ticket
    - Description should include:
      * Link to the experimental ticket created in Part I
@@ -54,8 +55,8 @@ Read configuration from `specs.config.yaml`:
      * Screenshots, demos, or examples if applicable
      * Known issues or future improvements
    - Include implementation context and code organization
-3. Create the pull request on the repository
-4. Confirm the PR is created and note the PR number
+4. Create the pull request on the repository
+5. Confirm the PR is created and note the PR number
 
 ### Part III: Link Ticket to PR
 
@@ -72,7 +73,7 @@ Read configuration from `specs.config.yaml`:
 
 **Typical Founder Mode Flow:**
 1. Founder implements experimental feature in a feature branch
-2. Tests and validates the feature works as intended
+2. Tests and validates the feature works as intended (the standing Definition of Done checklist is the bar)
 3. Runs `/founder_mode` command to create ticket + PR
 4. Team can review the ticket and pull request
 5. Either integrate into main if valuable, or archive/close if not

@@ -51,9 +51,10 @@ This command executes the full workflow in sequence:
    - Load and execute the implementation plan
    - Make atomic commits using `/commit` command
    - Reference ticket ID in all commit messages
-2. Upon completion, generate PR description using `/describe_pr`
-3. Update ticket status to "in_review"
-4. Confirm all changes are committed
+2. Apply the standing [Definition of Done](../../references/definition-of-done.md) checklist as the final gate before the PR — every item must pass. If any item fails, return to implementation and resolve it; do not proceed to `/describe_pr` with open failures
+3. Upon completion, generate PR description using `/describe_pr`
+4. Update ticket status to "in_review"
+5. Confirm all changes are committed
 
 ## Workflow Details
 
