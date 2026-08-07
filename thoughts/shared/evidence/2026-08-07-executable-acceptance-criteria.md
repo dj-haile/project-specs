@@ -27,11 +27,11 @@ that commit before being recorded.
 
 | Criterion | Test group | Red | Green |
 |---|---|---|---|
-| `AC-22` | `scripts/validate.py` | recorded | Phase 9 |
-| `AC-24` | `scripts/run_evals.py::check_core_command_coverage` | recorded | Phase 9 |
-| `AC-27` | `scripts/validate.py::check_gate_sections` | recorded | Phase 3 |
-| `AC-28` | `scripts/validate.py::check_gate_single_source` | recorded | Phase 3 |
-| `AC-29` | `scripts/validate.py::check_command_size_budget` | recorded | Phase 2 |
+| `AC-22` | `scripts/validate.py` | recorded | recorded (Phase 3) |
+| `AC-24` | `scripts/run_evals.py::check_core_command_coverage` | recorded | recorded (Phase 9) |
+| `AC-27` | `scripts/validate.py::check_gate_sections` | recorded | recorded (Phase 3) |
+| `AC-28` | `scripts/validate.py::check_gate_single_source` | recorded | recorded (Phase 3) |
+| `AC-29` | `scripts/validate.py::check_command_size_budget` | recorded | recorded (Phase 2) |
 
 All five reds are `strength: single-group` — each invocation runs exactly its
 bound group and nothing else. `AC-22`'s bound group *is* `scripts/validate.py`,
@@ -159,8 +159,8 @@ recorded_at: "2026-08-07T18:18:26Z"
 
 ## Green records
 
-Added as each criterion's satisfying change lands: `AC-29` in Phase 2, `AC-27`
-and `AC-28` in Phase 3, `AC-22` and `AC-24` in Phase 9. Each green record must
+Added as each criterion's satisfying change lands: `AC-29` in Phase 2, `AC-22`,
+`AC-27` and `AC-28` in Phase 3, `AC-24` in Phase 9. Each green record must
 carry a `code_state` different from its red record's.
 
 ## AC-29 — green
@@ -213,4 +213,25 @@ result: "exit 0 — conventions/criterion-binding.md is the single normative sou
 strength: single-group
 recorded_at: "2026-08-07"
 phase: 3
+```
+
+## AC-24 — green
+
+`evals/cases/validate_plan.json` now exists with two positive and two negative
+cases, so every command in `CORE_ROUTED` has routing coverage.
+
+<!-- PENDING SHA: the code_state below is a placeholder token. The orchestrator
+     must substitute the real 40-hex commit of the Phase 9 commit before this
+     record satisfies AC-31/AC-32 (a non-re-runnable code_state makes the
+     record absent). -->
+
+```yaml
+criterion: AC-24
+group: "scripts/run_evals.py::check_core_command_coverage"
+command: "python3 scripts/run_evals.py --check check_core_command_coverage"
+code_state: "pending-commit"   # PLACEHOLDER — replace with git:<40-hex sha> at commit time
+result: "exit 0 — run_evals.py [check_core_command_coverage]: OK (all four core routed commands have a case file with >=1 positive and >=1 negative)"
+strength: single-group
+recorded_at: "2026-08-07"
+phase: 9
 ```

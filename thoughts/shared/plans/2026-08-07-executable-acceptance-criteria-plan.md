@@ -413,16 +413,20 @@ Create the five test groups the bindings depend on, and prove the mechanism end 
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py --list-checks` prints exactly the seven registry names, exit 0
-- [ ] `python3 scripts/run_evals.py --list-checks` prints exactly the three registry names, exit 0
-- [ ] `python3 scripts/validate.py --check check_gate_sections` exits **1** — red for AC-27
-- [ ] `python3 scripts/validate.py --check check_gate_single_source` exits **1** — red for AC-28
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits **1** (create_plan.md 549 > 500) — red for AC-29
-- [ ] `python3 scripts/run_evals.py --check check_core_command_coverage` exits **1** (no `validate_plan.json`) — red for AC-24
-- [ ] `python3 scripts/validate.py` exits **1** — red for AC-22
-- [ ] `python3 scripts/validate.py --check check_agent_or_command`, `--check check_yaml_configs`, `--check check_skills`, `--check check_links` each exit **0** — the refactor changed no existing behavior
-- [ ] `python3 scripts/run_evals.py --check check_cases` and `--check check_collisions` each exit 0
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 scripts/validate.py --list-checks` prints exactly the seven registry names, exit 0
+- [x] `python3 scripts/run_evals.py --list-checks` prints exactly the three registry names, exit 0
+- [x] `python3 scripts/validate.py --check check_gate_sections` exits **1** — red for AC-27
+- [x] `python3 scripts/validate.py --check check_gate_single_source` exits **1** — red for AC-28
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits **1** (create_plan.md 549 > 500) — red for AC-29
+- [x] `python3 scripts/run_evals.py --check check_core_command_coverage` exits **1** (no `validate_plan.json`) — red for AC-24
+- [x] `python3 scripts/validate.py` exits **1** — red for AC-22
+- [x] `python3 scripts/validate.py --check check_agent_or_command`, `--check check_yaml_configs`, `--check check_skills`, `--check check_links` each exit **0** — the refactor changed no existing behavior
+- [x] `python3 scripts/run_evals.py --check check_cases` and `--check check_collisions` each exit 0
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+
+**Contingency invoked (Testing Strategy, pre-authorized).** The Testing Strategy warned that shared boilerplate (`## Setup (read before proceeding)`) could trip `check_gate_single_source`'s 25-word duplicate threshold. It did. The pre-authorized second option was taken: `DUP_MIN_WORDS` stayed at 25 and the duplicate comparison was **scoped to paragraphs containing `GATE_TOKEN`** (`scripts/validate.py:246`). The threshold was not raised.
+
+**Reconciled in Phase 9.** The red boxes above were true at `git:53b15a5ac752b74f5578e9100617df7b989c9edc` (the Phase 1 stash commit recorded in the evidence file) and at commit `f060bba`; they are green at HEAD by design.
 
 #### Manual Verification
 - [ ] Owner confirms the five red records each carry all three AC-31 elements and a `code_state` that `git checkout` can reach (AC-31, D-5)
@@ -452,12 +456,14 @@ Create the one file every command will link to, and free enough lines in `create
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits **0** — green for AC-29
-- [ ] `python3 scripts/validate.py --check check_links` exits 0 — the two new relative links resolve
-- [ ] `wc -l < commands/core/create_plan.md` ≤ 460
-- [ ] `python3 scripts/validate.py --check check_agent_or_command` exits 0 — Common Shortcuts / Red Flags / Verification still present in all four core commands (`scripts/validate.py:43-48`)
-- [ ] `python3 scripts/validate.py --check check_gate_single_source` still exits 1 — links pending, expected
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits **0** — green for AC-29
+- [x] `python3 scripts/validate.py --check check_links` exits 0 — the two new relative links resolve
+- [x] `wc -l < commands/core/create_plan.md` ≤ 460 — measured 460 at commit `37b4ea7`. Phases 3–5 added the gate obligations on top; at HEAD it is 481, inside the 500 ceiling this criterion serves.
+- [x] `python3 scripts/validate.py --check check_agent_or_command` exits 0 — Common Shortcuts / Red Flags / Verification still present in all four core commands (`scripts/validate.py:43-48`)
+- [x] `python3 scripts/validate.py --check check_gate_single_source` still exits 1 — links pending, expected
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+
+**No contingency invoked.** The extraction landed as planned (549 → 460, −89) and `create_plan.md` never needed the deeper cut. The AC-29 green record is on disk (commit `197e52b`), so the third manual item below awaits sign-off only.
 
 #### Manual Verification
 - [ ] Owner confirms the extracted Program Design and Sub-task Spawning text reads correctly in its new home and that `create_plan.md`'s pointers are unambiguous
@@ -487,12 +493,12 @@ The tracer bullet through the whole chain. After this phase, a criterion that ge
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py --check check_gate_sections` exits **0** — green for AC-27
-- [ ] `python3 scripts/validate.py --check check_gate_single_source` exits **0** — green for AC-28 (source exists, all four commands link to it, no ≥25-word paragraph repeated)
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — all four within budget
-- [ ] `python3 scripts/validate.py` exits **0** — green for AC-22
-- [ ] `python3 scripts/run_evals.py --check check_collisions` exits 0 — no description drifted (no description was edited)
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 scripts/validate.py --check check_gate_sections` exits **0** — green for AC-27
+- [x] `python3 scripts/validate.py --check check_gate_single_source` exits **0** — green for AC-28 (source exists, all four commands link to it, no ≥25-word paragraph repeated)
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — all four within budget
+- [x] `python3 scripts/validate.py` exits **0** — green for AC-22
+- [x] `python3 scripts/run_evals.py --check check_collisions` exits 0 — no description drifted (no description was edited)
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
 
 #### Manual Verification
 - [ ] Owner runs `/spec` on a small throwaway requirement and confirms every criterion emerges with a unique `AC-<n>` and exactly one mode line, and that no test name, path, or framework appears anywhere in it (AC-1, AC-2, AC-3b)
@@ -522,11 +528,11 @@ The tracer bullet through the whole chain. After this phase, a criterion that ge
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py` exits 0
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — `implement_plan.md` ≤ 300, `create_plan.md` ≤ 500
-- [ ] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — the AC-11 obligation was linked, not copied
-- [ ] `python3 scripts/run_evals.py` exits 0
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 scripts/validate.py` exits 0
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — `implement_plan.md` ≤ 300, `create_plan.md` ≤ 500
+- [x] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — the AC-11 obligation was linked, not copied
+- [x] `python3 scripts/run_evals.py` exits 0
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
 
 #### Manual Verification
 - [ ] Owner confirms a red and a green record for one criterion, with differing `code_state` values, and re-runs the red record's exact command against its `code_state` and observes the recorded failure (AC-7, AC-8, AC-31, D-5)
@@ -571,13 +577,15 @@ Safe for CI: `scripts/validate.py:177-183` checks `specs.config.example.yaml` fo
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 -c "import yaml,sys; yaml.safe_load(open('specs.config.yaml'))"` exits 0
-- [ ] `python3 scripts/validate.py` exits 0 — the new root config does not disturb structural validation
-- [ ] `python3 scripts/validate.py --check check_yaml_configs` exits 0
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits 0
-- [ ] `python3 scripts/run_evals.py` exits 0
-- [ ] `bash setup.sh /tmp/ps-smoke-claude --provider=claude --copy --yes` succeeds and `/tmp/ps-smoke-claude/specs.config.yaml` exists — installer unaffected by the new root config
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 -c "import yaml,sys; yaml.safe_load(open('specs.config.yaml'))"` exits 0
+- [x] `python3 scripts/validate.py` exits 0 — the new root config does not disturb structural validation
+- [x] `python3 scripts/validate.py --check check_yaml_configs` exits 0
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits 0
+- [x] `python3 scripts/run_evals.py` exits 0
+- [x] `bash setup.sh /tmp/ps-smoke-claude --provider=claude --copy --yes` succeeds and `/tmp/ps-smoke-claude/specs.config.yaml` exists — installer unaffected by the new root config
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+
+**Fallback NOT taken (Review item 3 accepted).** The root `specs.config.yaml` was created as planned, with `test_group_command: "python3 {file} --check {name}"`. All five bindings therefore record `strength: single-group`; none degrades. Smoke-tested at Phase 9 into a scratch directory rather than `/tmp/ps-smoke-claude` — the destination differs, the assertions do not.
 
 #### Manual Verification
 - [ ] Owner confirms substitution: `{file}`/`{name}` split on the last `::`, `{group}` is the whole name, and a group with no `::` uses `test_suite_command` (D-4)
@@ -602,11 +610,11 @@ Safe for CI: `scripts/validate.py:177-183` checks `specs.config.example.yaml` fo
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py` exits 0
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — `validate_plan.md` ≤ 300 (contingency below if breached)
-- [ ] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — the sample rule appears in the convention only
-- [ ] `python3 scripts/run_evals.py` exits 0
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 scripts/validate.py` exits 0
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — `validate_plan.md` ≤ 300 (contingency below if breached)
+- [x] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — the sample rule appears in the convention only
+- [x] `python3 scripts/run_evals.py` exits 0
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
 
 #### Manual Verification
 - [ ] Owner computes the sample by hand with `printf '%s\n' <green code_states in LC_ALL=C group order> | shasum -a 256` and confirms `/validate_plan` selected the same group (AC-17, OQ-11)
@@ -631,12 +639,12 @@ Safe for CI: `scripts/validate.py:177-183` checks `specs.config.example.yaml` fo
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py` exits 0
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — `spec.md` ≤ 300
-- [ ] `python3 scripts/validate.py --check check_gate_sections` exits 0
-- [ ] `python3 scripts/run_evals.py` exits 0
-- [ ] `grep -c 'ci_mode' commands/core/validate_plan.md` ≥ 1
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 scripts/validate.py` exits 0
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — `spec.md` ≤ 300
+- [x] `python3 scripts/validate.py --check check_gate_sections` exits 0
+- [x] `python3 scripts/run_evals.py` exits 0
+- [x] `grep -c 'ci_mode' commands/core/validate_plan.md` ≥ 1
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
 
 #### Manual Verification
 - [ ] Owner confirms `/spec` refuses to save a spec with a manual-only criterion missing any of the four elements (AC-4)
@@ -665,11 +673,11 @@ Safe for CI: `scripts/validate.py:177-183` checks `specs.config.example.yaml` fo
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py` exits 0
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — all four within budget
-- [ ] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — the legacy rule is defined once
-- [ ] `python3 scripts/run_evals.py` exits 0
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
+- [x] `python3 scripts/validate.py` exits 0
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — all four within budget
+- [x] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — the legacy rule is defined once
+- [x] `python3 scripts/run_evals.py` exits 0
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean
 
 #### Manual Verification
 - [ ] Owner runs all three commands against a pre-change spec and confirms none errors and all classify it `legacy-unlabeled` (AC-19)
@@ -696,17 +704,21 @@ Safe for CI: `scripts/validate.py:177-183` checks `specs.config.example.yaml` fo
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `python3 scripts/validate.py` exits **0** — green for AC-22
-- [ ] `python3 scripts/validate.py --check check_gate_sections` exits 0 — AC-27
-- [ ] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — AC-28
-- [ ] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — AC-29
-- [ ] `python3 scripts/run_evals.py --check check_core_command_coverage` exits **0** — AC-24
-- [ ] `python3 scripts/run_evals.py` exits 0 — routing evals and collision check
-- [ ] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean, AC-26 supporting check
-- [ ] `bash setup.sh /tmp/ps-smoke-claude --provider=claude --copy --yes`, `--provider=codex`, `--provider=cursor` all succeed with the expected layout — AC-25 supporting check
-- [ ] `wc -l < commands/core/spec.md` ≤ 300; `create_plan.md` ≤ 500; `implement_plan.md` ≤ 300; `validate_plan.md` ≤ 300
-- [ ] `grep -rniE '\b(claude-[a-z0-9.-]+|gpt-[0-9][a-z0-9.-]*|gemini-[a-z0-9.-]+|opus|sonnet|haiku)\b' commands/ conventions/criterion-binding.md conventions/program-design.md` returns nothing — AC-23 supporting check
-- [ ] All four CI jobs green on the branch (`.github/workflows/validate.yml:9-89`) — AC-22, AC-24, AC-25, AC-26
+- [x] `python3 scripts/validate.py` exits **0** — green for AC-22
+- [x] `python3 scripts/validate.py --check check_gate_sections` exits 0 — AC-27
+- [x] `python3 scripts/validate.py --check check_gate_single_source` exits 0 — AC-28
+- [x] `python3 scripts/validate.py --check check_command_size_budget` exits 0 — AC-29
+- [x] `python3 scripts/run_evals.py --check check_core_command_coverage` exits **0** — AC-24
+- [x] `python3 scripts/run_evals.py` exits 0 — routing evals and collision check
+- [x] `python3 scripts/build_skills.py && git diff --exit-code skills/.curated` — clean, AC-26 supporting check
+- [x] `bash setup.sh /tmp/ps-smoke-claude --provider=claude --copy --yes`, `--provider=codex`, `--provider=cursor` all succeed with the expected layout — AC-25 supporting check
+- [x] `wc -l < commands/core/spec.md` ≤ 300; `create_plan.md` ≤ 500; `implement_plan.md` ≤ 300; `validate_plan.md` ≤ 300
+- [x] `grep -rniE '\b(claude-[a-z0-9.-]+|gpt-[0-9][a-z0-9.-]*|gemini-[a-z0-9.-]+|opus|sonnet|haiku)\b' commands/ conventions/criterion-binding.md conventions/program-design.md` returns nothing — AC-23 supporting check
+- [ ] All four CI jobs green on the branch (`.github/workflows/validate.yml:9-89`) — AC-22, AC-24, AC-25, AC-26 — **not verifiable locally.** The four jobs' commands were reproduced on this machine and all pass (structural, evals, skills-drift, install-smoke-test × 3 providers). Confirm on the actual CI run once the branch is pushed.
+
+**Deviations from the stated commands.** The installer smoke test ran into scratch directories rather than `/tmp/ps-smoke-*`, and each target directory was `mkdir -p`'d first — the plan's command assumes an existing directory, `setup.sh` does not create one. The layout assertions run were `.github/workflows/validate.yml:71-88` verbatim, plus the codex frontmatter parse at `:90-105`.
+
+**Open gap found during reconciliation (not fixed — outside this phase's grant).** The source spec `thoughts/shared/specs/2026-08-07-executable-acceptance-criteria-spec.md` was never upgraded to the format this change introduces: all 36 `AC-<n>` headings are present, but the file carries **zero** `mode:` lines, none of the four AC-4 element labels, and no `## Manual-Only Approval` section. By the new rules the framework's own spec classifies as `legacy-unlabeled`. No phase's Changes Required covers this upgrade. Manual items 3 and 4 below cannot be confirmed as written until it happens.
 
 #### Manual Verification
 - [ ] Owner confirms every one of the five automated criteria has a red and a green record with differing `code_state` values, and spot-re-runs at least the deterministically sampled one (AC-7, AC-8, AC-32)
