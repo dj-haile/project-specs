@@ -175,54 +175,9 @@ Once aligned on approach:
 
 ### Step 4: Program Design (for medium and large tasks)
 
-For tasks beyond simple oneshot changes, produce a **program design artifact** before writing the detailed plan. This is the layer between architecture ("which services talk to each other") and code ("here are the file changes"). It captures the shape of the code so the reviewer can catch structural problems before 800 lines of implementation make them expensive to fix.
+For tasks beyond simple oneshot changes, produce a **program design artifact** before writing the detailed plan — a call-stack tree diff, a file-tree diff, and the key types and signatures.
 
-The program design artifact has three parts:
-
-1. **Call-stack tree diff** — Show the control flow that will change, using `+` for new call frames and `-` for removed ones. This lets the reviewer see at a glance how the call graph is being restructured:
-   ```
-   handleRequest()
-     → validateInput()
-   + → resolvePermissions()    # new: moved out of middleware
-     → executeQuery()
-   -   → legacyTransform()     # removed: replaced by pipeline
-   +   → pipeline.run()        # new: streaming pipeline
-   +     → stage1.process()
-   +     → stage2.process()
-     → formatResponse()
-   ```
-
-2. **File-tree diff** — Show what files are being created, renamed, modified, or deleted. This keeps the reviewer in touch with the layout of the codebase:
-   ```
-   src/
-   + api/permissions.ts          # new: extracted from middleware
-   ~ api/handlers/query.ts       # modified: swap legacy for pipeline
-   - api/transforms/legacy.ts    # deleted: replaced by pipeline stages
-   + pipeline/
-   +   runner.ts                 # new: streaming pipeline orchestrator
-   +   stages/
-   +     stage1.ts
-   +     stage2.ts
-   ```
-
-3. **Key types and method signatures** — For the main new functions, write the types and signatures without the implementation. These are decisions you'd otherwise make implicitly during code review, at the most expensive possible moment to change your mind:
-   ```typescript
-   interface PipelineStage<TIn, TOut> {
-     name: string;
-     process(input: TIn, ctx: PipelineContext): Promise<TOut>;
-   }
-
-   function createPipeline(stages: PipelineStage[]): Pipeline;
-   function resolvePermissions(userId: string, resource: Resource): Promise<PermissionSet>;
-   ```
-
-**When to include this step:**
-- ~40% of tasks are small enough to skip this — oneshot with 1–2 rounds of feedback.
-- Medium tasks: combine this with the architecture overview in one plan doc.
-- Large tasks: this gets its own review before implementation begins.
-- Pure refactors: skip the product/requirements step but still do program design.
-
-Present the program design to the user for review before writing the detailed implementation plan. Disagreements about code shape cost minutes here and hours during code review.
+Follow [program-design](../../conventions/program-design.md) for the artifact's three parts, when to include it, and the worked examples. Present it to the user for review before writing the detailed implementation plan — disagreements about code shape cost minutes here and hours during code review.
 
 ### Step 5: Detailed Plan Writing
 
@@ -261,6 +216,16 @@ After structure and program design approval:
 
 [Explicitly list out-of-scope items to prevent scope creep]
 
+## Criterion Bindings
+
+| Criterion | Test group | Invocation | Stakes domain | Phase |
+|---|---|---|---|---|
+| `AC-1` | `path/to/file::group_name` | `[command running exactly that group]` | `none` | 1 |
+
+[One row per `automated` criterion, no group repeated. List `manual-only` criteria under `## Manual-Only Criteria` instead.]
+
+**Evidence file**: `{thoughts_path}/evidence/[YYYY-MM-DD]-[plan-slug].md`
+
 ## Implementation Approach
 
 [High-level strategy and reasoning]
@@ -294,6 +259,7 @@ After structure and program design approval:
 ### Success Criteria:
 
 #### Automated Verification:
+- [ ] Run each test group this phase binds in `## Criterion Bindings` (pairing gate)
 - [ ] Run your project's build/test commands to verify compilation and unit tests
 - [ ] Confirm type checking passes (if applicable)
 - [ ] Run linting/formatting checks (if applicable)
@@ -345,6 +311,12 @@ After structure and program design approval:
 - Similar implementation: `[file:line]`
 ````
 
+3. **Bind every automated criterion before the plan is complete.** Fill `## Criterion Bindings` per [criterion-binding](../../conventions/criterion-binding.md) §2–§3: one individually runnable named test group per `automated` criterion, no group serving two criteria, an invocation that runs exactly that group, and a stakes-domain value on every row. If any `automated` criterion is still unbound, do **not** declare the plan complete — report the unbound identifiers and stop.
+
+4. **Name the evidence file on the line under the binding table.** Use the path shape in [criterion-binding](../../conventions/criterion-binding.md) §4. `/implement_plan` writes red and green records there and `/validate_plan` reads them from there, so the plan declaring it once is what keeps both ends pointed at one location.
+
+5. **Fill the stakes-domain column from the keyword table, not from your read of the risk.** The vocabulary is closed and the matching rule is mechanical — see [criterion-binding](../../conventions/criterion-binding.md) §3. Match its keywords against the criterion's own spec text; write `none` when nothing matches. Downstream this column is consumed, never recomputed: `/validate_plan` blocks a criterion carrying any non-`none` domain when the only evidence behind it is degraded, so a row you fill in loosely either blocks work that was fine or waves through work that was not.
+
 ### Step 6: Review
 
 1. **Present the draft plan location**:
@@ -380,6 +352,7 @@ When creating a plan, you will be tempted to rationalize skipping steps. These a
 | "I'll leave these open questions for the implementation phase." | No. Open questions in a plan become wrong assumptions in code. Resolve or ask now. |
 | "Program design is overkill for this task." | If you're changing more than 3 files or introducing a new abstraction, the call-stack and file-tree diffs take 5 minutes. Skipping them means the reviewer discovers your structural decisions inside a 500-line PR, where changing your mind costs hours. |
 | "I'll build all the database layers first, then the API, then the frontend." | That's horizontal slicing. You'll produce 2K lines before anything works end-to-end. Build a vertical tracer bullet through the full stack first, reviewed at 100-200 lines. |
+| "Every criterion maps to a phase, so the plan is done." | A phase is a unit of work, not a check. The pairing gate wants one named test group per automated criterion; a criterion that only maps to a phase is still unbound and can be dropped without anything going red. |
 
 ## Important Guidelines
 
@@ -480,53 +453,9 @@ Plan implementation as **vertical slices** — each slice cuts through the full 
 
 ## Sub-task Spawning Best Practices
 
-*Applies when `capabilities.subagents: true`. When subagents are unavailable, follow the same intent inline per [subagent-fallback](../../conventions/subagent-fallback.md).*
+*Applies when `capabilities.subagents: true`. When subagents are unavailable, follow the same intent inline per the fallback contract.*
 
-When spawning research sub-tasks:
-
-1. **Spawn multiple tasks in parallel** for efficiency
-2. **Each task should be focused** on a specific area
-3. **Provide detailed instructions** including:
-   - Exactly what to search for
-   - Which directories to focus on
-   - What information to extract
-   - Expected output format
-4. **Be EXTREMELY specific about directories**:
-   - Include the full path context in your prompts
-5. **Specify read-only tools** to use
-6. **Request specific file:line references** in responses
-7. **Wait for all tasks to complete** before synthesizing
-8. **Verify sub-task results**:
-   - If a sub-task returns unexpected results, spawn follow-up tasks
-   - Cross-check findings against the actual codebase
-   - Don't accept results that seem incorrect
-
-Example of spawning multiple tasks:
-```python
-# Spawn these tasks concurrently:
-tasks = [
-    Task("Research database schema", db_research_prompt),
-    Task("Find API patterns", api_research_prompt),
-    Task("Investigate UI components", ui_research_prompt),
-    Task("Check test patterns", test_research_prompt)
-]
-```
-
-## Example Interaction Flow
-
-```
-User: /create_plan
-Assistant: I'll help you create a detailed implementation plan...
-
-User: We need to improve the flight search error handling. See docs/DEPLOYMENT.md
-Assistant: Let me read that documentation file completely first...
-
-[Reads file fully]
-
-Based on the documentation, I understand we need to improve error handling in the flight search feature. Before I start planning, I have some questions...
-
-[Interactive process continues...]
-```
+Follow the eight practices in [subagent-fallback](../../conventions/subagent-fallback.md#sub-task-spawning-best-practices): parallel focused tasks, detailed instructions with full directory paths, read-only tools, file:line references, wait for all tasks, and verify results against the codebase before synthesizing.
 
 ## Red Flags
 
@@ -537,6 +466,7 @@ Observable signs that you are drifting off this workflow:
 - The plan references a spec's acceptance criteria loosely ("meets requirements") instead of mapping each one to a phase
 - You are planning changes to files you haven't opened
 - The plan keeps growing to cover "while we're at it" work outside the spec's scope
+- An automated criterion has no row in `## Criterion Bindings`, or two criteria share one group — either way the pairing gate is unsatisfied
 
 ## Verification
 
@@ -545,5 +475,7 @@ Before presenting the plan as final:
 - [ ] Every file the plan modifies has actually been read in this session
 - [ ] Every phase has verifiable success criteria (a command to run, or a concrete observable outcome)
 - [ ] Every acceptance criterion from the spec maps to at least one phase
+- [ ] Every automated criterion has exactly one binding row, no group repeats, and every row carries a stakes domain — the pairing gate's requirement
+- [ ] The plan was never declared complete while the pairing gate reported an unbound automated criterion
 - [ ] Open questions and unresolved assumptions are listed at the top, not buried
 - [ ] The plan is saved to the configured location and its path reported to the user

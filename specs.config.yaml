@@ -1,0 +1,19 @@
+# project-specs — this repository's own configuration.
+# Created by Phase 5 of the executable-acceptance-criteria plan so that this
+# repo's dogfood evidence is single-group rather than degraded.
+# See specs.config.example.yaml for the full set of documented keys.
+
+provider: "claude"
+project_name: "project-specs"
+project_description: "Spec-driven development framework for coding agents"
+
+thoughts_directory: true
+thoughts_path: "thoughts/shared"
+
+ci_mode: false
+
+# --- Acceptance-criteria pairing gate ---
+# The named test groups in this repo are selected with `--check <name>` on the
+# script that holds them, so {file} is the script path and {name} is the check.
+test_group_command: "python3 {file} --check {name}"
+test_suite_command: "python3 {file}"

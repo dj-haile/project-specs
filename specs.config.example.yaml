@@ -64,6 +64,19 @@ models:
 log_directory: ""                   # Path to application logs (e.g., "logs/" or "/var/log/myapp/")
 database_path: ""                   # Path to local database file (e.g., "data/app.db")
 
+# --- Acceptance-criteria pairing gate ---
+# Optional. Command template for running ONE named test group individually.
+# Placeholders: {group} = the full group name from the plan's binding table;
+# {file} = everything before the last "::"; {name} = everything after it.
+# Unset (default) -> red/green evidence degrades to full-suite runs, is labeled
+# degraded, and blocks on any criterion whose stakes domain is not "none".
+# See conventions/criterion-binding.md sections 3 and 5.
+test_group_command: ""              # e.g. "pytest -q {file}::{name}" | "npm test -- -t {name}"
+
+# Optional. Used for a file-level group (a group name with no "::"), and as the
+# full-suite fallback when test_group_command is unset.
+test_suite_command: ""              # e.g. "pytest -q" | "npm test"
+
 # --- CI/CD ---
 ci_mode: false                      # true = non-interactive (no user prompts)
 ci_commit_prefix: "ci: "            # Prefix for CI-generated commits

@@ -1,0 +1,13 @@
+{
+  "command": "validate_plan",
+  "trigger": {
+    "positive": [
+      { "prompt": "validate the implementation against the plan and verify every success criterion", "top_k": 1 },
+      { "prompt": "check whether the plan was correctly executed and identify deviations", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "implement the plan phase by phase with verification", "owner": "implement_plan" },
+      { "prompt": "review this implementation plan for unverified assumptions before any code is written", "owner": "plan-skeptic" }
+    ]
+  }
+}
