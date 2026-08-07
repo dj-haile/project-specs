@@ -177,3 +177,15 @@ Named distinctly from the `blocking` / `concern` / `note` severities `/validate_
 Pre-change code is **the code state immediately before the specific change that satisfies that criterion**, identified by the `Phase` column of the binding table — not the branch point. This is the only reading under which a criterion satisfied in a late phase can have red evidence at all, and it is what makes the red record discriminating rather than incidental.
 
 A bound group that passes on its first run against that state is not red evidence. Report it unsatisfied, naming both possible causes: the group does not discriminate the change, or the behavior already exists.
+
+---
+
+## 9. Legacy specs
+
+**Classification keys on the spec's own format, never on a date.** A spec in which no line matches §1's mode-line pattern is `legacy-unlabeled`. Nothing about when the spec was written, when its filename says it was written, or when this convention landed enters the decision — a spec authored today with no mode lines is legacy, and one upgraded years ago is not. Reading the file is the whole test, so two readers reach the same classification.
+
+**All three downstream commands accept a legacy spec and proceed without error.** `/create_plan`, `/implement_plan`, and `/validate_plan` do their ordinary work against it. The gate simply has nothing to act on: no identifiers to bind, no modes to separate automated from manual, and therefore no binding table and no evidence obligations. An unlabeled criterion is not a defect in the spec and is not reported as one.
+
+**The gate is reported unenforced, and never as passed.** `/validate_plan` records `legacy-unenforced` (§7) and states the reason in the report: the spec carries no criterion labels, so the pairing gate had nothing to enforce. Silence is not allowed either — a report that omits the gate reads as a gate that found nothing wrong. No criterion-level pass, no tick, no "no gate issues", and no overall `success` resting on the gate's approval.
+
+**Upgrading is an insertion, not a rewrite.** Re-invoking `/spec` on a legacy spec assigns identifiers and modes by §1 in the order the criteria already appear. Each criterion's own sentence is preserved exactly; the only lines the upgrade may add are the identifier heading, the mode line, and — for `manual-only` — the four labeled elements. Any diff that changes a criterion's wording is a failed upgrade, however small the improvement looks: the old text is what people agreed to. The assignments are listed for a human to review before the upgraded spec is saved, and the manual-only approval of §1 applies as it does to any other spec. The upgrade binds nothing — test groups arrive later, from `/create_plan`.

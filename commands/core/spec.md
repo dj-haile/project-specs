@@ -150,6 +150,15 @@ Next step: Run /create_plan to design the implementation approach.
 The plan will use these acceptance criteria as its success criteria.
 ```
 
+### Step 5: Upgrade a Legacy Spec
+
+A spec whose criteria carry no mode lines is legacy — see [criterion-binding](../../conventions/criterion-binding.md) §9 for the classification, which is read off the file's format and never off a date. Re-invoking this command on one upgrades it in place, and the upgrade only adds lines:
+
+1. **Keep every criterion's sentence exactly as written.** The diff may insert the identifier heading, the mode line, and a `manual-only` criterion's four elements — nothing else. If a criterion reads badly or is untestable, say so in the review list and let the author decide; rewording it while labeling it is a failed upgrade, not a favor.
+2. **Assign identifiers in the order the criteria already appear**, per §1, then one mode each.
+3. **List every assignment for human review before saving** — identifier, mode, and why that mode. Step 4's manual-only approval applies here too.
+4. **Bind nothing.** Test groups come from `/create_plan` afterwards; a criterion that names a test here has been broken, not upgraded.
+
 ## Key Behaviors
 
 - **Do NOT suggest implementation approaches.** That's create_plan's job. If you catch yourself writing "we could implement this by...", stop and reframe as a requirement.
@@ -170,6 +179,7 @@ When defining requirements, you will be tempted to rationalize skipping rigor. T
 | "This is too small to need a spec." | If it's truly small, the spec takes 5 minutes. If it's not (and it usually isn't), you just saved a failed implementation. |
 | "I'll write the criteria now and label the modes later." | An unlabeled criterion is invisible to the pairing gate: nothing binds it, nothing accounts for it, and it can be dropped silently. Assign the identifier and the mode as you write each criterion. |
 | "The manual-only criteria are clearly fine — I'll approve them myself and note that I did." | Self-approval is not approval. `manual-only` is the one label the pairing gate cannot check for you, so a human signs off on the set and the spec records who and when. Under `ci_mode` you stop and report instead. |
+| "While I'm labeling this old criterion I may as well tighten its wording." | Then the upgrade changed what was agreed to, and nobody reviewing the diff can tell the label apart from the edit. Upgrading a legacy spec inserts the identifier and the mode and touches no criterion's sentence. |
 
 ## Integration with create_plan
 
@@ -193,6 +203,7 @@ Observable signs that you are drifting off this workflow. If you notice any of t
 - The spec has no explicit out-of-scope section
 - A criterion has no identifier or no mode line, or names a test — the pairing gate cannot read it, and naming tests here is the plan's job
 - A `manual-only` criterion is missing its reason, its steps, its pass/fail condition, or its named performer — or you are about to save the spec with no recorded human approval of the manual-only set
+- You are upgrading an older spec and its criteria are coming out reworded, or you decided it was legacy from its date rather than from the absence of mode lines in the file
 
 ## Verification
 
@@ -202,6 +213,7 @@ Before declaring the spec complete, confirm every item below. If any fails, the 
 - [ ] Every criterion carries a unique identifier and exactly one mode line, so the pairing gate can bind and account for it
 - [ ] No criterion names a test, a file path, or a framework — the pairing gate binds tests in the plan, never in the spec
 - [ ] Every `manual-only` criterion carries all four of its required elements, and the manual-only set has a recorded human approval — self-approval is not approval, and under `ci_mode: true` the run stopped instead
+- [ ] If this run upgraded a legacy spec, every original criterion's text survives the diff untouched, only identifiers and mode lines were inserted, and the assignments were listed for human review before saving
 - [ ] The "Assumptions I'm Making" block was presented to the user and confirmed or corrected
 - [ ] Scope boundaries state what is explicitly OUT of scope, not just what's in
 - [ ] No implementation decisions appear anywhere in the document

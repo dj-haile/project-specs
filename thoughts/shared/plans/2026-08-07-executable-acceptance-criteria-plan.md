@@ -658,6 +658,8 @@ Safe for CI: `scripts/validate.py:177-183` checks `specs.config.example.yaml` fo
 
 **2. `commands/core/create_plan.md` and `commands/core/implement_plan.md`** — no new lines; the legacy classification is defined once in the convention and both already link to it.
 
+**0. Size contingency invoked (Phase 6, pre-authorized).** `validate_plan.md` stood at 298 lines entering this phase, so the +~6 below would have breached the 300 ceiling. The Phase 6 contingency was applied: the "Validation Report" markdown template moved to `references/validation-report-template.md` and the command links to it. No normative text was shortened. `references/validation-report-template.md` is therefore an added file in this phase's set.
+
 **3. `commands/core/validate_plan.md`** (+~6) — classification keys on the spec's **own format**, never the run date: a spec containing zero lines matching the mode-line regex is `legacy-unlabeled` (AC-19). All three commands proceed without error. The report states the pairing gate was not enforced and why, and must never state or imply that it passed (AC-20). Verdict: `legacy-unenforced`.
 
 ### Success Criteria
