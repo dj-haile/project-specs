@@ -315,6 +315,8 @@ After structure and program design approval:
 
 4. **Name the evidence file on the line under the binding table.** Use the path shape in [criterion-binding](../../conventions/criterion-binding.md) §4. `/implement_plan` writes red and green records there and `/validate_plan` reads them from there, so the plan declaring it once is what keeps both ends pointed at one location.
 
+5. **Fill the stakes-domain column from the keyword table, not from your read of the risk.** The vocabulary is closed and the matching rule is mechanical — see [criterion-binding](../../conventions/criterion-binding.md) §3. Match its keywords against the criterion's own spec text; write `none` when nothing matches. Downstream this column is consumed, never recomputed: `/validate_plan` blocks a criterion carrying any non-`none` domain when the only evidence behind it is degraded, so a row you fill in loosely either blocks work that was fine or waves through work that was not.
+
 ### Step 6: Review
 
 1. **Present the draft plan location**:

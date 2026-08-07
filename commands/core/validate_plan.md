@@ -122,6 +122,13 @@ Take the verdict vocabulary and the overall-result rule from [criterion-binding]
 - A green record must be present, and its code-state reference must differ from the red record's. Identical references mean the pass was never shown to depend on the change.
 - A bound group with no red record, or whose red record shows the group passing, takes the blocking verdict. Name both the criterion and the group in the report.
 
+**Strength and stakes.** Copy each record's `strength` into the Strength column, and print a degraded record's `degraded_reason` beside it. Degraded evidence is reported as what it is: no tick mark that hides the reason, no summary line that lets it stand in for a run of the bound group alone.
+
+The stakes domain comes from the plan's binding row and is **read, never re-derived** — recomputing it from the criterion text would put judgment back inside the part of this report that has to come out identical every time. Then apply [criterion-binding](../../conventions/criterion-binding.md) §5's rule:
+
+- Stakes `none` and evidence degraded → labeled, not blocked.
+- Stakes anything else and the only evidence is degraded → the blocking verdict for that criterion. Name the domain that matched, and give the remediation: set `test_group_command` in `specs.config.yaml` and re-take the evidence.
+
 Read the records; do not infer them from the implementation session's narrative. These verdicts sit on top of the standing obligations rather than replacing them — the full suite must still pass and the [Definition of Done](../../references/definition-of-done.md) still applies, whatever the records say.
 
 ### Step 3: Generate Validation Report
@@ -206,6 +213,8 @@ When validating a plan, you will be tempted to rationalize incomplete verificati
 | "Every check the plan named passed, so I'll report success." | The plan's check list does not decide the result — the pairing gate does. One unbound criterion makes the run blocked no matter how green everything else came back. |
 | "Both records are there, so that criterion passes." | Open them. Three elements on each, and a green code state that differs from the red one. An incomplete record is an absent record, and absent red evidence blocks. |
 | "The group has no red record but the change is obviously correct." | Obvious correctness is the claim the gate is here to test. A group that never failed leaves the criterion blocked, however convincing the diff looks. |
+| "The evidence is degraded but the suite went red and green, so it counts the same." | It does not, and the report has to say so. Show the strength and the reason; on a criterion whose stakes domain is not `none`, degraded evidence is the pairing gate's blocking verdict, not a footnote. |
+| "This criterion reads high-stakes to me, so I'll upgrade its domain in the report." | The domain is the plan's column. Re-deriving it here makes two validators disagree on the same artifacts. If the row is wrong, say the row is wrong — do not quietly substitute your own reading. |
 
 ## Important Guidelines
 
@@ -251,6 +260,8 @@ Observable signs that you are drifting off this workflow:
 - You are softening findings to avoid contradicting the implementation session
 - You built the criterion accounting from the plan's phases rather than the spec's list — the pairing gate exists to catch the criteria the plan forgot
 - You marked a criterion's evidence acceptable without opening the record — whether the three elements are present, and whether red and green sit at different code states, is checked, never assumed
+- Your report shows a degraded record without its reason, or reads as though a full-suite run and a run of the bound group alone were the same thing
+- You worked out a criterion's stakes domain yourself instead of reading the plan's column, or let degraded evidence through on a criterion whose domain is not `none`
 
 ## Verification
 
@@ -265,3 +276,5 @@ A validation run is itself complete only when:
 - [ ] Any unbound automated criterion produced the pairing gate's blocking result, and the run was never reported as success while one remained
 - [ ] Each bound criterion's records were opened and checked for the three required elements and for red and green sitting at different code states
 - [ ] Every bound group that never failed produced the blocking verdict, with criterion and group named in the report
+- [ ] Every degraded record is shown with its reason and is nowhere presented as equal to evidence from the bound group alone
+- [ ] Each criterion's stakes domain was taken from the plan's binding row, and degraded evidence on any non-`none` domain produced the pairing gate's blocking verdict with the domain and the remediation named
