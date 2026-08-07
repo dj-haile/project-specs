@@ -229,7 +229,7 @@ cases, so every command in `CORE_ROUTED` has routing coverage.
 criterion: AC-24
 group: "scripts/run_evals.py::check_core_command_coverage"
 command: "python3 scripts/run_evals.py --check check_core_command_coverage"
-code_state: "pending-commit"   # PLACEHOLDER — replace with git:<40-hex sha> at commit time
+code_state: "git:f9cc6a11dc74eea9af3b5909bff6bcf16c2518c3"   # PLACEHOLDER — replace with git:<40-hex sha> at commit time
 result: "exit 0 — run_evals.py [check_core_command_coverage]: OK (all four core routed commands have a case file with >=1 positive and >=1 negative)"
 strength: single-group
 recorded_at: "2026-08-07"
