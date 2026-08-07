@@ -175,3 +175,42 @@ strength: single-group
 recorded_at: "2026-08-07"
 phase: 2
 ```
+
+## AC-22 — green
+
+```yaml
+criterion: AC-22
+group: "scripts/validate.py"
+command: "python3 scripts/validate.py"
+code_state: "git:d5070f7"
+result: "exit 0 — full structural validation green (26 files)"
+strength: single-group
+recorded_at: "2026-08-07"
+phase: 3
+```
+
+## AC-27 — green
+
+```yaml
+criterion: AC-27
+group: "scripts/validate.py::check_gate_sections"
+command: "python3 scripts/validate.py --check check_gate_sections"
+code_state: "git:d5070f7"
+result: "exit 0 — all four commands carry pairing-gate rows in Common Shortcuts / Red Flags / Verification"
+strength: single-group
+recorded_at: "2026-08-07"
+phase: 3
+```
+
+## AC-28 — green
+
+```yaml
+criterion: AC-28
+group: "scripts/validate.py::check_gate_single_source"
+command: "python3 scripts/validate.py --check check_gate_single_source"
+code_state: "git:d5070f7"
+result: "exit 0 — conventions/criterion-binding.md is the single normative source; four resolvable links; no duplicated gate paragraphs"
+strength: single-group
+recorded_at: "2026-08-07"
+phase: 3
+```
