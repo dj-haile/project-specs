@@ -116,6 +116,14 @@ Build the accounting from the **spec's** criterion list, never from the plan's r
 
 Take the verdict vocabulary and the overall-result rule from [criterion-binding](../../conventions/criterion-binding.md) §7. Two consequences to apply directly: an `automated` criterion with no bound group is blocked, and the report names its identifier; and the overall result is not success while any such criterion exists, however green the plan's own check list came back.
 
+**Evidence verdicts.** For every bound criterion, open its records in the evidence file the plan declares and judge them against §4:
+
+- A red record must be present and complete on all three required elements. Missing one makes the record absent.
+- A green record must be present, and its code-state reference must differ from the red record's. Identical references mean the pass was never shown to depend on the change.
+- A bound group with no red record, or whose red record shows the group passing, takes the blocking verdict. Name both the criterion and the group in the report.
+
+Read the records; do not infer them from the implementation session's narrative. These verdicts sit on top of the standing obligations rather than replacing them — the full suite must still pass and the [Definition of Done](../../references/definition-of-done.md) still applies, whatever the records say.
+
 ### Step 3: Generate Validation Report
 
 Create comprehensive validation summary:
@@ -196,6 +204,8 @@ When validating a plan, you will be tempted to rationalize incomplete verificati
 | "This deviation from the plan is an improvement, not a problem." | Document it anyway. Undocumented deviations compound. The next person reading the plan will be confused. |
 | "Manual testing isn't needed for backend-only changes." | Backend changes surface as user-visible behavior somewhere. Identify where and verify. |
 | "Every check the plan named passed, so I'll report success." | The plan's check list does not decide the result — the pairing gate does. One unbound criterion makes the run blocked no matter how green everything else came back. |
+| "Both records are there, so that criterion passes." | Open them. Three elements on each, and a green code state that differs from the red one. An incomplete record is an absent record, and absent red evidence blocks. |
+| "The group has no red record but the change is obviously correct." | Obvious correctness is the claim the gate is here to test. A group that never failed leaves the criterion blocked, however convincing the diff looks. |
 
 ## Important Guidelines
 
@@ -240,6 +250,7 @@ Observable signs that you are drifting off this workflow:
 - You are validating against the plan but never opened the original spec's acceptance criteria
 - You are softening findings to avoid contradicting the implementation session
 - You built the criterion accounting from the plan's phases rather than the spec's list — the pairing gate exists to catch the criteria the plan forgot
+- You marked a criterion's evidence acceptable without opening the record — whether the three elements are present, and whether red and green sit at different code states, is checked, never assumed
 
 ## Verification
 
@@ -252,3 +263,5 @@ A validation run is itself complete only when:
 - [ ] Findings are reported honestly, ordered by severity, including "no issues found" only when genuinely true
 - [ ] The pairing gate accounting holds exactly one record per spec criterion, built from the spec itself, with nothing omitted or merged
 - [ ] Any unbound automated criterion produced the pairing gate's blocking result, and the run was never reported as success while one remained
+- [ ] Each bound criterion's records were opened and checked for the three required elements and for red and green sitting at different code states
+- [ ] Every bound group that never failed produced the blocking verdict, with criterion and group named in the report

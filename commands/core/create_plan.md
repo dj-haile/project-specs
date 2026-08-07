@@ -224,6 +224,8 @@ After structure and program design approval:
 
 [One row per `automated` criterion, no group repeated. List `manual-only` criteria under `## Manual-Only Criteria` instead.]
 
+**Evidence file**: `{thoughts_path}/evidence/[YYYY-MM-DD]-[plan-slug].md`
+
 ## Implementation Approach
 
 [High-level strategy and reasoning]
@@ -310,6 +312,8 @@ After structure and program design approval:
 ````
 
 3. **Bind every automated criterion before the plan is complete.** Fill `## Criterion Bindings` per [criterion-binding](../../conventions/criterion-binding.md) §2–§3: one individually runnable named test group per `automated` criterion, no group serving two criteria, an invocation that runs exactly that group, and a stakes-domain value on every row. If any `automated` criterion is still unbound, do **not** declare the plan complete — report the unbound identifiers and stop.
+
+4. **Name the evidence file on the line under the binding table.** Use the path shape in [criterion-binding](../../conventions/criterion-binding.md) §4. `/implement_plan` writes red and green records there and `/validate_plan` reads them from there, so the plan declaring it once is what keeps both ends pointed at one location.
 
 ### Step 6: Review
 
