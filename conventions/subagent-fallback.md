@@ -44,3 +44,37 @@ When a command says *"spawn the **codebase-locator** agent (see
 subagent-fallback)"* — the link being `../../conventions/subagent-fallback.md`
 relative to the command's location — this contract is what that parenthetical
 refers to.
+
+## Sub-task Spawning Best Practices
+
+*Applies when `capabilities.subagents: true`. When subagents are unavailable, follow the same intent inline per the contract above.*
+
+When spawning research sub-tasks:
+
+1. **Spawn multiple tasks in parallel** for efficiency
+2. **Each task should be focused** on a specific area
+3. **Provide detailed instructions** including:
+   - Exactly what to search for
+   - Which directories to focus on
+   - What information to extract
+   - Expected output format
+4. **Be EXTREMELY specific about directories**:
+   - Include the full path context in your prompts
+5. **Specify read-only tools** to use
+6. **Request specific file:line references** in responses
+7. **Wait for all tasks to complete** before synthesizing
+8. **Verify sub-task results**:
+   - If a sub-task returns unexpected results, spawn follow-up tasks
+   - Cross-check findings against the actual codebase
+   - Don't accept results that seem incorrect
+
+Example of spawning multiple tasks:
+```python
+# Spawn these tasks concurrently:
+tasks = [
+    Task("Research database schema", db_research_prompt),
+    Task("Find API patterns", api_research_prompt),
+    Task("Investigate UI components", ui_research_prompt),
+    Task("Check test patterns", test_research_prompt)
+]
+```
