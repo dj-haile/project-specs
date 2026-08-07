@@ -15,7 +15,8 @@ Create comprehensive pull request descriptions that follow your repository's tem
    - `pr_template_path`: path to PR template file (if specified)
    - `thoughts_directory`: true/false (whether to save to thoughts/)
    - `thoughts_path`: path to thoughts directory (if enabled)
-3. Apply appropriate behavior based on config
+3. **Detect a PR stack**: check for a stack map file at `{thoughts_path}/prs/*-stack-map.md` matching the current feature, and confirm with `gh stack view`. If a stack exists, follow **Stack-Aware Mode** below. If not, proceed normally — nothing changes.
+4. Apply appropriate behavior based on config
 
 ## Behavior
 
@@ -29,6 +30,20 @@ Create comprehensive pull request descriptions that follow your repository's tem
 - Use built-in default PR template
 - Save to project root or user-specified location
 - Display description in session output
+
+## Stack-Aware Mode
+
+Applies only when a stack exists (created by `/stack_pr` — see [conventions/pr-decomposition.md](../../conventions/pr-decomposition.md)). With no stack, this section is inert and behavior is identical to the single-PR flow below.
+
+When a stack is detected:
+
+1. **One PR per layer**, not one PR for the whole feature. Iterate the layers bottom-up from the stack map.
+2. **Base branches chain**: layer 1 targets the trunk (`default_base_branch`); every higher layer targets the layer directly below it. Verify with `gh stack view` before creating PRs — a mis-based PR shows the whole stack's diff and defeats the decomposition.
+3. **Stack map at the top of every PR**: prepend the stack table from the stack map file, marking the current layer, so reviewers see where this PR sits in the chain.
+4. **Layer-scoped review questions**: include that layer's questions from the stack map in a `## Review Focus` section. Do not repeat other layers' questions.
+5. **Scope each description to its layer's diff**: `git diff {parent_layer}...{layer}`, not the full feature diff.
+6. Prefer `gh stack submit` to push branches and open/update the PRs as a linked stack; fall back to per-branch `gh pr create --base {parent_layer}` if unavailable.
+7. When saving descriptions to `{thoughts_path}/prs/`, use one file per layer: `{branch-name}-description.md`.
 
 ## Process
 
@@ -172,6 +187,10 @@ Fixes memory leak in WebSocket connection cleanup during component unmount.
 ## Summary
 Updates API documentation with new OAuth2 endpoint examples and migration guide.
 ```
+
+## Suggest Stacking When Oversized
+
+If no stack exists but the diff crosses the thresholds in [conventions/pr-decomposition.md](../../conventions/pr-decomposition.md) (>500 lines, >3 files across more than one layer, or >2 plan phases), suggest running `/stack_pr` first — name the threshold and the actual numbers. Suggest, don't require: if the user declines or the session is CI-mode, note it and produce the single PR as usual.
 
 ## Error Handling
 
