@@ -58,6 +58,10 @@ Given [precondition] when [action] then [expected result].
 
 Assign identifiers and modes per [criterion-binding](../../conventions/criterion-binding.md) §1, which owns the identifier scheme, the parse rule, and the extra elements a `manual-only` criterion carries. Modes come from the closed set `automated` | `manual-only`, one per criterion — zero, two, or an unrecognized value makes the spec incomplete.
 
+A `manual-only` criterion is not finished at the mode line. It carries all four of §1's labeled elements — why automation is not feasible, the exact steps to run, the observable condition that decides pass or fail, and who performs it. Any one of them missing makes the spec incomplete, exactly as a missing mode line does.
+
+When any criterion is `manual-only`, the spec also carries a `## Manual-Only Approval` section recording `approved_by:`, `approved_at:`, and the identifiers approved. Step 4 covers how that approval is obtained.
+
 Stay solution-neutral: name no test, file path, or framework in any criterion. Downstream, `/create_plan` binds each `automated` criterion to one test group; the spec supplies the identifier and the mode, nothing more.
 
 Every criterion must be verifiable. Prefer automatable criteria where possible. If a criterion can't be tested, it's not a real requirement — rewrite it until it is.
@@ -132,10 +136,11 @@ Please review:
 
 1. Resolve all open questions (or explicitly defer with user agreement)
 2. Ensure every acceptance criterion is testable
-3. Save the spec document:
+3. **Get the manual-only set approved before saving.** Present every `manual-only` criterion together with its stated reason for not being automated, and wait for a human's approval. Record it in `## Manual-Only Approval` — who approved, when, and which identifiers. Until that record exists the spec does not save as complete. Under `ci_mode: true` in `specs.config.yaml`, never self-approve: stop, report the unapproved manual-only set, and leave it for a human to close.
+4. Save the spec document:
    - If `thoughts_directory: true`: save to `{thoughts_path}/specs/YYYY-MM-DD-description.md`
    - Otherwise: save to the location the user specified
-4. Present the final spec with:
+5. Present the final spec with:
 ```
 Spec complete and saved to [path].
 
@@ -164,6 +169,7 @@ When defining requirements, you will be tempted to rationalize skipping rigor. T
 | "The user knows what they want." | The user knows the problem. The spec translates that into verifiable outcomes. |
 | "This is too small to need a spec." | If it's truly small, the spec takes 5 minutes. If it's not (and it usually isn't), you just saved a failed implementation. |
 | "I'll write the criteria now and label the modes later." | An unlabeled criterion is invisible to the pairing gate: nothing binds it, nothing accounts for it, and it can be dropped silently. Assign the identifier and the mode as you write each criterion. |
+| "The manual-only criteria are clearly fine — I'll approve them myself and note that I did." | Self-approval is not approval. `manual-only` is the one label the pairing gate cannot check for you, so a human signs off on the set and the spec records who and when. Under `ci_mode` you stop and report instead. |
 
 ## Integration with create_plan
 
@@ -186,6 +192,7 @@ Observable signs that you are drifting off this workflow. If you notice any of t
 - You are filling in an ambiguous requirement with a guess instead of listing it as an assumption
 - The spec has no explicit out-of-scope section
 - A criterion has no identifier or no mode line, or names a test — the pairing gate cannot read it, and naming tests here is the plan's job
+- A `manual-only` criterion is missing its reason, its steps, its pass/fail condition, or its named performer — or you are about to save the spec with no recorded human approval of the manual-only set
 
 ## Verification
 
@@ -194,6 +201,7 @@ Before declaring the spec complete, confirm every item below. If any fails, the 
 - [ ] Every acceptance criterion has a clear pass/fail test (automated preferred, manual acceptable)
 - [ ] Every criterion carries a unique identifier and exactly one mode line, so the pairing gate can bind and account for it
 - [ ] No criterion names a test, a file path, or a framework — the pairing gate binds tests in the plan, never in the spec
+- [ ] Every `manual-only` criterion carries all four of its required elements, and the manual-only set has a recorded human approval — self-approval is not approval, and under `ci_mode: true` the run stopped instead
 - [ ] The "Assumptions I'm Making" block was presented to the user and confirmed or corrected
 - [ ] Scope boundaries state what is explicitly OUT of scope, not just what's in
 - [ ] No implementation decisions appear anywhere in the document

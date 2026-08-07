@@ -116,6 +116,8 @@ Build the accounting from the **spec's** criterion list, never from the plan's r
 
 Take the verdict vocabulary and the overall-result rule from [criterion-binding](../../conventions/criterion-binding.md) §7. Two consequences to apply directly: an `automated` criterion with no bound group is blocked, and the report names its identifier; and the overall result is not success while any such criterion exists, however green the plan's own check list came back.
 
+**Manual-only criteria.** No manual-only criterion ever passes on its own: only a human's recorded verdict turns it into a pass or a fail. Absent that verdict it reads `awaiting-human-verdict` and the overall result is not success — say plainly that what is missing is a human's sign-off, so it never reads as a defect the gate caught. Under `ci_mode: true` the same criterion reads `deferred` instead: still non-success, still visibly different from a defect block, and **non-halting** — finish the run, list the deferred identifiers, and leave them for a human to close.
+
 **Evidence verdicts.** For every bound criterion, open its records in the evidence file the plan declares and judge them against §4:
 
 - A red record must be present and complete on all three required elements. Missing one makes the record absent.
@@ -224,6 +226,7 @@ When validating a plan, you will be tempted to rationalize incomplete verificati
 | "The group has no red record but the change is obviously correct." | Obvious correctness is the claim the gate is here to test. A group that never failed leaves the criterion blocked, however convincing the diff looks. |
 | "The evidence is degraded but the suite went red and green, so it counts the same." | It does not, and the report has to say so. Show the strength and the reason; on a criterion whose stakes domain is not `none`, degraded evidence is the pairing gate's blocking verdict, not a footnote. |
 | "I re-ran the group I had doubts about — that covers the sampling requirement." | It does not. The pairing gate's sample is derived from the artifacts and shown, not chosen. A hand-picked re-run tells the next validator nothing about whether they would have landed on the same group. |
+| "Nobody is going to run the manual checks, so I'll mark them passed and move on." | Then the pairing gate reports a pass no human ever gave. An unresolved manual-only criterion is `awaiting-human-verdict`, or `deferred` under `ci_mode` — never success, and never dressed up as a defect block either. |
 | "This criterion reads high-stakes to me, so I'll upgrade its domain in the report." | The domain is the plan's column. Re-deriving it here makes two validators disagree on the same artifacts. If the row is wrong, say the row is wrong — do not quietly substitute your own reading. |
 
 ## Important Guidelines
@@ -274,6 +277,7 @@ Observable signs that you are drifting off this workflow:
 - You worked out a criterion's stakes domain yourself instead of reading the plan's column, or let degraded evidence through on a criterion whose domain is not `none`
 - You chose which group to re-run instead of deriving it, or left the derivation out of the report so a reader cannot land on the same group
 - A re-run disagreed with its record and you refreshed the record instead of treating that evidence as absent
+- You passed a manual-only criterion no human signed off on, let an unresolved one read as a defect block, or halted a `ci_mode` run over one instead of deferring it
 
 ## Verification
 
@@ -290,4 +294,5 @@ A validation run is itself complete only when:
 - [ ] Every bound group that never failed produced the blocking verdict, with criterion and group named in the report
 - [ ] Every degraded record is shown with its reason and is nowhere presented as equal to evidence from the bound group alone
 - [ ] Each criterion's stakes domain was taken from the plan's binding row, and degraded evidence on any non-`none` domain produced the pairing gate's blocking verdict with the domain and the remediation named
+- [ ] Every manual-only criterion carries a human's recorded verdict, or reads `awaiting-human-verdict` — `deferred` under `ci_mode: true`, which does not halt the run — with the overall result non-success either way
 - [ ] The re-run set was derived by the convention's rule, its derivation shown, and every selected record re-run at its stored code state; evidence that could not be re-run or that contradicted its record was treated as absent and blocked
