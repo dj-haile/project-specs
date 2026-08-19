@@ -187,7 +187,7 @@ A failing eval means a description needs sharpening, not that the test is wrong 
 
 CI (`.github/workflows/validate.yml`) runs `validate.py` and `run_evals.py` on every pull request, plus an installer smoke test that runs `setup.sh --yes` against a fresh project for all three providers and asserts the expected install layout. This protects the core promise — one neutral source installs everywhere — automatically.
 
-Two generated artifacts are kept in sync by CI drift jobs: `skills/.curated/` (regenerate with `python3 scripts/build_skills.py`) and `standards/statements.json` (regenerate with `python3 standards/extractor.py`). Both jobs fail the PR if the committed file doesn't match its sources.
+CI also keeps two generated files honest: `skills/.curated/` (regenerate with `python3 scripts/build_skills.py`) and `standards/statements.json` (regenerate with `python3 standards/extractor.py`). If a PR edits the sources without regenerating the file, the matching drift job fails it.
 
 For scripted or CI installs, `setup.sh` accepts `--yes` to run non-interactively (overwrites an existing install, skips optional prompts).
 
@@ -197,11 +197,11 @@ The conventions in `conventions/` don't just document how the framework should b
 
 It works in three parts:
 
-1. **Conventions carry the rules.** A convention opts in with front matter (`domain`, `status`, `sdlc_stage`) and writes its requirements with bold RFC 2119 keywords — "Engineers **MUST** stack PRs when the diff exceeds 1,000 lines." The doc stays readable; the keywords make the rules extractable.
-2. **The extractor makes them machine-readable.** `standards/extractor.py` parses opted-in conventions into `standards/statements.json` — one statement per SHOULD/MUST sentence, each with a stable slug, its source file, and its stage. The registry is committed, so agents query it without running anything.
-3. **Commands check them at the point of work.** `/check_standards` filters the registry to the current workflow stage and reports violations by severity. It runs standalone, and automatically inside `/create_plan` (planning standards, as recommendations), `/validate_plan` (implementation standards — a MUST violation on an enforced convention fails validation), and `/describe_pr` (review standards — warns before creating the PR).
+1. **Conventions carry the rules.** A convention opts in with front matter (`domain`, `status`, `sdlc_stage`) and states each rule as a sentence with a bold **MUST** or **SHOULD** — the RFC 2119 convention for requirement keywords. For example: "Engineers **MUST** stack PRs when the diff exceeds 1,000 lines." The doc stays readable prose; the keywords are what makes the rules extractable.
+2. **The extractor makes the rules machine-readable.** `standards/extractor.py` parses opted-in conventions into `standards/statements.json`: one statement per MUST/SHOULD sentence, each with a stable slug, its source file, and its workflow stage. The registry is committed, so agents query it without running anything.
+3. **Commands check the rules at the point of work.** `/check_standards` filters the registry to the stage you're at and reports violations by severity. You can run it directly, but mostly it runs for you. `/create_plan` surfaces planning findings as recommendations. `/validate_plan` fails validation when the implementation breaks an enforced MUST rule. `/describe_pr` warns before creating a PR that breaks a review rule.
 
-Standards have a lifecycle: they enter as `approved` (findings surface, nothing blocks) and are promoted to `enforced` once the team has absorbed them. Enforcement strictness is tunable per project via the `standards:` block in `specs.config.yaml`, and projects can waive a specific standard for a specific change with a recorded reason. The full lifecycle — proposing, promoting, waiving, ownership — is in [conventions/standards-governance.md](./conventions/standards-governance.md).
+A new standard starts as `approved`: its findings show up, but nothing blocks. Once the team has absorbed it, promote it to `enforced`, where breaking a MUST rule actually stops work. Each project chooses how hard each rule bites through the `standards:` block in `specs.config.yaml`, and any change can opt out of a specific rule by recording a waiver with a reason. The full lifecycle — proposing, promoting, waiving, ownership — lives in [conventions/standards-governance.md](./conventions/standards-governance.md).
 
 ## Definition of Done
 
