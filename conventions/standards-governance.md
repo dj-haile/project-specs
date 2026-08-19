@@ -12,7 +12,7 @@ The framework's conventions double as its standards. A convention doc stays huma
 
 ## How a convention becomes a standard
 
-A convention opts in by carrying three front matter keys:
+To make a convention enforceable, start its file with three metadata keys (the YAML front matter):
 
 ```yaml
 ---
@@ -33,7 +33,7 @@ A convention without front matter contributes no statements — it is documentat
 
 ## The extractor workflow
 
-`standards/extractor.py` parses opted-in conventions and writes `standards/statements.json` — the registry agents query at runtime, committed so no one runs the extractor at runtime.
+`standards/extractor.py` reads every enforceable convention and writes `standards/statements.json`. The output file is committed, so agents read it at runtime instead of running the extractor.
 
 Engineers **MUST** regenerate `standards/statements.json` and commit it in the same PR as any convention edit that adds, removes, or rewords a bold SHOULD/MUST sentence:
 

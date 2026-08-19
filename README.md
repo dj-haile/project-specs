@@ -73,7 +73,7 @@ agent sources by `scripts/build_skills.py` (CI enforces they stay in sync).
 project-specs is built on three tightly coupled layers:
 
 - **Agents** (agents/) — Orchestrators that read specs.config.yaml and dispatch work to commands. Seven standard agents handle codebase analysis, pattern discovery, thought management, web research, and adversarial plan review.
-- **Commands** (commands/) — Reusable workflows that compose skills and enforce consistent patterns. 12 core commands (create_plan, implement_plan, validate_plan, etc.) plus 7 integration commands for ticket systems and team workflows.
+- **Commands** (commands/) — Reusable workflows that compose skills and enforce consistent patterns. 14 core commands (create_plan, implement_plan, validate_plan, etc.) plus 7 integration commands for ticket systems and team workflows.
 - **Skills** (skills/) — Atomic, reusable operations (file search, code review, test execution) invoked by commands. Skills are versioned and namespaced.
 
 ## Supported Providers
@@ -101,7 +101,9 @@ Two coupling points degrade gracefully by convention: subagent spawning ([subage
 | `implement_plan` | Execute implementation steps with validation checkpoints |
 | `validate_plan` | Run tests, linting, type checks against plan deliverables |
 | `commit` | Commit changes with conventional commit messages and co-author attribution |
+| `stack_pr` | Decompose a large change into a stack of dependency-ordered, reviewable branches |
 | `describe_pr` | Generate pull request title and body from commit history |
+| `check_standards` | Check a plan, diff, or PR against the extracted standards registry |
 | `debug` | Reproduce and analyze runtime errors or test failures |
 | `create_handoff` | Package current context for another Claude session |
 | `resume_handoff` | Load prior handoff context and continue work |
@@ -185,7 +187,21 @@ A failing eval means a description needs sharpening, not that the test is wrong 
 
 CI (`.github/workflows/validate.yml`) runs `validate.py` and `run_evals.py` on every pull request, plus an installer smoke test that runs `setup.sh --yes` against a fresh project for all three providers and asserts the expected install layout. This protects the core promise — one neutral source installs everywhere — automatically.
 
+CI also keeps two generated files honest: `skills/.curated/` (regenerate with `python3 scripts/build_skills.py`) and `standards/statements.json` (regenerate with `python3 standards/extractor.py`). If a PR edits the sources without regenerating the file, the matching drift job fails it.
+
 For scripted or CI installs, `setup.sh` accepts `--yes` to run non-interactively (overwrites an existing install, skips optional prompts).
+
+## Standards Enforcement
+
+Agents check plans, implementations, and PRs against the rules written in `conventions/`. You write a rule once, as a sentence a person can read, and the commands apply it at each step of the workflow where it matters. This is the model Cloudflare uses (they call theirs the Codex) to enforce engineering standards with AI.
+
+It works in three parts:
+
+1. **Conventions carry the rules.** To make a convention enforceable, add three metadata lines at the top of its file (`domain`, `status`, `sdlc_stage`) and write each rule as a sentence with a bold **MUST** or **SHOULD** — the RFC 2119 convention for requirement keywords. For example: "Engineers **MUST** stack PRs when the diff exceeds 1,000 lines." The doc stays readable prose. The bold keywords tell the extractor which sentences are rules.
+2. **The extractor makes the rules machine-readable.** `standards/extractor.py` reads the enforceable conventions and writes `standards/statements.json`: one entry per MUST/SHOULD sentence. Each entry carries the rule's text, its source file, its workflow stage, and a short ID built from the rule's own words, so the ID doesn't change when the rest of the doc does. The file is committed to git, so agents read it directly instead of running the extractor.
+3. **Commands check the rules at the point of work.** `/check_standards` filters the registry to the stage you're at and reports violations by severity. You can run it directly, but mostly it runs for you. `/create_plan` surfaces planning findings as recommendations. `/validate_plan` fails validation when the implementation breaks an enforced MUST rule. `/describe_pr` warns before creating a PR that breaks a review rule.
+
+A new standard starts as `approved`: its findings show up, but nothing blocks. Once the team has absorbed it, promote it to `enforced`, where breaking a MUST rule actually stops work. Each project chooses how hard each rule bites through the `standards:` block in `specs.config.yaml`, and any change can opt out of a specific rule by recording a waiver with a reason. The full lifecycle — proposing, promoting, waiving, ownership — lives in [conventions/standards-governance.md](./conventions/standards-governance.md).
 
 ## Definition of Done
 
@@ -206,7 +222,7 @@ See [skills/_template/SKILL.md](./skills/_template/SKILL.md) for a complete anno
 
 Common workflows are documented in [conventions/workflow-patterns.md](./conventions/workflow-patterns.md):
 
-- **Spec-First — Requirements → plan → implement → validate
+- **Spec-First** — Requirements → plan → implement → validate
 - **Iterative Planning** — Multi-round refinement before implementation
 - **Debugging in Production** — Rapid error reproduction and fix
 - **Codebase Onboarding** — New team member analysis and context-building
