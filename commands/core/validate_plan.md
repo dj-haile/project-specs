@@ -143,6 +143,15 @@ The stakes domain comes from the plan's binding row and is **read, never re-deri
 
 Read the records; do not infer them from the implementation session's narrative. These verdicts sit on top of the standing obligations rather than replacing them — the full suite must still pass and the [Definition of Done](../../references/definition-of-done.md) still applies, whatever the records say.
 
+### Step 2.7: Standards Compliance
+
+Run the standards check defined in [check_standards](check_standards.md) against the implementation, filtered to `sdlc_stage: implementation` and `all`:
+
+1. Load the statements registry (default `standards/statements.json`). Skip this step — noting the skip in the report — if `standards.enabled` is `false` or the registry is absent.
+2. Assess the implementation and diff against each relevant statement.
+3. Add the findings to the Validation Report under a "Standards Compliance" section, grouped by severity with slugs and source files.
+4. Any blocking finding (by default, a MUST violation on an `enforced` standard — see the enforcement table in [check_standards](check_standards.md)) fails the validation. Recommendations are reported but do not block.
+
 ### Step 3: Generate Validation Report
 
 Create a comprehensive validation summary in the shape given by the [validation report template](../../references/validation-report-template.md). Keep its section order and fill every section, including the criterion accounting — a section left out reads as a section with nothing to report.
@@ -234,6 +243,7 @@ A validation run is itself complete only when:
 - [ ] Each spec acceptance criterion has an explicit pass/fail verdict
 - [ ] The standing [Definition of Done](../../references/definition-of-done.md) checklist was applied
 - [ ] Findings are reported honestly, ordered by severity, including "no issues found" only when genuinely true
+- [ ] The standards compliance check ran (or its skip is noted in the report), and the validation was not reported as passed while a blocking standards finding stood
 - [ ] The pairing gate accounting holds exactly one record per spec criterion, built from the spec itself, with nothing omitted or merged
 - [ ] Any unbound automated criterion produced the pairing gate's blocking result, and the run was never reported as success while one remained
 - [ ] Each bound criterion's records were opened and checked for the three required elements and for red and green sitting at different code states

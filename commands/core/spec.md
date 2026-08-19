@@ -137,10 +137,11 @@ Please review:
 1. Resolve all open questions (or explicitly defer with user agreement)
 2. Ensure every acceptance criterion is testable
 3. **Get the manual-only set approved before saving.** Present every `manual-only` criterion together with its stated reason for not being automated, and wait for a human's approval. Record it in `## Manual-Only Approval` — who approved, when, and which identifiers. Until that record exists the spec does not save as complete. Under `ci_mode: true` in `specs.config.yaml`, never self-approve: stop, report the unapproved manual-only set, and leave it for a human to close.
-4. Save the spec document:
+4. **Note any standards conflicts.** Run the check defined in [check_standards](../core/check_standards.md) filtered to `sdlc_stage: planning` and `all`, and check whether any acceptance criterion conflicts with an existing standard. Surface conflicts as a note in the spec — never block spec creation on them. Skip silently if `standards.enabled` is `false` or the registry is absent.
+5. Save the spec document:
    - If `thoughts_directory: true`: save to `{thoughts_path}/specs/YYYY-MM-DD-description.md`
    - Otherwise: save to the location the user specified
-5. Present the final spec with:
+6. Present the final spec with:
 ```
 Spec complete and saved to [path].
 

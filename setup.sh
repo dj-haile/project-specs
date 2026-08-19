@@ -356,6 +356,19 @@ if [[ -d "$SCRIPT_DIR/conventions" ]]; then
   print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
 fi
 
+# --- Install standards registry + extractor ----------------------------------
+# Commands check artifacts against standards/statements.json (see
+# conventions/standards-governance.md). Installed at the project root to match
+# the default standards.statements_path in specs.config.yaml. Individual file
+# copies (no rm -rf): the target may keep its own files in standards/.
+if [[ -d "$SCRIPT_DIR/standards" ]]; then
+  STD_DEST="$TARGET_PATH/standards"
+  mkdir -p "$STD_DEST"
+  cp "$SCRIPT_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
+  cp "$SCRIPT_DIR/standards/statements.json" "$STD_DEST/statements.json"
+  print_success "Installed standards registry → standards/"
+fi
+
 # --- Provider-specific artifacts --------------------------------------------
 
 # Root instructions file (e.g. Codex/Cursor AGENTS.md)
