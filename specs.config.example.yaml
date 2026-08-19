@@ -77,6 +77,22 @@ test_group_command: ""              # e.g. "pytest -q {file}::{name}" | "npm tes
 # full-suite fallback when test_group_command is unset.
 test_suite_command: ""              # e.g. "pytest -q" | "npm test"
 
+# --- Standards Enforcement ---
+# Conventions carrying SHOULD/MUST statements are extracted by
+# standards/extractor.py into a statements registry that /check_standards (and
+# the commands wired to it) query. See conventions/standards-governance.md.
+# The enforcement matrix maps each statement level x convention status to a
+# treatment: block | warn | ignore. Defaults below match the governance
+# lifecycle; a team just adopting the framework can set everything to "warn".
+standards:
+  enabled: true
+  statements_path: "standards/statements.json"
+  enforcement:
+    must_on_enforced: block         # MUST violation on an enforced convention
+    should_on_enforced: warn        # SHOULD violation on an enforced convention
+    must_on_approved: warn          # MUST violation on an approved convention
+    should_on_approved: ignore      # SHOULD violation on an approved convention
+
 # --- CI/CD ---
 ci_mode: false                      # true = non-interactive (no user prompts)
 ci_commit_prefix: "ci: "            # Prefix for CI-generated commits

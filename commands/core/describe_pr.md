@@ -45,6 +45,15 @@ When a stack is detected:
 6. Prefer `gh stack submit` to push branches and open/update the PRs as a linked stack; fall back to per-branch `gh pr create --base {parent_layer}` if unavailable.
 7. When saving descriptions to `{thoughts_path}/prs/`, use one file per layer: `{branch-name}-description.md`.
 
+## Pre-Flight Standards Check
+
+Before creating the PR, run the standards check defined in [check_standards](check_standards.md) against the diff:
+
+1. Load the statements registry (default `standards/statements.json`), filtered to `sdlc_stage: review` and `all`. Skip silently if `standards.enabled` is `false` or the registry is absent.
+2. Check the diff and PR structure against the review-stage statements (PR size, stacking thresholds, naming and commit conventions).
+3. If blocking findings exist (by default, MUST violations on `enforced` standards): warn the user with the findings — slug, evidence, source file — and ask whether to proceed. In CI-mode, do not block: note the findings in the PR description under a "Standards Findings" heading and continue.
+4. Non-blocking findings go in the session output as recommendations; include them in the PR description only if the user asks.
+
 ## Process
 
 1. **Analyze changes**

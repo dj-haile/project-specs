@@ -319,6 +319,12 @@ After structure and program design approval:
 
 ### Step 6: Review
 
+0. **Check the plan against planning-stage standards**: run the check defined in
+   [check_standards](check_standards.md), filtered to `sdlc_stage: planning` and
+   `all`, and surface any findings as recommendations inside the plan document
+   (skip silently if `standards.enabled` is `false` or the registry is absent).
+   Findings here never block plan creation.
+
 1. **Present the draft plan location**:
    ```
    I've created the initial implementation plan at:
