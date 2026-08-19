@@ -289,6 +289,48 @@ def check_gate_single_source() -> None:
                                  f"verbatim in {where}: '{head}…'")
 
 
+def check_standards_registry() -> None:
+    """standards/statements.json must parse, carry unique slugs, valid level/
+    status/sdlc_stage values, and point only at conventions that exist. The
+    registry is the artifact /check_standards queries at runtime, so a broken
+    entry is an enforcement gap, not a style issue. Freshness (registry matches
+    the conventions' current SHOULD/MUST text) is CI's drift job:
+    `python3 standards/extractor.py --check`."""
+    import json
+    rel = "standards/statements.json"
+    path = ROOT / rel
+    if not path.exists():
+        err(rel, "missing — run: python3 standards/extractor.py")
+        return
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        err(rel, f"invalid JSON: {e}")
+        return
+    stmts = doc.get("statements")
+    if not isinstance(stmts, list):
+        err(rel, "'statements' must be a list")
+        return
+    seen = set()
+    for i, s in enumerate(stmts):
+        where = f"statements[{i}]"
+        slug = s.get("slug", "")
+        if not slug:
+            err(rel, f"{where}: missing slug")
+        elif slug in seen:
+            err(rel, f"{where}: duplicate slug '{slug}'")
+        seen.add(slug)
+        if s.get("level") not in {"MUST", "SHOULD"}:
+            err(rel, f"{where} ({slug}): level must be MUST|SHOULD")
+        if s.get("status") not in {"enforced", "approved"}:
+            err(rel, f"{where} ({slug}): status must be enforced|approved")
+        if s.get("sdlc_stage") not in {"planning", "implementation", "review", "all"}:
+            err(rel, f"{where} ({slug}): invalid sdlc_stage")
+        src = s.get("source", "")
+        if not src or not (ROOT / src).exists():
+            err(rel, f"{where} ({slug}): source '{src}' does not exist")
+
+
 def check_command_size_budget() -> None:
     """Every path in SIZE_BUDGET must stay at or under its line ceiling,
     measured the way `wc -l` measures it (newline count)."""
@@ -359,6 +401,7 @@ CHECKS: "dict[str, Callable[[], None]]" = {
     "check_links":               _run_links,
     "check_gate_sections":       check_gate_sections,
     "check_gate_single_source":  check_gate_single_source,
+    "check_standards_registry":  check_standards_registry,
     "check_command_size_budget": check_command_size_budget,
 }
 

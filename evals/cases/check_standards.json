@@ -1,0 +1,14 @@
+{
+  "command": "check_standards",
+  "trigger": {
+    "positive": [
+      { "prompt": "check this PR against our engineering standards", "top_k": 1 },
+      { "prompt": "run a standards check on my plan", "top_k": 1 },
+      { "prompt": "are there any standards violations in this diff", "top_k": 1 }
+    ],
+    "negative": [
+      { "prompt": "review my changes against the style guide before I merge", "owner": "local_review" },
+      { "prompt": "validate the implementation against the plan", "owner": "validate_plan" }
+    ]
+  }
+}

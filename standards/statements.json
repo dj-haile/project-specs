@@ -1,0 +1,384 @@
+{
+  "version": "1.0",
+  "extracted_at": "2026-08-16T13:15:43Z",
+  "statements": [
+    {
+      "slug": "must-acceptance-criterion-bound-exactly-individually-runnable-named",
+      "source": "conventions/criterion-binding.md",
+      "domain": "verification",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Every automated acceptance criterion MUST be bound to exactly one individually runnable named test group, and MUST carry re-runnable evidence of that group failing before the change and passing after it.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-not-spec-criterion-name-test-file-path-test",
+      "source": "conventions/criterion-binding.md",
+      "domain": "verification",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "A spec criterion MUST NOT name a test, a file path, or a test framework — tests are named by the plan, never by the spec.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-not-test-group-bound-more-criterion",
+      "source": "conventions/criterion-binding.md",
+      "domain": "verification",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Injectivity is checked on this column: a test group MUST NOT be bound to more than one criterion.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-evidence-record-contain-command-codestate-result-three",
+      "source": "conventions/criterion-binding.md",
+      "domain": "verification",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Every evidence record MUST contain command, code_state, and result — the three required elements.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-records-codestate-differ-red-records-same-criterion",
+      "source": "conventions/criterion-binding.md",
+      "domain": "verification",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Red and green must differ. The green record's code_state MUST differ from the red record's for the same criterion.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-agent-filenames-use-kebab-case",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Agent filenames MUST use kebab-case",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-agents-include-yaml-frontmatter-name-description",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Agents MUST include YAML frontmatter with name, description, tools, and model fields.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-frontmatter-name-match-file-stem-model-value",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "The frontmatter name MUST match the file stem, and the model value MUST be a semantic tier (planning, analysis, or quick), never a literal model name.",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-agent-names-descriptive-but-concise-2-3-words",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Agent names SHOULD be descriptive but concise (2-3 words)",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-not-agent-names-project-specific-keep-agents-reusable",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Agent names MUST NOT be project-specific (keep agents reusable)",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-command-filenames-use-snakecase",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Command filenames MUST use snake_case",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-commands-include-yaml-frontmatter-name-description",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Commands MUST include YAML frontmatter with name, description, and model fields, where model is a semantic tier",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-skill-directories-use-kebab-case",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Skill directories MUST use kebab-case",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-every-skill-directory-containing-skillmd-file-optional",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Every skill MUST be a directory containing a SKILL.md file, with optional supporting files alongside it",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-thoughts-files-use-timestamped-pattern-longer-lived-documents",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Session-specific thoughts files SHOULD use the timestamped pattern, and longer-lived documents SHOULD use the date-only pattern.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-not-new-commands-use-nt-suffix-control-behavior",
+      "source": "conventions/naming-conventions.md",
+      "domain": "structure",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "New commands MUST NOT use the _nt suffix; control the behavior through configuration instead",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-engineers-stack-prs-diff-exceeds-500",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "SHOULD",
+      "text": "Engineers SHOULD stack PRs when the diff exceeds 500 lines, touches more than 3 files across more than one architectural layer (data/API/UI), or comes from an implementation plan with more than 2 phases.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-engineers-stack-prs-diff-exceeds-1000",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "MUST",
+      "text": "Engineers MUST stack PRs when the diff exceeds 1,000 lines.",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-validateplan-describepr-suggest-running-stackpr-stacking-threshold",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "SHOULD",
+      "text": "Commands that see the diff (/implement_plan, /validate_plan, /describe_pr) SHOULD suggest running /stack_pr when a stacking threshold is crossed, stating which threshold and the current numbers.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-not-commands-auto-stack-must-not-block-stacking",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "MUST",
+      "text": "Commands MUST NOT auto-stack, and MUST NOT block on the stacking suggestion in CI-mode; note it in output and continue.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-stack-layers-follow-dependency-direction-each-layer",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "MUST",
+      "text": "Stack layers MUST follow dependency direction, with each layer depending only on layers below it.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-stack-layer-leave-codebase-green-builds-tests",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "MUST",
+      "text": "Every stack layer MUST leave the codebase green: builds and tests pass, with no references to code that only exists higher in the stack.",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-stack-layer-carry-2-4-scoped-review-questions",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "SHOULD",
+      "text": "Each stack layer SHOULD carry 2-4 scoped review questions naming layer-specific risks, not \"LGTM?\" prompts.",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-stacks-stay-5-6-layers-fewer-merge",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "SHOULD",
+      "text": "Stacks SHOULD stay at 5-6 layers or fewer; merge adjacent thin layers rather than fragmenting.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-not-engineers-use-web-rebase-stack-button",
+      "source": "conventions/pr-decomposition.md",
+      "domain": "review",
+      "sdlc_stage": "review",
+      "level": "MUST",
+      "text": "Engineers MUST NOT use the web \"Rebase stack\" button on repositories whose branch protection requires signed commits.",
+      "status": "enforced"
+    },
+    {
+      "slug": "must-oneshot-changes-include-program-design-artifact-before",
+      "source": "conventions/program-design.md",
+      "domain": "planning",
+      "sdlc_stage": "planning",
+      "level": "MUST",
+      "text": "Plans for tasks beyond simple oneshot changes MUST include a program design artifact before the detailed implementation plan is written.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-design-artifact-contain-three-parts-below-call-stack",
+      "source": "conventions/program-design.md",
+      "domain": "planning",
+      "sdlc_stage": "planning",
+      "level": "MUST",
+      "text": "The program design artifact MUST contain all three parts below: a call-stack tree diff, a file-tree diff, and key types and signatures.",
+      "status": "approved"
+    },
+    {
+      "slug": "should-pure-refactors-skip-productrequirements-step-but-still",
+      "source": "conventions/program-design.md",
+      "domain": "planning",
+      "sdlc_stage": "planning",
+      "level": "SHOULD",
+      "text": "Pure refactors SHOULD skip the product/requirements step but still produce a program design.",
+      "status": "approved"
+    },
+    {
+      "slug": "should-engineers-present-program-design-review-before",
+      "source": "conventions/program-design.md",
+      "domain": "planning",
+      "sdlc_stage": "planning",
+      "level": "SHOULD",
+      "text": "Engineers SHOULD present the program design for review before writing the detailed implementation plan.",
+      "status": "approved"
+    },
+    {
+      "slug": "should-new-standard-enter-status-approved-findings-surface",
+      "source": "conventions/standards-governance.md",
+      "domain": "governance",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "A new standard SHOULD enter as status: approved, so its findings surface without blocking anyone.",
+      "status": "approved"
+    },
+    {
+      "slug": "should-normative-sentence-carry-exactly-rfc-2119-keyword",
+      "source": "conventions/standards-governance.md",
+      "domain": "governance",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Each normative sentence SHOULD carry exactly one RFC 2119 keyword, since one sentence becomes one statement with one level.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-engineers-regenerate-standardsstatementsjson-commit-same-pr",
+      "source": "conventions/standards-governance.md",
+      "domain": "governance",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "Engineers MUST regenerate standards/statements.json and commit it in the same PR as any convention edit that adds, removes, or rewords a bold SHOULD/MUST sentence",
+      "status": "approved"
+    },
+    {
+      "slug": "should-standard-promoted-enforced-only-after-24",
+      "source": "conventions/standards-governance.md",
+      "domain": "governance",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "A standard SHOULD be promoted to enforced only after 2–4 weeks of approved findings show the violation trend is declining or flat-and-understood.",
+      "status": "approved"
+    },
+    {
+      "slug": "must-waiver-name-statements-slug-scope-applies",
+      "source": "conventions/standards-governance.md",
+      "domain": "governance",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "A waiver MUST name the statement's slug, the scope it applies to (a PR, a plan, or a project), and the reason.",
+      "status": "approved"
+    },
+    {
+      "slug": "should-conventions-referenced-commands-not-pre-loaded-session",
+      "source": "conventions/three-layer-architecture.md",
+      "domain": "architecture",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Conventions SHOULD be referenced from commands, not pre-loaded at session start",
+      "status": "approved"
+    },
+    {
+      "slug": "must-500-lines-split-into-focused-sub-files-router",
+      "source": "conventions/three-layer-architecture.md",
+      "domain": "architecture",
+      "sdlc_stage": "all",
+      "level": "MUST",
+      "text": "A convention file that exceeds 500 lines MUST be split into focused sub-files with a router index",
+      "status": "approved"
+    },
+    {
+      "slug": "should-convention-files-cover-concept-per-file",
+      "source": "conventions/three-layer-architecture.md",
+      "domain": "architecture",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Convention files SHOULD cover one concept per file",
+      "status": "approved"
+    },
+    {
+      "slug": "should-commands-stay-under-300-lines-possible",
+      "source": "conventions/three-layer-architecture.md",
+      "domain": "architecture",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Commands SHOULD stay under 300 lines where possible",
+      "status": "approved"
+    },
+    {
+      "slug": "should-files-systems-follow-research-plan-implement-review",
+      "source": "conventions/workflow-patterns.md",
+      "domain": "workflow",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Work that spans multiple files or systems SHOULD follow the Research → Plan → Implement → Review sequence.",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-engineers-run-researchcodebase-ticketresearch-before-createplan",
+      "source": "conventions/workflow-patterns.md",
+      "domain": "workflow",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Engineers SHOULD run /research_codebase (or /ticket_research) before /create_plan for new features and major refactors, so the plan rests on verified codebase findings rather than assumptions.",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-implementations-validated-validateplan-before-pr-created",
+      "source": "conventions/workflow-patterns.md",
+      "domain": "workflow",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Implementations SHOULD be validated with /validate_plan before their PR is created.",
+      "status": "enforced"
+    },
+    {
+      "slug": "should-engineers-start-spec-before-createplan-requirements",
+      "source": "conventions/workflow-patterns.md",
+      "domain": "workflow",
+      "sdlc_stage": "all",
+      "level": "SHOULD",
+      "text": "Engineers SHOULD start with /spec before /create_plan when requirements are not fully understood or scope creep is a risk.",
+      "status": "enforced"
+    }
+  ]
+}
