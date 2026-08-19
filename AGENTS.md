@@ -299,6 +299,17 @@ This pattern ensures:
 - Commands own orchestration logic (which agents to call, in what order)
 - Results are composable (agents return structured data, not side effects)
 
+## Standards Enforcement
+
+Conventions that carry front matter (`domain`, `status`, `sdlc_stage`) are standards: every sentence in them with a bold **MUST**/**SHOULD** keyword is extracted into `standards/statements.json`, which `/check_standards` and the commands wired to it (`create_plan`, `validate_plan`, `describe_pr`, `spec`) query at the matching workflow stage.
+
+Two obligations follow for agents working in this repo:
+
+- **Editing a convention's normative sentences requires regenerating the registry** in the same change: `python3 standards/extractor.py`. CI fails the PR if the committed registry is stale.
+- **Write normative sentences to stand alone** — one RFC 2119 keyword per sentence, no "the table above" references — because statements are read from the registry without the surrounding doc.
+
+Lifecycle, promotion, and waivers: [conventions/standards-governance.md](./conventions/standards-governance.md).
+
 ## Summary of Conventions
 
 | Convention | Rationale |

@@ -169,6 +169,24 @@ Verification between phases is non-negotiable. The agent cannot batch phases or 
 
 There is no "skip pause for consecutive phases" option. If you want to batch, you say so explicitly each time.
 
+### Standards enforcement
+
+Conventions with front matter double as machine-checkable standards: their bold **MUST**/**SHOULD** sentences are extracted into `standards/statements.json`, and commands check your work against them at the matching stage — `/create_plan` checks planning standards, `/validate_plan` checks implementation standards, `/describe_pr` checks review standards. You can also run `/check_standards` directly on any plan, diff, or PR.
+
+**What a finding looks like:**
+
+```
+## Standards Check (stage: review)
+
+### Blocking (MUST violations on enforced standards)
+- [must-engineers-stack-prs-diff-exceeds-1000] PR is 1,247 lines — MUST be stacked
+  Source: conventions/pr-decomposition.md
+```
+
+MUST violations on `enforced` conventions block (`/validate_plan` fails; `/describe_pr` asks before proceeding). Everything else surfaces as a recommendation. If a standard genuinely shouldn't apply to your change, record a waiver — the slug, the scope, and the reason — in the plan's `## What We're NOT Doing` section or the PR's `## Standards Waivers` section, and the check reports it as waived instead of as a finding.
+
+Tune how hard each combination bites via the `standards:` block in `specs.config.yaml`, and see [conventions/standards-governance.md](../conventions/standards-governance.md) for how standards are proposed, promoted, and waived.
+
 ---
 
 ## Workflow Selection
@@ -186,6 +204,7 @@ Not sure which command to start with? Use this decision tree from AGENTS.md:
 | Quick prototype, document later | `/founder_mode` |
 | Picking up someone's work | `/resume_handoff` |
 | Reviewing changes | `/local_review` |
+| Checking work against team standards | `/check_standards` |
 
 **When in doubt, start with `/spec`.** It's always safe to define requirements first.
 
