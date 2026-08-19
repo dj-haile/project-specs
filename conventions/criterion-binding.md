@@ -1,6 +1,12 @@
+---
+domain: verification
+status: approved
+sdlc_stage: all
+---
+
 # Criterion Binding — the acceptance-criteria pairing gate
 
-Every automated acceptance criterion is bound to exactly one individually runnable named test group, and carries re-runnable evidence of that group failing before the change and passing after it.
+Every automated acceptance criterion **MUST** be bound to exactly one individually runnable named test group, and **MUST** carry re-runnable evidence of that group failing before the change and passing after it.
 
 This file is the **single normative source** for the pairing gate. `/spec`, `/create_plan`, `/implement_plan`, and `/validate_plan` reference these rules by relative link; none of them restates a rule defined here. The failing-first bar itself is not defined here either — it is the standing one in [definition-of-done](../references/definition-of-done.md), which this gate makes per-criterion and mechanical.
 
@@ -30,7 +36,7 @@ Given [precondition] when [action] then [expected result].
 - *Performed by:* …
 ```
 
-**The spec stays solution-neutral.** A criterion block may contain the mode line and, for `manual-only`, the four labeled elements — and nothing else structured. No `group:`, `test:`, or `file:` field; no path-like token matching `\S+\.(py|js|ts|tsx|go|rb|java|md)\b`; no test-framework name. Tests are named by the plan, never by the spec.
+**The spec stays solution-neutral.** A criterion block may contain the mode line and, for `manual-only`, the four labeled elements — and nothing else structured. No `group:`, `test:`, or `file:` field; no path-like token matching `\S+\.(py|js|ts|tsx|go|rb|java|md)\b`; no test-framework name. A spec criterion **MUST NOT** name a test, a file path, or a test framework — tests are named by the plan, never by the spec.
 
 ---
 
@@ -42,7 +48,7 @@ The plan carries one section, `## Criterion Bindings`, with exactly one row per 
 |---|---|---|---|---|
 | `AC-27` | `scripts/validate.py::check_gate_sections` | `python3 scripts/validate.py --check check_gate_sections` | `none` | 3 |
 
-- **Test group** — `<path>::<name>` for a class, `describe` block, or named assertion; bare `<path>` for a file-level group. Injectivity is checked on this column: no value may repeat. Nesting between a file-level group and a named group inside the same file is permitted and must be declared in the plan.
+- **Test group** — `<path>::<name>` for a class, `describe` block, or named assertion; bare `<path>` for a file-level group. Injectivity is checked on this column: a test group **MUST NOT** be bound to more than one criterion. Nesting between a file-level group and a named group inside the same file is permitted and must be declared in the plan.
 - **Invocation** — the literal command that runs *exactly* that group. Copied verbatim into evidence records.
 - **Stakes domain** — a value from the closed vocabulary in §3, comma-separated if several. A bound criterion with a missing stakes value makes the plan incomplete.
 - **Phase** — the phase whose work satisfies the criterion. Determines the code state the red record is taken against (§7).
@@ -85,11 +91,11 @@ strength: single-group        # single-group | degraded
 recorded_at: "2026-08-07T14:02:11Z"
 ```
 
-**The three required elements are `command`, `code_state`, and `result`.** A record missing any one is treated as absent, and absent red evidence is a blocking verdict.
+Every evidence record **MUST** contain `command`, `code_state`, and `result` — the three required elements. A record missing any one is treated as absent, and absent red evidence is a blocking verdict.
 
 **`code_state` must be re-runnable.** Accepted forms: `git:<40-hex sha>` for a commit, or `git:<40-hex sha>` produced by `git stash create` for an uncommitted state — that yields a real dangling commit reachable with `git checkout`. A working-tree reference such as `git:<sha>-dirty` is not re-runnable, and a record carrying one is absent.
 
-**Red and green must differ.** The green record's `code_state` must differ from the red record's for the same criterion.
+**Red and green must differ.** The green record's `code_state` **MUST** differ from the red record's for the same criterion.
 
 **`strength`** is `single-group` when the invocation executes exactly the bound group and nothing else, and `degraded` when it executes a superset. Granularity is irrelevant: running `scripts/validate.py` for a criterion whose bound group *is* `scripts/validate.py` is `single-group`.
 

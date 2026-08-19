@@ -1,3 +1,9 @@
+---
+domain: review
+status: enforced
+sdlc_stage: review
+---
+
 # PR Decomposition
 
 One-line summary: when a change is too big to review as one PR, split it into a stack of dependency-ordered branches with `/stack_pr`; otherwise ship a single PR.
@@ -14,6 +20,10 @@ Stack when **any** of these holds:
 | Spread | > 3 files across more than one architectural layer (data / API / UI) |
 | Plan shape | Implementation plan has > 2 phases |
 
+Engineers **SHOULD** stack PRs when the diff exceeds 500 lines, touches more than 3 files across more than one architectural layer (data/API/UI), or comes from an implementation plan with more than 2 phases.
+
+Engineers **MUST** stack PRs when the diff exceeds 1,000 lines.
+
 ## When to Ship a Single PR
 
 Single PR when **all** of these hold:
@@ -28,14 +38,14 @@ Between the thresholds, use judgment and lean single PR. Stack only if the chang
 
 ## Suggest, Don't Require
 
-Commands that see the diff (`/implement_plan`, `/validate_plan`, `/describe_pr`) should **suggest** running `/stack_pr` when a threshold is crossed — state which threshold and the current numbers. The user decides. Never auto-stack, and never block on the suggestion in CI-mode; note it in output and continue.
+Commands that see the diff (`/implement_plan`, `/validate_plan`, `/describe_pr`) **SHOULD** suggest running `/stack_pr` when a stacking threshold is crossed, stating which threshold and the current numbers. The user decides. Commands **MUST NOT** auto-stack, and **MUST NOT** block on the stacking suggestion in CI-mode; note it in output and continue.
 
 ## Layer Rules
 
-- Layers follow **dependency direction**: each layer may depend only on layers below it. Data model → API → wiring → UI is the canonical shape, but derive layers from the actual change (plan phases are often the natural cut).
-- Every layer leaves the codebase **green**: builds, tests pass, no references to code that only exists higher in the stack.
-- Each layer gets **scoped review questions** — 2-4 questions naming layer-specific risks, not "LGTM?" prompts. The question tells the reviewer where the risk lives.
-- Keep stacks to **5-6 layers max**; merge adjacent thin layers rather than fragmenting.
+- Stack layers **MUST** follow dependency direction, with each layer depending only on layers below it. Data model → API → wiring → UI is the canonical shape, but derive layers from the actual change (plan phases are often the natural cut).
+- Every stack layer **MUST** leave the codebase green: builds and tests pass, with no references to code that only exists higher in the stack.
+- Each stack layer **SHOULD** carry 2-4 scoped review questions naming layer-specific risks, not "LGTM?" prompts. The question tells the reviewer where the risk lives.
+- Stacks **SHOULD** stay at 5-6 layers or fewer; merge adjacent thin layers rather than fragmenting.
 
 ## Tooling
 
@@ -49,7 +59,7 @@ Key commands: `gh stack init` (start), `gh stack add` (add a layer), `gh stack s
 
 ## Caveat: Signed Commits and the Web "Rebase Stack" Button
 
-GitHub's web UI offers a "Rebase stack" button on stacked PRs. **Do not use it on repositories whose branch protection requires signed commits.** The server-side rebase resets the committer and strips commit signatures, so the rebased commits fail the signed-commit check and the stack cannot merge.
+GitHub's web UI offers a "Rebase stack" button on stacked PRs. Engineers **MUST NOT** use the web "Rebase stack" button on repositories whose branch protection requires signed commits. The server-side rebase resets the committer and strips commit signatures, so the rebased commits fail the signed-commit check and the stack cannot merge.
 
 Instead, rebase locally where your signing key lives:
 

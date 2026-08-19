@@ -1,3 +1,9 @@
+---
+domain: structure
+status: enforced
+sdlc_stage: all
+---
+
 # Naming Conventions
 
 Consistent naming conventions across agents, commands, skills, and configuration files make the framework predictable and maintainable.
@@ -5,7 +11,7 @@ Consistent naming conventions across agents, commands, skills, and configuration
 ## Agents
 
 ### File Naming
-Use **kebab-case** for agent filenames:
+Agent filenames **MUST** use kebab-case:
 ```
 agents/
 ├── codebase-analyzer.md
@@ -22,7 +28,7 @@ The agent identifier comes from the filename (without `.md`):
 - Identifier: `codebase-analyzer`
 
 ### YAML Frontmatter
-Agents must include YAML frontmatter with these fields:
+Agents **MUST** include YAML frontmatter with name, description, tools, and model fields. The frontmatter name **MUST** match the file stem, and the model value **MUST** be a semantic tier (planning, analysis, or quick), never a literal model name.
 
 ```yaml
 ---
@@ -32,13 +38,14 @@ tools:
   - glob
   - grep
   - read
-model: sonnet
+model: analysis
 ---
 ```
 
 ### Naming Guidelines
-- Descriptive but concise (2-3 words)
+- Agent names **SHOULD** be descriptive but concise (2-3 words)
 - Include the primary action or specialty
+- Agent names **MUST NOT** be project-specific (keep agents reusable)
 - Examples of good names:
   - `codebase-analyzer` (what it does + domain)
   - `pattern-finder` (action + target)
@@ -48,12 +55,11 @@ model: sonnet
   - Single-word names (`analyzer` is too generic)
   - Names longer than 4 words
   - Acronyms without explanation
-  - Project-specific names (keep agents reusable)
 
 ## Commands
 
 ### File Naming
-Use **snake_case** for command filenames:
+Command filenames **MUST** use snake_case:
 ```
 commands/
 ├── research_codebase.md
@@ -70,12 +76,13 @@ The command trigger comes from the filename (without `.md`):
 - User invokes with: `/create_plan`
 
 ### YAML Frontmatter
-Commands must include YAML frontmatter with these fields:
+Commands **MUST** include YAML frontmatter with name, description, and model fields, where model is a semantic tier:
 
 ```yaml
 ---
+name: create_plan
 description: Creates a detailed implementation plan based on research findings
-model: opus
+model: planning
 ---
 ```
 
@@ -120,7 +127,7 @@ Handoff workflow:
 ## Skills
 
 ### Directory Naming
-Use **kebab-case** for skill directories:
+Skill directories **MUST** use kebab-case:
 ```
 skills/
 ├── deployment-checklist/
@@ -130,7 +137,7 @@ skills/
 ```
 
 ### File Structure
-Each skill is a directory containing a required `SKILL.md` file and optional supporting files:
+Every skill **MUST** be a directory containing a `SKILL.md` file, with optional supporting files alongside it:
 
 ```
 skills/deployment-checklist/
@@ -208,6 +215,8 @@ models:
 ## Thoughts Directory
 
 ### File Naming Patterns
+
+Session-specific thoughts files **SHOULD** use the timestamped pattern, and longer-lived documents **SHOULD** use the date-only pattern.
 
 #### With Timestamp (for session-specific files)
 ```
@@ -290,7 +299,7 @@ Examples of deprecated naming:
 - `implement_plan.md` and `implement_plan_nt.md`
 
 ### Why It Changed
-The framework has consolidated to a single implementation per command. Control the behavior through configuration:
+The framework has consolidated to a single implementation per command. New commands **MUST NOT** use the `_nt` suffix; control the behavior through configuration instead:
 
 ```yaml
 # specs.config.yaml
