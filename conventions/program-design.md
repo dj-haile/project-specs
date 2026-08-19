@@ -1,8 +1,14 @@
+---
+domain: planning
+status: approved
+sdlc_stage: planning
+---
+
 # Program Design Artifact
 
 The layer between architecture ("which services talk to each other") and code ("here are the file changes") — produced before the detailed plan, so structural problems surface before implementation makes them expensive.
 
-For tasks beyond simple oneshot changes, produce a **program design artifact** before writing the detailed plan. It captures the shape of the code so the reviewer can catch structural problems before 800 lines of implementation make them expensive to fix.
+Plans for tasks beyond simple oneshot changes **MUST** include a program design artifact before the detailed implementation plan is written. It captures the shape of the code so the reviewer can catch structural problems before 800 lines of implementation make them expensive to fix. The program design artifact **MUST** contain all three parts below: a call-stack tree diff, a file-tree diff, and key types and signatures.
 
 The program design artifact has three parts:
 
@@ -47,6 +53,6 @@ The program design artifact has three parts:
 - ~40% of tasks are small enough to skip this — oneshot with 1–2 rounds of feedback.
 - Medium tasks: combine this with the architecture overview in one plan doc.
 - Large tasks: this gets its own review before implementation begins.
-- Pure refactors: skip the product/requirements step but still do program design.
+- Pure refactors **SHOULD** skip the product/requirements step but still produce a program design.
 
-Present the program design to the user for review before writing the detailed implementation plan. Disagreements about code shape cost minutes here and hours during code review.
+Engineers **SHOULD** present the program design for review before writing the detailed implementation plan. Disagreements about code shape cost minutes here and hours during code review.

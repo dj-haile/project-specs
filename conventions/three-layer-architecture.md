@@ -1,3 +1,9 @@
+---
+domain: architecture
+status: approved
+sdlc_stage: all
+---
+
 # Three-Layer Architecture
 
 The project-specs framework organizes Claude Code automation into three distinct layers: agents, commands, and skills. Each layer has a specific role in the workflow.
@@ -22,7 +28,7 @@ tools:
   - glob
   - grep
   - read
-model: sonnet
+model: analysis
 ---
 ```
 
@@ -44,7 +50,7 @@ model: sonnet
 ```yaml
 ---
 description: Creates an implementation plan for a feature or bug fix
-model: opus
+model: planning
 ---
 ```
 
@@ -164,23 +170,23 @@ Do not load all commands and conventions into agent context at session start. Co
 
 **How loading works in project-specs:**
 - **Commands** are loaded on invocation — the slash command triggers loading
-- **Conventions** should be referenced, not pre-loaded
+- **Conventions** **SHOULD** be referenced from commands, not pre-loaded at session start
 - **Skills** are loaded when a command calls them, not at startup
 - **Agents** load only when spawned by a command
 
 **Guidelines for file size:**
-- If a convention file exceeds 500 lines, split it into focused sub-files with a router index
+- A convention file that exceeds 500 lines **MUST** be split into focused sub-files with a router index
 - A 200-line focused document outperforms a 2,000-line comprehensive one because the agent actually follows the focused version
 - Each file should cover one concept and be scannable in under 5 seconds
 
 **When adding new conventions:**
-- One concept per file
+- Convention files **SHOULD** cover one concept per file
 - Title should be scannable (agent decides in <1 second whether to read it)
 - Include a 1-line summary at the top before any detail
 - Prefer examples over prose — agents follow examples more reliably than instructions
 
 **When adding new commands:**
-- Keep commands under 300 lines where possible
+- Commands **SHOULD** stay under 300 lines where possible
 - If a command grows beyond that, extract reusable sections into skills
 - Anti-rationalization tables, scope rules, and verification gates add lines but earn their keep — don't count them toward the "too long" threshold
 

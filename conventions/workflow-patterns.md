@@ -1,3 +1,9 @@
+---
+domain: workflow
+status: enforced
+sdlc_stage: all
+---
+
 # Workflow Patterns
 
 The project-specs framework provides standardized workflow patterns for common development tasks. Each pattern combines commands and agents in a proven sequence.
@@ -5,6 +11,8 @@ The project-specs framework provides standardized workflow patterns for common d
 ## 1. Research → Plan → Implement → Review
 
 The **full feature development cycle** from investigation through deployment.
+
+Work that spans multiple files or systems **SHOULD** follow the Research → Plan → Implement → Review sequence. Engineers **SHOULD** run `/research_codebase` (or `/ticket_research`) before `/create_plan` for new features and major refactors, so the plan rests on verified codebase findings rather than assumptions. Implementations **SHOULD** be validated with `/validate_plan` before their PR is created.
 
 ### Flow
 
@@ -353,6 +361,8 @@ workflows:
 ## 6. Spec-First Workflow
 
 **Requirements definition before planning** to catch assumptions early.
+
+Engineers **SHOULD** start with `/spec` before `/create_plan` when requirements are not fully understood or scope creep is a risk.
 
 ### Flow
 
