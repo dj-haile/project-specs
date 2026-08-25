@@ -101,3 +101,60 @@ output: |
 strength: single-group
 ```
 
+
+## Slice 2 — Fetch and reference pinning
+
+```yaml
+criterion: AC-4
+group: scripts/test_installer.py::check_install_from_url_without_clone
+outcome: red
+command: "python3 scripts/test_installer.py --check check_install_from_url_without_clone"
+code_state: "git:877bf54c3ab78095b1569a411a8ce57f2ea10e07"
+output: |
+  exit 1
+  
+  test_installer.py [check_install_from_url_without_clone]: 1 failure(s)
+  
+    FAIL  check_install_from_url_without_clone: installer exited 1: ✗ Unknown flag: --from=file:///var/folders/zp/xp_qs4s54417fqk1jlr2dbfc0000gn/T/specs-installer-test-5817jhti/source
+strength: single-group
+```
+
+```yaml
+criterion: AC-16
+group: scripts/test_installer.py::check_install_named_reference
+outcome: red
+command: "python3 scripts/test_installer.py --check check_install_named_reference"
+code_state: "git:877bf54c3ab78095b1569a411a8ce57f2ea10e07"
+output: |
+  exit 1
+  
+  test_installer.py [check_install_named_reference]: 1 failure(s)
+  
+    FAIL  check_install_named_reference: tag install exited 1: ✗ Unknown flag: --from=file:///var/folders/zp/xp_qs4s54417fqk1jlr2dbfc0000gn/T/specs-installer-test-wu0jfa5o/source
+strength: single-group
+```
+
+```yaml
+criterion: AC-4
+group: scripts/test_installer.py::check_install_from_url_without_clone
+outcome: green
+command: "python3 scripts/test_installer.py --check check_install_from_url_without_clone"
+code_state: "git:1246a372099c09cd39f19693e04182eb49099253"
+output: |
+  exit 0
+  test_installer.py [check_install_from_url_without_clone]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-16
+group: scripts/test_installer.py::check_install_named_reference
+outcome: green
+command: "python3 scripts/test_installer.py --check check_install_named_reference"
+code_state: "git:1246a372099c09cd39f19693e04182eb49099253"
+output: |
+  exit 0
+  test_installer.py [check_install_named_reference]: OK
+strength: single-group
+```
+

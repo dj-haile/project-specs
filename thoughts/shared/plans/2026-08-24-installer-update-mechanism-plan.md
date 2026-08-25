@@ -300,17 +300,19 @@ Add `--from=<git-url>` and `--ref=<name>`. Add `fetch_source`: mirror-clone into
 **2. `scripts/test_installer.py`** (modified)
 Fixture helper that builds a `file://` source repository with two branches and a tag. Groups for AC-4 and AC-16.
 
+**Deviation (in scope, `setup.sh` was already listed).** Pointing every read at the resolved source made the closing summary print paths into the temporary export, which is deleted when the installer exits. The summary now names the source repository and the installed convention path instead.
+
 ### Success Criteria
 
 **Automated:**
-- [ ] `--check check_install_from_url_without_clone` passes (AC-4)
-- [ ] `--check check_install_named_reference` passes (AC-16)
-- [ ] Both groups have red-then-green evidence
-- [ ] No test reads or writes outside its temporary directory — asserted by pointing the cache at a temporary path in every group
-- [ ] Slice 1's three groups still pass
+- [x] `--check check_install_from_url_without_clone` passes (AC-4)
+- [x] `--check check_install_named_reference` passes (AC-16)
+- [x] Both groups have red-then-green evidence
+- [x] No test reads or writes outside its temporary directory — asserted by pointing the cache at a temporary path in every group
+- [x] Slice 1's three groups still pass
 
 **Manual:**
-- [ ] Install into a scratch directory from the real GitHub URL and confirm the cache lands where expected
+- [x] Install into a scratch directory from the real GitHub URL and confirm the cache lands where expected
 
 ---
 
