@@ -30,6 +30,9 @@ SRC_DIR="$SCRIPT_DIR"
 RECORD_PATHS=()
 RECORD_NAME=".project-specs.json"
 
+# Paths an update left alone because the developer had edited them.
+KEPT_PATHS=()
+
 # Show help text
 show_help() {
   cat << 'EOF'
@@ -293,6 +296,12 @@ write_install_record() {
   fi
   local path_args=() p
   for p in "${RECORD_PATHS[@]}"; do path_args+=(--path "$p"); done
+  # PROTECTED was read before the first write, which is the only point at which
+  # "edited since the last install" can still be told apart from "just updated".
+  local kept_args=()
+  if [[ ${#PROTECTED[@]} -gt 0 ]]; then
+    for p in "${PROTECTED[@]}"; do kept_args+=(--kept "$p"); done
+  fi
   local pin_args=()
   [[ "$REC_PINNED" == true ]] && pin_args+=(--pinned)
   local out
@@ -300,7 +309,7 @@ write_install_record() {
              --target "$TARGET_PATH" \
              --source "$REC_SOURCE" --ref "$REC_REF" --track "$REC_TRACK" \
              --commit "$REC_COMMIT" --provider "$PROVIDER" --mode "$MODE" \
-             "${pin_args[@]}" "${path_args[@]}" 2>&1); then
+             "${pin_args[@]}" "${kept_args[@]}" "${path_args[@]}" 2>&1); then
     print_success "Recorded install in $RECORD_NAME ($out files)"
   else
     print_warning "Could not write $RECORD_NAME: $out"
@@ -427,11 +436,61 @@ if [[ -d "$INSTALL_DIR" ]]; then
   fi
 fi
 
+# Which installed files the developer has changed since the last install. Read
+# once, before anything is written, so every install site sees the same answer.
+PROTECTED=()
+if [[ -f "$SUPPORT" && -f "$TARGET_PATH/$RECORD_NAME" ]]; then
+  if ! PROTECTED_OUT="$(python3 "$SUPPORT" protected --target "$TARGET_PATH" 2>&1)"; then
+    print_error "Could not determine which files you edited; refusing to overwrite blindly:"
+    echo "$PROTECTED_OUT" | tail -5
+    exit 1
+  fi
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && PROTECTED+=("$line")
+  done <<< "$PROTECTED_OUT"
+  if [[ ${#PROTECTED[@]} -gt 0 ]]; then
+    print_status "${#PROTECTED[@]} file(s) edited since the last install will be kept"
+  fi
+fi
+
 # Create install directory
 print_status "Creating $BASE_DIR/ directory structure..."
 mkdir -p "$INSTALL_DIR"
 
 # --- Install helpers ---------------------------------------------------------
+
+# Copy one directory into the target file by file, leaving edited files alone.
+# A directory-at-a-time `cp -r` cannot make that decision, so the copy engine
+# lives in installer_support.py and this reads back what it did.
+sync_into() {
+  local src="$1" dest="$2" out action rel
+  # Captured rather than piped: inside a process substitution a crash in the
+  # helper is invisible, and the installer would report success having copied
+  # nothing.
+  if ! out="$(python3 "$SUPPORT" sync --target "$TARGET_PATH" --src "$src" --dest "$dest" 2>&1)"; then
+    print_error "Failed while installing $src:"
+    echo "$out" | tail -5
+    exit 1
+  fi
+  while IFS=$'\t' read -r action rel; do
+    [[ "$action" == "kept" ]] && KEPT_PATHS+=("$rel")
+  done <<< "$out"
+  # The loop's final read hits EOF and returns non-zero; without this the
+  # function's exit status would take `set -e` down with it.
+  return 0
+}
+
+# Copy one file into the target unless the developer edited it.
+sync_file_into() {
+  local src="$1" dest="$2" rel="${2#$TARGET_PATH/}"
+  if [[ ${#PROTECTED[@]} -gt 0 ]] && printf '%s\n' "${PROTECTED[@]}" | grep -Fxq "$rel"; then
+    KEPT_PATHS+=("$rel")
+    return 0
+  fi
+  mkdir -p "$(dirname "$dest")"
+  cp "$src" "$dest"
+  return 0
+}
 
 # Plain copy/symlink of a source dir to a destination subdir under INSTALL_DIR.
 install_dir_plain() {
@@ -447,8 +506,8 @@ install_dir_plain() {
     ln -s "$src" "$dest"
     print_success "Symlinked $label → $BASE_DIR/$dest_rel/"
   else
-    cp -r "$src" "$dest"
-    print_success "Copied $label → $BASE_DIR/$dest_rel/"
+    sync_into "$src" "$dest"
+    print_success "Installed $label → $BASE_DIR/$dest_rel/"
   fi
   RECORD_PATHS+=("$BASE_DIR/$dest_rel")
 }
@@ -572,9 +631,8 @@ if [[ -d "$SRC_DIR/conventions" ]]; then
   else
     CONV_DEST="$INSTALL_DIR/conventions"
   fi
-  rm -rf "$CONV_DEST"
   mkdir -p "$(dirname "$CONV_DEST")"
-  cp -r "$SRC_DIR/conventions" "$CONV_DEST"
+  sync_into "$SRC_DIR/conventions" "$CONV_DEST"
   print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
   RECORD_PATHS+=("${CONV_DEST#$TARGET_PATH/}")
 fi
@@ -587,8 +645,8 @@ fi
 if [[ -d "$SRC_DIR/standards" ]]; then
   STD_DEST="$TARGET_PATH/standards"
   mkdir -p "$STD_DEST"
-  cp "$SRC_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
-  cp "$SRC_DIR/standards/statements.json" "$STD_DEST/statements.json"
+  sync_file_into "$SRC_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
+  sync_file_into "$SRC_DIR/standards/statements.json" "$STD_DEST/statements.json"
   print_success "Installed standards registry → standards/"
   RECORD_PATHS+=("standards/extractor.py" "standards/statements.json")
 fi
@@ -651,8 +709,8 @@ fi
 
 # Copy PR description template
 if [[ -f "$SRC_DIR/templates/pr_description.md" ]]; then
-  cp "$SRC_DIR/templates/pr_description.md" "$TARGET_PATH/pr_description.md"
-  print_success "Copied pr_description.md to project root"
+  sync_file_into "$SRC_DIR/templates/pr_description.md" "$TARGET_PATH/pr_description.md"
+  print_success "Installed pr_description.md at project root"
   RECORD_PATHS+=("pr_description.md")
 else
   print_warning "templates/pr_description.md not found in source"
@@ -688,6 +746,12 @@ fi
 write_install_record
 
 # Print summary
+if [[ ${#KEPT_PATHS[@]} -gt 0 ]]; then
+  echo
+  print_warning "Kept your local changes (not overwritten):"
+  printf '  • %s\n' "${KEPT_PATHS[@]}" | sort -u
+fi
+
 echo
 echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}✓ Installation Complete${NC}"
@@ -708,7 +772,7 @@ echo
 echo "Documentation:"
 # With --from, SRC_DIR is a temp export removed when this script exits, so
 # pointing at it would hand the reader a path that no longer exists.
-if [[ -n "$SOURCE_URL" ]]; then
+if [[ -n "$EXPORT_DIR" ]]; then
   echo "  • Framework source: $REC_SOURCE ($REC_REF)"
 else
   echo "  • Skill template: $SRC_DIR/skills/_template/SKILL.md"

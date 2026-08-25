@@ -15,7 +15,7 @@ dependency the installer did not already have.
 Subcommands:
   write-record   --target DIR --source URL --ref REF --track BRANCH
                  --commit SHA --provider NAME --mode MODE [--pinned]
-                 [--path REL ...]
+                 [--path REL ...] [--kept REL ...]
                  Walk each --path under the target, fingerprint every regular
                  file, and write the record. Directories are walked; symlinks
                  are recorded without a fingerprint.
@@ -26,6 +26,16 @@ Subcommands:
   assert-schema  --target DIR
                  Exit 0 when the record is absent or readable by this version.
                  Exit 3 when it was written by a newer installer.
+
+  protected      --target DIR
+                 Print, one per line, the installed paths whose content no
+                 longer matches the record. Nothing printed when there is no
+                 record: without fingerprints nothing can be called edited.
+
+  sync           --target DIR --src DIR --dest DIR
+                 Copy src into dest file by file, skipping anything the
+                 developer edited. Prints one "action<TAB>relpath" line per
+                 file: written, kept, or linked.
 
   record-field   --target DIR --field NAME
                  Print one top-level field, for shell to read. Booleans print
@@ -39,6 +49,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -141,6 +152,72 @@ def collect_files(target: Path, rel_paths) -> "dict[str, str]":
     return files
 
 
+def protected_paths(target: Path, record) -> "set[str]":
+    """Installed paths the developer has changed since the installer wrote them.
+
+    A path counts as edited when the record holds a non-empty fingerprint for it
+    and the file on disk hashes differently. A missing file is not protected —
+    the developer deleted it, and reinstalling is the useful answer. Symlinks
+    carry no fingerprint, so they are never protected.
+    """
+    if not record:
+        return set()
+    out = set()
+    for rel, recorded in (record.get("files") or {}).items():
+        if not recorded:
+            continue
+        path = target / rel
+        if not path.is_file() or path.is_symlink():
+            continue
+        if file_hash(path) != recorded:
+            out.add(rel)
+    return out
+
+
+def sync_tree(src: Path, dest: Path, target_root: Path,
+              protected: "set[str]") -> list:
+    """Copy every file under src to dest, leaving edited files alone.
+
+    Replaces a directory-at-a-time copy, which cannot make a per-file decision.
+    Files present in dest but absent from src are removed, so a file dropped
+    upstream does not linger — unless the developer edited it.
+    """
+    results = []
+    dest.mkdir(parents=True, exist_ok=True)
+    wanted = set()
+    for dirpath, _dirnames, filenames in os.walk(src):
+        here = Path(dirpath)
+        rel_dir = here.relative_to(src)
+        (dest / rel_dir).mkdir(parents=True, exist_ok=True)
+        for name in sorted(filenames):
+            s = here / name
+            d = dest / rel_dir / name
+            rel = str(d.relative_to(target_root))
+            wanted.add(rel)
+            if rel in protected:
+                results.append(("kept", rel, ""))
+                continue
+            if d.is_symlink():
+                d.unlink()
+            shutil.copy2(s, d)
+            results.append(("written", rel, file_hash(d)))
+
+    # Prune files this install no longer provides, keeping edited ones.
+    for dirpath, _dirnames, filenames in os.walk(dest, topdown=False):
+        here = Path(dirpath)
+        for name in sorted(filenames):
+            d = here / name
+            rel = str(d.relative_to(target_root))
+            if rel in wanted or rel in protected:
+                continue
+            d.unlink()
+        try:
+            here.rmdir()          # only succeeds when the directory is empty
+        except OSError:
+            pass
+    return results
+
+
 def write_record(target: Path, *, source: str, ref: str, track: str, commit: str,
                  provider: str, mode: str, pinned: bool,
                  files: "dict[str, str]") -> None:
@@ -171,6 +248,23 @@ def cmd_write_record(args) -> int:
         print(f"ERROR: target is not a directory: {target}", file=sys.stderr)
         return EXIT_ERROR
     files = collect_files(target, args.path or [])
+
+    # A fingerprint always describes the last content the INSTALLER wrote, never
+    # what happens to be on disk. For a file the developer edited and this run
+    # kept, that is the previous fingerprint. Recording the edited content
+    # instead would make the file look untouched next time, and the edit this
+    # run protected would be overwritten by the following one.
+    #
+    # The kept set is supplied by the caller because it must be computed BEFORE
+    # anything is written. Re-deriving it here would compare against files the
+    # sync has already replaced, and every legitimately updated file would look
+    # edited.
+    if args.kept:
+        previous = read_record(target)
+        prior_files = (previous or {}).get("files") or {}
+        for rel in args.kept:
+            if rel in files and rel in prior_files:
+                files[rel] = prior_files[rel]
     write_record(
         target, source=args.source, ref=args.ref, track=args.track,
         commit=args.commit, provider=args.provider, mode=args.mode,
@@ -186,6 +280,28 @@ def cmd_read_record(args) -> int:
         return EXIT_NO_RECORD
     json.dump(rec, sys.stdout, indent=2, sort_keys=True)
     sys.stdout.write("\n")
+    return EXIT_OK
+
+
+def cmd_protected(args) -> int:
+    target = Path(args.target).resolve()
+    for rel in sorted(protected_paths(target, read_record(target))):
+        print(rel)
+    return EXIT_OK
+
+
+def cmd_sync(args) -> int:
+    # Resolve all three the same way. On macOS a temp path like /var/folders/...
+    # is a symlink to /private/var/folders/..., and mixing resolved with
+    # unresolved forms makes every relative_to() call fail.
+    target = Path(args.target).resolve()
+    src, dest = Path(args.src).resolve(), Path(args.dest).resolve()
+    if not src.is_dir():
+        print(f"ERROR: source is not a directory: {src}", file=sys.stderr)
+        return EXIT_ERROR
+    protected = protected_paths(target, read_record(target))
+    for action, rel, _digest in sync_tree(src, dest, target, protected):
+        print(f"{action}\t{rel}")
     return EXIT_OK
 
 
@@ -222,11 +338,24 @@ def main() -> int:
     w.add_argument("--mode", required=True)
     w.add_argument("--pinned", action="store_true")
     w.add_argument("--path", action="append", default=[])
+    w.add_argument("--kept", action="append", default=[],
+                   help="paths this run left alone because the developer edited "
+                        "them; they retain their previous fingerprint")
     w.set_defaults(func=cmd_write_record)
 
     r = sub.add_parser("read-record")
     r.add_argument("--target", required=True)
     r.set_defaults(func=cmd_read_record)
+
+    pr = sub.add_parser("protected")
+    pr.add_argument("--target", required=True)
+    pr.set_defaults(func=cmd_protected)
+
+    sy = sub.add_parser("sync")
+    sy.add_argument("--target", required=True)
+    sy.add_argument("--src", required=True)
+    sy.add_argument("--dest", required=True)
+    sy.set_defaults(func=cmd_sync)
 
     f = sub.add_parser("record-field")
     f.add_argument("--target", required=True)

@@ -632,18 +632,22 @@ def check_update_keeps_edited_file() -> None:
                 fh.write(EDITED_MARK)
             edited[rel] = path.read_text(encoding="utf-8")
 
-        proc = run_setup(bare, target, "--update", cache=cache)
-        if proc.returncode != 0:
-            fail(g, f"update exited {proc.returncode}: "
-                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
-            return
-        combined = proc.stdout + proc.stderr
-        for rel, expected in edited.items():
-            actual = (target / rel).read_text(encoding="utf-8")
-            if actual != expected:
-                fail(g, f"{rel} was overwritten despite being edited")
-            if rel not in combined:
-                fail(g, f"output never names {rel} as kept")
+        # Twice: the first update must keep the edit, and must not adopt the
+        # edited content as the new baseline, or the second update overwrites it.
+        for attempt in (1, 2):
+            proc = run_setup(bare, target, "--update", cache=cache)
+            if proc.returncode != 0:
+                fail(g, f"update {attempt} exited {proc.returncode}: "
+                        f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+                return
+            combined = proc.stdout + proc.stderr
+            for rel, expected in edited.items():
+                actual = (target / rel).read_text(encoding="utf-8")
+                if actual != expected:
+                    fail(g, f"{rel} was overwritten on update {attempt} despite "
+                            f"being edited")
+                if rel not in combined:
+                    fail(g, f"update {attempt} never names {rel} as kept")
 
 
 def check_update_replaces_untouched_file() -> None:
