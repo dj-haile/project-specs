@@ -607,6 +607,94 @@ def check_update_moves_pin() -> None:
             fail(g, "install did not move to the named branch's content")
 
 
+# --- Groups: protecting the developer's edits --------------------------------
+
+EDITED_MARK = "\n<!-- edited by the developer -->\n"
+
+
+def check_update_keeps_edited_file() -> None:
+    """AC-9 — a file whose content no longer matches its recorded fingerprint is
+    left alone by an update, and the installer says it kept it."""
+    g = "check_update_keeps_edited_file"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        # Two files the installer would otherwise replace on every run.
+        edited = {
+            "pr_description.md": None,
+            ".claude/conventions/naming-conventions.md": None,
+        }
+        for rel in edited:
+            path = target / rel
+            with path.open("a", encoding="utf-8") as fh:
+                fh.write(EDITED_MARK)
+            edited[rel] = path.read_text(encoding="utf-8")
+
+        proc = run_setup(bare, target, "--update", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        combined = proc.stdout + proc.stderr
+        for rel, expected in edited.items():
+            actual = (target / rel).read_text(encoding="utf-8")
+            if actual != expected:
+                fail(g, f"{rel} was overwritten despite being edited")
+            if rel not in combined:
+                fail(g, f"output never names {rel} as kept")
+
+
+def check_update_replaces_untouched_file() -> None:
+    """AC-10 — a file still matching its recorded fingerprint is replaced with
+    the source's version, so protection does not freeze the whole install."""
+    g = "check_update_replaces_untouched_file"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        rel = ".claude/conventions/naming-conventions.md"   # changed upstream, untouched here
+        before = (target / rel).read_text(encoding="utf-8")
+        if "landed after the install" in before:
+            fail(g, "fixture is wrong: the upstream change is already installed")
+            return
+
+        proc = run_setup(bare, target, "--update", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        after = (target / rel).read_text(encoding="utf-8")
+        if "landed after the install" not in after:
+            fail(g, f"{rel} was not updated even though it was never edited")
+        rec = read_record(target)
+        if rec and rec["files"].get(rel) != digest(target / rel):
+            fail(g, f"record fingerprint for {rel} does not match the file it wrote")
+
+
+def check_update_preserves_project_config() -> None:
+    """AC-11 — a customized project configuration file survives an update."""
+    g = "check_update_preserves_project_config"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        cfg = target / "specs.config.yaml"
+        customized = cfg.read_text(encoding="utf-8") + '\nproject_name: "my-own-project"\n'
+        cfg.write_text(customized, encoding="utf-8")
+
+        proc = run_setup(bare, target, "--update", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        if cfg.read_text(encoding="utf-8") != customized:
+            fail(g, "specs.config.yaml was overwritten by the update")
+
+
 # --- Check registry ----------------------------------------------------------
 # Keyed by the group name used in a plan's Criterion Bindings table, so
 # `python3 scripts/test_installer.py --check <name>` runs exactly one bound group.
@@ -624,6 +712,9 @@ CHECKS: "dict[str, Callable[[], None]]" = {
     "check_update_without_record_warns": check_update_without_record_warns,
     "check_update_keeps_pin":            check_update_keeps_pin,
     "check_update_moves_pin":            check_update_moves_pin,
+    "check_update_keeps_edited_file":    check_update_keeps_edited_file,
+    "check_update_replaces_untouched_file": check_update_replaces_untouched_file,
+    "check_update_preserves_project_config": check_update_preserves_project_config,
 }
 
 
