@@ -23,10 +23,10 @@ record below is `strength: single-group` — the run executed exactly the bound 
 ```yaml
 criterion: AC-1
 group: scripts/test_installer.py::check_fresh_install_writes_record
-edge: red
+outcome: red
 command: "python3 scripts/test_installer.py --check check_fresh_install_writes_record"
 code_state: "git:03195aa0dc5ac4456824441c606f3d6cf0cddc83"
-result: |
+output: |
   exit 1
   
   test_installer.py [check_fresh_install_writes_record]: 1 failure(s)
@@ -38,10 +38,10 @@ strength: single-group
 ```yaml
 criterion: AC-2
 group: scripts/test_installer.py::check_record_hashes_match_disk
-edge: red
+outcome: red
 command: "python3 scripts/test_installer.py --check check_record_hashes_match_disk"
 code_state: "git:03195aa0dc5ac4456824441c606f3d6cf0cddc83"
-result: |
+output: |
   exit 1
   
   test_installer.py [check_record_hashes_match_disk]: 1 failure(s)
@@ -53,10 +53,10 @@ strength: single-group
 ```yaml
 criterion: AC-3
 group: scripts/test_installer.py::check_future_schema_refused
-edge: red
+outcome: red
 command: "python3 scripts/test_installer.py --check check_future_schema_refused"
 code_state: "git:03195aa0dc5ac4456824441c606f3d6cf0cddc83"
-result: |
+output: |
   exit 1
   
   test_installer.py [check_future_schema_refused]: 1 failure(s)
@@ -68,10 +68,10 @@ strength: single-group
 ```yaml
 criterion: AC-1
 group: scripts/test_installer.py::check_fresh_install_writes_record
-edge: green
+outcome: green
 command: "python3 scripts/test_installer.py --check check_fresh_install_writes_record"
 code_state: "git:a87a0ce53d1d6b09bbbfa9fcf33e889065251102"
-result: |
+output: |
   exit 0
   test_installer.py [check_fresh_install_writes_record]: OK
 strength: single-group
@@ -80,10 +80,10 @@ strength: single-group
 ```yaml
 criterion: AC-2
 group: scripts/test_installer.py::check_record_hashes_match_disk
-edge: green
+outcome: green
 command: "python3 scripts/test_installer.py --check check_record_hashes_match_disk"
 code_state: "git:a87a0ce53d1d6b09bbbfa9fcf33e889065251102"
-result: |
+output: |
   exit 0
   test_installer.py [check_record_hashes_match_disk]: OK
 strength: single-group
@@ -92,10 +92,10 @@ strength: single-group
 ```yaml
 criterion: AC-3
 group: scripts/test_installer.py::check_future_schema_refused
-edge: green
+outcome: green
 command: "python3 scripts/test_installer.py --check check_future_schema_refused"
 code_state: "git:a87a0ce53d1d6b09bbbfa9fcf33e889065251102"
-result: |
+output: |
   exit 0
   test_installer.py [check_future_schema_refused]: OK
 strength: single-group

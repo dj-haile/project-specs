@@ -133,7 +133,7 @@ The stakes domain comes from the plan's binding row and is **read, never re-deri
 - Stakes `none` and evidence degraded → labeled, not blocked.
 - Stakes anything else and the only evidence is degraded → the blocking verdict for that criterion. Name the domain that matched, and give the remediation: set `test_group_command` in `specs.config.yaml` and re-take the evidence.
 
-**Sampled re-run.** Derive the re-run set from [criterion-binding](../../conventions/criterion-binding.md) §6 — the deterministic sample plus every criterion whose text or bound group moved since the last recorded validation — and show the derivation in the report: the sorted group list, the hash, and the index it produced. Never pick the sample by hand or by preference; a chosen sample is not a sampled re-run. For each selected record, run its stored command against its stored code state and compare the outcome with the stored result:
+**Sampled re-run.** Derive the re-run set from [criterion-binding](../../conventions/criterion-binding.md) §6 — the deterministic sample plus every criterion whose text or bound group moved since the last recorded validation — and show the derivation in the report: the sorted group list, the hash, and the index it produced. Never pick the sample by hand or by preference; a chosen sample is not a sampled re-run. For each selected record, run its stored command against its stored code state and compare what it prints with the stored output:
 
 - Agreement → the criterion keeps the verdict its records earned.
 - The command cannot be re-run at that code state → the evidence is absent and the criterion takes the blocking verdict.

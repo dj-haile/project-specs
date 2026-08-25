@@ -81,17 +81,17 @@ Closed vocabulary: `none` · `auth` · `billing` · `data-integrity` · `securit
 ```yaml
 criterion: AC-27
 group: scripts/validate.py::check_gate_sections
-edge: red                     # red | green
+outcome: red                  # red | green
 command: "python3 scripts/validate.py --check check_gate_sections"
 code_state: "git:9f2c1ab7e4d38c05b6119ad2f7e0c4413ab2d9f1"
-result: |
+output: |
   exit 1
   ERROR commands/core/spec.md: section 'Red Flags' never mentions the obligation
 strength: single-group        # single-group | degraded
 recorded_at: "2026-08-07T14:02:11Z"
 ```
 
-Every evidence record **MUST** contain `command`, `code_state`, and `result` — the three required elements. A record missing any one is treated as absent, and absent red evidence is a blocking verdict.
+Every evidence record **MUST** contain `command`, `code_state`, and `output` — the three required elements. A record missing any one is treated as absent, and absent red evidence is a blocking verdict.
 
 **`code_state` must be re-runnable.** Accepted forms: `git:<40-hex sha>` for a commit, or `git:<40-hex sha>` produced by `git stash create` for an uncommitted state — that yields a real dangling commit reachable with `git checkout`. A working-tree reference such as `git:<sha>-dirty` is not re-runnable, and a record carrying one is absent.
 
@@ -99,7 +99,7 @@ Every evidence record **MUST** contain `command`, `code_state`, and `result` —
 
 **`strength`** is `single-group` when the invocation executes exactly the bound group and nothing else, and `degraded` when it executes a superset. Granularity is irrelevant: running `scripts/validate.py` for a criterion whose bound group *is* `scripts/validate.py` is `single-group`.
 
-**A `degraded` record** additionally requires `degraded_reason:`, and its `result` must quote the output lines that individually identify the bound group's outcome. If the bound group's outcome is not identifiable in the captured output, the record does not count as red or green evidence at all — it is rejected, not merely labeled.
+**A `degraded` record** additionally requires `degraded_reason:`, and its `output` must quote the lines that individually identify the bound group's outcome. If the bound group's outcome is not identifiable in the captured output, the record does not count as red or green evidence at all — it is rejected, not merely labeled.
 
 ---
 
@@ -155,7 +155,7 @@ git diff --name-only <validated_at_code_state>..<current> -- <paths in bound gro
 git diff <validated_at_code_state>..<current> -- <spec file>   # criterion blocks that differ
 ```
 
-**Re-run semantics.** Execute each selected record's stored `command` against its stored `code_state` and compare with the stored `result`. A command that cannot be re-run, or whose result contradicts the record, makes that criterion's evidence absent and the blocking verdict applies.
+**Re-run semantics.** Execute each selected record's stored `command` against its stored `code_state` and compare with the stored `output`. A command that cannot be re-run, or whose output contradicts the record, makes that criterion's evidence absent and the blocking verdict applies.
 
 **Reproducibility.** Given identical spec, plan, evidence records, and repository state, the pairing and red→green portion of a validation is identical across two runs or two validators. Judgment-based findings elsewhere in the report may differ; this portion may not.
 
