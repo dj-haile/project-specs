@@ -41,6 +41,8 @@ USAGE:
   ./setup.sh /path/to/project --copy             Copy (independent snapshot)
   ./setup.sh /path/to/project --update           Update existing installation
   ./setup.sh /path/to/project --provider=NAME    Install for a provider (claude|codex|cursor)
+  ./setup.sh /path/to/project --from=GIT_URL     Fetch the framework from a git repo (no local clone needed)
+  ./setup.sh /path/to/project --ref=NAME         Install a branch, tag, or revision (default: the source's HEAD branch)
   ./setup.sh /path/to/project --yes              Non-interactive: overwrite if exists, skip optional prompts (CI)
   ./setup.sh --help                              Show this help
 
@@ -60,11 +62,20 @@ MODES:
                     because they require a format transform that can't be symlinked).
   update          — Update existing installation (overwrite safely).
 
+SOURCE:
+  With no --from, the framework is read from the directory this script lives in.
+  With --from, it is fetched into a local cache (SPECS_CACHE, or
+  $XDG_CACHE_HOME/project-specs) and one revision is exported for the install.
+  A --ref naming a branch tracks that branch; a tag or a revision pins the
+  install, and the record says so.
+
 EXAMPLES:
   ./setup.sh ~/my-project
   ./setup.sh ~/my-project --provider=cursor
   ./setup.sh ~/my-project --provider=codex --update
   ./setup.sh ~/my-project --link
+  ./setup.sh ~/my-project --from=https://github.com/dj-haile/project-specs
+  ./setup.sh ~/my-project --from=https://github.com/dj-haile/project-specs --ref=v1.0.0
 EOF
   exit 0
 }
@@ -114,6 +125,105 @@ else:
 PY
 }
 
+# --- Fetching a source ------------------------------------------------------
+# With --from, the framework is fetched into a local mirror clone and exactly one
+# revision is exported for this install. A mirror plus an export is used rather
+# than a checkout because two projects can pin different revisions of the same
+# source; a shared cache that checked refs in and out would fight itself.
+
+EXPORT_DIR=""      # temp dir holding the exported revision; removed on exit
+
+cleanup_export() {
+  [[ -n "$EXPORT_DIR" && -d "$EXPORT_DIR" ]] && rm -rf "$EXPORT_DIR"
+  return 0
+}
+trap cleanup_export EXIT
+
+# Where a given source URL is mirrored. Keyed by a hash of the URL so two
+# sources never share a directory and no URL character reaches the filesystem.
+cache_dir_for() {
+  local url="$1"
+  local base="${SPECS_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/project-specs}"
+  local key
+  key="$(printf '%s' "$url" | python3 -c \
+    'import hashlib,sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest()[:16])')"
+  printf '%s/%s.git' "$base" "$key"
+}
+
+# Fetch $1 at ref $2, export it, and set SRC_DIR plus the REC_* record fields.
+fetch_source() {
+  local url="$1" ref="$2"
+  check_required_command git
+  check_required_command tar
+
+  local mirror; mirror="$(cache_dir_for "$url")"
+  mkdir -p "$(dirname "$mirror")"
+  if [[ -d "$mirror" ]]; then
+    print_status "Refreshing cached source: $mirror"
+    if ! git -C "$mirror" fetch --prune --quiet 2>/dev/null; then
+      print_error "Could not fetch from $url"
+      return 1
+    fi
+  else
+    print_status "Fetching source into cache: $mirror"
+    if ! git clone --mirror --quiet "$url" "$mirror" 2>/dev/null; then
+      print_error "Could not clone $url"
+      rm -rf "$mirror"
+      return 1
+    fi
+  fi
+
+  # The source's own default branch, used as the tracking branch for a pin.
+  local default_branch
+  default_branch="$(git -C "$mirror" symbolic-ref --short HEAD 2>/dev/null || true)"
+  [[ -z "$ref" ]] && ref="$default_branch"
+  if [[ -z "$ref" ]]; then
+    print_error "Could not determine a default branch for $url — pass --ref"
+    return 1
+  fi
+
+  local commit
+  if ! commit="$(git -C "$mirror" rev-parse --verify --quiet "${ref}^{commit}")"; then
+    print_error "Reference not found in $url: $ref"
+    return 1
+  fi
+
+  # A branch moves, so it is tracked. A tag or a raw revision does not, so the
+  # install is pinned and staleness is measured against the default branch.
+  if git -C "$mirror" show-ref --verify --quiet "refs/heads/$ref"; then
+    REC_PINNED=false
+    REC_TRACK="$ref"
+  else
+    REC_PINNED=true
+    REC_TRACK="$default_branch"
+  fi
+
+  EXPORT_DIR="$(mktemp -d)"
+  if ! git -C "$mirror" archive "$commit" | tar -x -C "$EXPORT_DIR"; then
+    print_error "Could not export $ref ($commit) from $url"
+    return 1
+  fi
+
+  SRC_DIR="$EXPORT_DIR"
+  REC_SOURCE="$url"
+  REC_REF="$ref"
+  REC_COMMIT="$commit"
+  print_success "Using $ref ($(printf '%.10s' "$commit")) from $url"
+  return 0
+}
+
+# Decide where framework files are read from, and describe that source for the
+# record. Runs before anything is written to the target.
+resolve_source() {
+  REC_SOURCE=""; REC_REF=""; REC_TRACK=""; REC_COMMIT=""; REC_PINNED=false
+  if [[ -n "$SOURCE_URL" ]]; then
+    fetch_source "$SOURCE_URL" "$REQ_REF" || exit 1
+  else
+    SRC_DIR="$SCRIPT_DIR"
+    resolve_record_metadata
+  fi
+}
+
 # --- Install record ----------------------------------------------------------
 # The record lives at <target>/.project-specs.json and says what was installed
 # from where. scripts/installer_support.py owns its format; this file only
@@ -134,7 +244,6 @@ assert_record_readable() {
 # Describe the source this run installed from: its revision, its origin URL, and
 # the branch it was on. Empty fields when the source is not a git working copy.
 resolve_record_metadata() {
-  REC_SOURCE=""; REC_REF=""; REC_TRACK=""; REC_COMMIT=""; REC_PINNED=false
   if git -C "$SRC_DIR" rev-parse --git-dir >/dev/null 2>&1; then
     REC_COMMIT="$(git -C "$SRC_DIR" rev-parse HEAD 2>/dev/null || true)"
     REC_SOURCE="$(git -C "$SRC_DIR" remote get-url origin 2>/dev/null || true)"
@@ -150,7 +259,6 @@ write_install_record() {
     print_warning "scripts/installer_support.py not found in source; no install record written"
     return 0
   fi
-  resolve_record_metadata
   local path_args=() p
   for p in "${RECORD_PATHS[@]}"; do path_args+=(--path "$p"); done
   local pin_args=()
@@ -176,6 +284,8 @@ TARGET_PATH=""
 MODE="copy"
 PROVIDER="claude"
 ASSUME_YES=false
+SOURCE_URL=""      # --from: fetch the framework from here instead of SCRIPT_DIR
+REQ_REF=""         # --ref: which branch, tag, or revision to install
 
 for arg in "$@"; do
   case "$arg" in
@@ -185,6 +295,8 @@ for arg in "$@"; do
     --update)         MODE="update" ;;
     --yes|-y)         ASSUME_YES=true ;;
     --provider=*)     PROVIDER="${arg#--provider=}" ;;
+    --from=*)         SOURCE_URL="${arg#--from=}" ;;
+    --ref=*)          REQ_REF="${arg#--ref=}" ;;
     --*)              print_error "Unknown flag: $arg"; exit 1 ;;
     *)
       if [[ -z "$TARGET_PATH" ]]; then
@@ -209,26 +321,31 @@ if [[ ! -d "$TARGET_PATH" ]]; then
 fi
 TARGET_PATH="$(cd "$TARGET_PATH" && pwd)"
 
-# Validate provider + load manifest
-MANIFEST="$SCRIPT_DIR/providers/$PROVIDER/manifest.yaml"
-if [[ ! -f "$MANIFEST" ]]; then
-  print_error "Unknown provider: $PROVIDER"
-  echo "Available providers:"
-  for d in "$SCRIPT_DIR"/providers/*/; do
-    [[ -f "$d/manifest.yaml" ]] && echo "  - $(basename "$d")"
-  done
-  exit 1
-fi
-
 # Check required commands (python3 needed for manifest parsing)
 check_required_command mkdir
 check_required_command cp
 check_required_command ln
 check_required_command python3
 
-# Resolve manifest values
+# Refuse a target recorded by a newer installer before fetching or writing.
 assert_record_readable
 
+# Decide where framework files are read from. Everything below reads SRC_DIR,
+# which is this script's own directory unless --from fetched a source.
+resolve_source
+
+# Validate provider + load manifest (from the resolved source)
+MANIFEST="$SRC_DIR/providers/$PROVIDER/manifest.yaml"
+if [[ ! -f "$MANIFEST" ]]; then
+  print_error "Unknown provider: $PROVIDER"
+  echo "Available providers:"
+  for d in "$SRC_DIR"/providers/*/; do
+    [[ -f "$d/manifest.yaml" ]] && echo "  - $(basename "$d")"
+  done
+  exit 1
+fi
+
+# Resolve manifest values
 BASE_DIR="$(manifest_get "$MANIFEST" install.base_dir)"
 AGENTS_SUBDIR="$(manifest_get "$MANIFEST" install.agents_subdir)"
 COMMANDS_SUBDIR="$(manifest_get "$MANIFEST" install.commands_subdir)"
@@ -244,7 +361,7 @@ INSTALL_DIR="$TARGET_PATH/$BASE_DIR"
 print_status "Installing project-specs into $TARGET_PATH"
 print_status "Provider: $DISPLAY_NAME ($PROVIDER)"
 print_status "Mode: $MODE | Transform: $TRANSFORM"
-print_status "Source: $SCRIPT_DIR"
+print_status "Source: $SRC_DIR"
 
 # Non-claude providers can't be symlinked when a transform is required
 if [[ "$MODE" == "link" && "$TRANSFORM" != "copy" ]]; then
@@ -388,12 +505,12 @@ PY
 # --- Install agents + commands per transform type ----------------------------
 if [[ "$TRANSFORM" == "skill+toml" ]]; then
   # Codex: commands become skills, agents become TOML
-  install_commands_as_skills "$SCRIPT_DIR/commands" "$SKILLS_SUBDIR"
-  install_agents_as_toml     "$SCRIPT_DIR/agents"   "$AGENTS_SUBDIR"
+  install_commands_as_skills "$SRC_DIR/commands" "$SKILLS_SUBDIR"
+  install_agents_as_toml     "$SRC_DIR/agents"   "$AGENTS_SUBDIR"
 else
   # Claude / Cursor: straight copy
-  install_dir_plain "$SCRIPT_DIR/agents"   "$AGENTS_SUBDIR"   "agents/"
-  install_dir_plain "$SCRIPT_DIR/commands" "$COMMANDS_SUBDIR" "commands/"
+  install_dir_plain "$SRC_DIR/agents"   "$AGENTS_SUBDIR"   "agents/"
+  install_dir_plain "$SRC_DIR/commands" "$COMMANDS_SUBDIR" "commands/"
 fi
 
 # Skills directory (project-specific skills live here for copy providers)
@@ -408,7 +525,7 @@ fi
 # so ../../conventions resolves to <base>/conventions. For Codex, generated
 # skills live at <skills_base>/<name>/SKILL.md, so ../../conventions resolves to
 # <skills_base>/../conventions (i.e. alongside the skills root's parent).
-if [[ -d "$SCRIPT_DIR/conventions" ]]; then
+if [[ -d "$SRC_DIR/conventions" ]]; then
   if [[ "$TRANSFORM" == "skill+toml" ]]; then
     # Skills install under $TARGET_PATH/$SKILLS_SUBDIR/<name>/SKILL.md
     # ../../conventions from there → $TARGET_PATH/$(dirname SKILLS_SUBDIR)/conventions
@@ -418,7 +535,7 @@ if [[ -d "$SCRIPT_DIR/conventions" ]]; then
   fi
   rm -rf "$CONV_DEST"
   mkdir -p "$(dirname "$CONV_DEST")"
-  cp -r "$SCRIPT_DIR/conventions" "$CONV_DEST"
+  cp -r "$SRC_DIR/conventions" "$CONV_DEST"
   print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
   RECORD_PATHS+=("${CONV_DEST#$TARGET_PATH/}")
 fi
@@ -428,11 +545,11 @@ fi
 # conventions/standards-governance.md). Installed at the project root to match
 # the default standards.statements_path in specs.config.yaml. Individual file
 # copies (no rm -rf): the target may keep its own files in standards/.
-if [[ -d "$SCRIPT_DIR/standards" ]]; then
+if [[ -d "$SRC_DIR/standards" ]]; then
   STD_DEST="$TARGET_PATH/standards"
   mkdir -p "$STD_DEST"
-  cp "$SCRIPT_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
-  cp "$SCRIPT_DIR/standards/statements.json" "$STD_DEST/statements.json"
+  cp "$SRC_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
+  cp "$SRC_DIR/standards/statements.json" "$STD_DEST/statements.json"
   print_success "Installed standards registry → standards/"
   RECORD_PATHS+=("standards/extractor.py" "standards/statements.json")
 fi
@@ -443,8 +560,8 @@ fi
 if [[ -n "$ROOT_INSTRUCTIONS" ]]; then
   ROOT_FILE="$TARGET_PATH/$ROOT_INSTRUCTIONS"
   if [[ ! -f "$ROOT_FILE" ]]; then
-    if [[ -f "$SCRIPT_DIR/AGENTS.md" ]]; then
-      cp "$SCRIPT_DIR/AGENTS.md" "$ROOT_FILE"
+    if [[ -f "$SRC_DIR/AGENTS.md" ]]; then
+      cp "$SRC_DIR/AGENTS.md" "$ROOT_FILE"
       print_success "Created $ROOT_INSTRUCTIONS at project root"
     else
       cat > "$ROOT_FILE" <<EOF
@@ -464,7 +581,7 @@ fi
 
 # Settings/permissions template (Claude only, currently)
 if [[ -n "$SETTINGS_TEMPLATE" ]]; then
-  SRC_SETTINGS="$SCRIPT_DIR/.claude/$SETTINGS_TEMPLATE"
+  SRC_SETTINGS="$SRC_DIR/.claude/$SETTINGS_TEMPLATE"
   if [[ -f "$SRC_SETTINGS" && ! -f "$INSTALL_DIR/$SETTINGS_TEMPLATE" ]]; then
     cp "$SRC_SETTINGS" "$INSTALL_DIR/$SETTINGS_TEMPLATE"
     print_success "Copied $SETTINGS_TEMPLATE → $BASE_DIR/"
@@ -473,9 +590,9 @@ if [[ -n "$SETTINGS_TEMPLATE" ]]; then
 fi
 
 # Copy specs.config.yaml if not present
-if [[ -f "$SCRIPT_DIR/specs.config.example.yaml" ]]; then
+if [[ -f "$SRC_DIR/specs.config.example.yaml" ]]; then
   if [[ ! -f "$TARGET_PATH/specs.config.yaml" ]]; then
-    cp "$SCRIPT_DIR/specs.config.example.yaml" "$TARGET_PATH/specs.config.yaml"
+    cp "$SRC_DIR/specs.config.example.yaml" "$TARGET_PATH/specs.config.yaml"
     # Set the provider in the freshly-copied config to match this install
     python3 - "$TARGET_PATH/specs.config.yaml" "$PROVIDER" <<'PY'
 import re, sys
@@ -494,8 +611,8 @@ else
 fi
 
 # Copy PR description template
-if [[ -f "$SCRIPT_DIR/templates/pr_description.md" ]]; then
-  cp "$SCRIPT_DIR/templates/pr_description.md" "$TARGET_PATH/pr_description.md"
+if [[ -f "$SRC_DIR/templates/pr_description.md" ]]; then
+  cp "$SRC_DIR/templates/pr_description.md" "$TARGET_PATH/pr_description.md"
   print_success "Copied pr_description.md to project root"
   RECORD_PATHS+=("pr_description.md")
 else
@@ -520,8 +637,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   mkdir -p "$THOUGHTS_DIR/prs"
   mkdir -p "$THOUGHTS_DIR/research"
 
-  if [[ -f "$SCRIPT_DIR/templates/pr_description.md" ]]; then
-    cp "$SCRIPT_DIR/templates/pr_description.md" "$THOUGHTS_DIR/pr_description.md"
+  if [[ -f "$SRC_DIR/templates/pr_description.md" ]]; then
+    cp "$SRC_DIR/templates/pr_description.md" "$THOUGHTS_DIR/pr_description.md"
   fi
   print_success "Created thoughts/ directory structure"
 else
@@ -550,8 +667,16 @@ echo "  2. Add project-specific skills under the provider's skills directory"
 echo "  3. Confirm your provider discovers the installed files"
 echo
 echo "Documentation:"
-echo "  • Skill template: $SCRIPT_DIR/skills/_template/SKILL.md"
-echo "  • Provider portability: $SCRIPT_DIR/conventions/provider-portability.md"
+# With --from, SRC_DIR is a temp export removed when this script exits, so
+# pointing at it would hand the reader a path that no longer exists.
+if [[ -n "$SOURCE_URL" ]]; then
+  echo "  • Framework source: $REC_SOURCE ($REC_REF)"
+else
+  echo "  • Skill template: $SRC_DIR/skills/_template/SKILL.md"
+fi
+if [[ -n "${CONV_DEST:-}" && -f "$CONV_DEST/provider-portability.md" ]]; then
+  echo "  • Provider portability: ${CONV_DEST#$TARGET_PATH/}/provider-portability.md"
+fi
 echo "  • PR template: $TARGET_PATH/pr_description.md"
 if [[ -n "$THOUGHTS_DIR" && -d "$THOUGHTS_DIR" ]]; then
   echo "  • Thoughts: $THOUGHTS_DIR/"
