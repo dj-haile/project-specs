@@ -270,12 +270,12 @@ New `installer-behavior` job running `python3 scripts/test_installer.py`.
 ### Success Criteria
 
 **Automated:**
-- [ ] `python3 scripts/test_installer.py --check check_fresh_install_writes_record` passes (AC-1)
-- [ ] `python3 scripts/test_installer.py --check check_record_hashes_match_disk` passes (AC-2)
-- [ ] `python3 scripts/test_installer.py --check check_future_schema_refused` passes (AC-3)
-- [ ] Each of the three groups was recorded failing before the change and passing after it, per the pairing gate
-- [ ] `python3 scripts/validate.py` passes
-- [ ] The existing `install-smoke-test` job still passes for all three providers
+- [x] `python3 scripts/test_installer.py --check check_fresh_install_writes_record` passes (AC-1)
+- [x] `python3 scripts/test_installer.py --check check_record_hashes_match_disk` passes (AC-2)
+- [x] `python3 scripts/test_installer.py --check check_future_schema_refused` passes (AC-3)
+- [x] Each of the three groups was recorded failing before the change and passing after it, per the pairing gate
+- [x] `python3 scripts/validate.py` passes
+- [x] The existing `install-smoke-test` job still passes for all three providers
 
 **Manual:**
 - [ ] Install into a scratch directory by hand and read the record — the field names and the timestamp are legible to a person
