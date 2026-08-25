@@ -18,7 +18,7 @@ record below is `strength: single-group` — the run executed exactly the bound 
 
 ---
 
-## Slice 1 — Install record
+## Phase 1 — Install record
 
 ```yaml
 criterion: AC-1
@@ -102,7 +102,7 @@ strength: single-group
 ```
 
 
-## Slice 2 — Fetch and reference pinning
+## Phase 2 — Fetch and reference pinning
 
 ```yaml
 criterion: AC-4

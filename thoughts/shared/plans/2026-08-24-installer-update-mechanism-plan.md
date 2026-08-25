@@ -10,7 +10,7 @@ tags:
 
 # Installer Update Mechanism — Implementation Plan
 
-**Grades against:** `thoughts/shared/specs/2026-08-24-installer-update-mechanism-spec.md`, criteria AC-1 … AC-23 (24 including AC-17b). Every slice cites the criteria it satisfies.
+**Grades against:** `thoughts/shared/specs/2026-08-24-installer-update-mechanism-spec.md`, criteria AC-1 … AC-23 (24 including AC-17b). Every phase cites the criteria it satisfies.
 **Decision record:** `thoughts/decisions/framework-distribution-and-updates.md` (ADR-001, Option D).
 **Open questions:** none. The spec's three questions were closed as D-1, D-2, and D-3 on 2026-08-24.
 
@@ -77,7 +77,7 @@ Every group lives in `scripts/test_installer.py` and is run with `python3 script
 
 Stakes domains are filled from the keyword table in `conventions/criterion-binding.md` §3 by matching each criterion's own spec text. The match is mechanical, not a judgment: AC-21 lands on `auth` because its text contains "session" (in "agent session"), which is a listed `auth` keyword. That is the rule working as written, and it means AC-21 must not rest on degraded evidence.
 
-| Criterion | Test group | Invocation | Stakes domain | Slice |
+| Criterion | Test group | Invocation | Stakes domain | Phase |
 |---|---|---|---|---|
 | `AC-1` | `scripts/test_installer.py::check_fresh_install_writes_record` | `python3 scripts/test_installer.py --check check_fresh_install_writes_record` | `none` | 1 |
 | `AC-2` | `scripts/test_installer.py::check_record_hashes_match_disk` | `python3 scripts/test_installer.py --check check_record_hashes_match_disk` | `none` | 1 |
@@ -245,7 +245,7 @@ Record shape written into a consumer repository:
 
 ---
 
-## Slice 1: Install record — tracer bullet through Bash, Python, and the test harness
+## Phase 1: Install record — tracer bullet through Bash, Python, and the test harness
 
 Satisfies **AC-1, AC-2, AC-3**.
 
@@ -259,7 +259,7 @@ The thinnest path that touches every layer this work will use: the installer cal
 Implement `SCHEMA`, `file_hash`, `read_record`, `write_record`, and `assert_schema_supported`. Expose a small subcommand interface (`write-record`, `read-record`) so Bash can call it. Records are written with sorted keys and a trailing newline so a diff of two records is readable.
 
 **2. `setup.sh`** (modified)
-Collect every written file into a `RECORD_FILES` array as the existing copy steps run, then call `write_record` before the summary. In this slice the copy engine is unchanged — only the bookkeeping is added. `commit` is filled from `git -C "$SRC_DIR" rev-parse HEAD` when the source directory is a git working copy, and left empty otherwise. `assert_schema_supported` runs at the start of any run that finds an existing record.
+Collect every written file into a `RECORD_FILES` array as the existing copy steps run, then call `write_record` before the summary. In this phase the copy engine is unchanged — only the bookkeeping is added. `commit` is filled from `git -C "$SRC_DIR" rev-parse HEAD` when the source directory is a git working copy, and left empty otherwise. `assert_schema_supported` runs at the start of any run that finds an existing record.
 
 **3. `scripts/test_installer.py`** (new)
 The `CHECKS` registry, `--check`, and `--list-checks`, modeled on `scripts/validate.py:397-449`. A fixture builder that copies the minimum source tree into a temporary directory and commits it. The three groups for AC-1, AC-2, AC-3.
@@ -280,11 +280,11 @@ New `installer-behavior` job running `python3 scripts/test_installer.py`.
 **Manual:**
 - [ ] Install into a scratch directory by hand and read the record — the field names and the timestamp are legible to a person
 
-**Implementation note:** pause after this slice for confirmation before continuing. It fixes the record shape, and every later slice depends on it.
+**Implementation note:** pause after this phase for confirmation before continuing. It fixes the record shape, and every later phase depends on it.
 
 ---
 
-## Slice 2: Fetch and install from a source URL
+## Phase 2: Fetch and install from a source URL
 
 Satisfies **AC-4, AC-16**.
 
@@ -309,14 +309,14 @@ Fixture helper that builds a `file://` source repository with two branches and a
 - [x] `--check check_install_named_reference` passes (AC-16)
 - [x] Both groups have red-then-green evidence
 - [x] No test reads or writes outside its temporary directory — asserted by pointing the cache at a temporary path in every group
-- [x] Slice 1's three groups still pass
+- [x] Phase 1's three groups still pass
 
 **Manual:**
 - [x] Install into a scratch directory from the real GitHub URL and confirm the cache lands where expected
 
 ---
 
-## Slice 3: Update that fetches, and holds a pin
+## Phase 3: Update that fetches, and holds a pin
 
 Satisfies **AC-5, AC-6, AC-7, AC-8, AC-12, AC-17, AC-18**.
 
@@ -336,7 +336,7 @@ Seven groups. The AC-8 group points the record at an unreachable path and assert
 
 **Automated:**
 - [ ] All seven groups for AC-5, AC-6, AC-7, AC-8, AC-12, AC-17, AC-18 pass, each with red-then-green evidence
-- [ ] Slices 1 and 2 still pass
+- [ ] Phases 1 and 2 still pass
 - [ ] `python3 scripts/validate.py` passes
 
 **Manual:**
@@ -344,7 +344,7 @@ Seven groups. The AC-8 group points the record at an unreachable path and assert
 
 ---
 
-## Slice 4: Keep the files the developer edited
+## Phase 4: Keep the files the developer edited
 
 Satisfies **AC-9, AC-10, AC-11**.
 
@@ -355,10 +355,10 @@ Replace the directory-at-a-time copy with a per-file sync that compares each des
 ### Changes Required
 
 **1. `scripts/installer_support.py`** (modified)
-Implement `protected_paths` and `sync_tree`. A file is protected when the record holds a hash for it and the file on disk hashes differently. With no record, nothing is protected and the caller reports that (already handled in slice 3).
+Implement `protected_paths` and `sync_tree`. A file is protected when the record holds a hash for it and the file on disk hashes differently. With no record, nothing is protected and the caller reports that (already handled in phase 3).
 
 **2. `setup.sh`** (modified)
-Replace `install_dir_plain`'s copy branch with `sync_tree`. Route conventions, standards, and the PR description template through it as well, removing the unconditional `cp` at `setup.sh:425-428`. Print a "kept your local changes" list in the summary. The project configuration file keeps its existing write-only-when-absent behavior (AC-11) — this slice adds the test, not new behavior.
+Replace `install_dir_plain`'s copy branch with `sync_tree`. Route conventions, standards, and the PR description template through it as well, removing the unconditional `cp` at `setup.sh:425-428`. Print a "kept your local changes" list in the summary. The project configuration file keeps its existing write-only-when-absent behavior (AC-11) — this phase adds the test, not new behavior.
 
 **3. `scripts/test_installer.py`** (modified)
 Three groups. The AC-10 group must edit the source between installs so a replacement is observable.
@@ -367,7 +367,7 @@ Three groups. The AC-10 group must edit the source between installs so a replace
 
 **Automated:**
 - [ ] Groups for AC-9, AC-10, AC-11 pass with red-then-green evidence
-- [ ] Slices 1 through 3 still pass
+- [ ] Phases 1 through 3 still pass
 - [ ] The existing `install-smoke-test` job still passes for all three providers — the copy engine changed underneath it
 
 **Manual:**
@@ -375,7 +375,7 @@ Three groups. The AC-10 group must edit the source between installs so a replace
 
 ---
 
-## Slice 5: Staleness report
+## Phase 5: Staleness report
 
 Satisfies **AC-13, AC-14, AC-15, AC-17b**.
 
@@ -399,14 +399,14 @@ Four groups. The AC-14 fixture must add a change-log entry in the advancing comm
 **Automated:**
 - [ ] Groups for AC-13, AC-14, AC-15, AC-17b pass with red-then-green evidence
 - [ ] The AC-17b group asserts no installed file changed during the check
-- [ ] Slices 1 through 4 still pass
+- [ ] Phases 1 through 4 still pass
 
 **Manual:**
 - [ ] Run the check against the real install in `agent-readiness-cli` and confirm the report reads clearly
 
 ---
 
-## Slice 6: Link mode coverage, the command, and the documentation
+## Phase 6: Link mode coverage, the command, and the documentation
 
 Satisfies **AC-19, AC-20, AC-21, AC-22, AC-23**.
 
@@ -414,7 +414,7 @@ Satisfies **AC-19, AC-20, AC-21, AC-22, AC-23**.
 
 Close the remaining gaps: link mode reaches the conventions and the standards registry, a command makes the check and the update reachable from an agent session, and the documentation explains both.
 
-Merged from what would naturally be two slices, to respect the enforced standard that a stack stays at five or six layers. Both halves are small.
+Merged from what would naturally be two phases, to respect the enforced standard that a stack stays at five or six layers. Both halves are small.
 
 ### Changes Required
 
@@ -480,7 +480,7 @@ Checked against the registry, filtered to `sdlc_stage: planning` and `all`. No f
 
 - **Program design** (`MUST`, approved, planning stage): satisfied — all three parts are present above.
 - **Command naming and frontmatter** (`MUST`, enforced): the new command uses a snake_case filename, a frontmatter `name` matching the file stem, and a semantic model tier rather than a literal model name.
-- **PR stacking** (`MUST` above 1,000 lines, `SHOULD` above 500 or across layers, enforced, review stage): this plan is written as six stacked layers for exactly this reason. Each slice leaves the repository green on its own, and each depends only on the slices below it.
+- **PR stacking** (`MUST` above 1,000 lines, `SHOULD` above 500 or across layers, enforced, review stage): this plan is written as six stacked layers for exactly this reason. Each phase leaves the repository green on its own, and each depends only on the phases below it.
 - **Research before planning** (`SHOULD`): satisfied — every file this plan modifies was read in full during planning.
 
 ## Recommendations (outside this plan's scope)
