@@ -158,3 +158,199 @@ output: |
 strength: single-group
 ```
 
+
+## Phase 3 — Update that fetches, and holds a pin
+
+```yaml
+criterion: AC-5
+group: scripts/test_installer.py::check_update_fetches_new_revision
+outcome: red
+command: "python3 scripts/test_installer.py --check check_update_fetches_new_revision"
+code_state: "git:512c08793c802435ab7a3d4853540302581f7de2"
+output: |
+  exit 1
+  
+  test_installer.py [check_update_fetches_new_revision]: 1 failure(s)
+  
+    FAIL  check_update_fetches_new_revision: update exited 1: ✗ Unknown provider: claude
+  Available providers:
+strength: single-group
+```
+
+```yaml
+criterion: AC-6
+group: scripts/test_installer.py::check_update_without_source_argument
+outcome: red
+command: "python3 scripts/test_installer.py --check check_update_without_source_argument"
+code_state: "git:512c08793c802435ab7a3d4853540302581f7de2"
+output: |
+  exit 1
+  
+  test_installer.py [check_update_without_source_argument]: 1 failure(s)
+  
+    FAIL  check_update_without_source_argument: update with no --from exited 1: ✗ Unknown provider: claude
+  Available providers:
+strength: single-group
+```
+
+```yaml
+criterion: AC-7
+group: scripts/test_installer.py::check_repeat_update_is_stable
+outcome: red
+command: "python3 scripts/test_installer.py --check check_repeat_update_is_stable"
+code_state: "git:512c08793c802435ab7a3d4853540302581f7de2"
+output: |
+  exit 1
+  
+  test_installer.py [check_repeat_update_is_stable]: 1 failure(s)
+  
+    FAIL  check_repeat_update_is_stable: first update failed
+strength: single-group
+```
+
+```yaml
+criterion: AC-8
+group: scripts/test_installer.py::check_failed_fetch_leaves_install_intact
+outcome: red
+command: "python3 scripts/test_installer.py --check check_failed_fetch_leaves_install_intact"
+code_state: "git:512c08793c802435ab7a3d4853540302581f7de2"
+output: |
+  exit 1
+  
+  test_installer.py [check_failed_fetch_leaves_install_intact]: 1 failure(s)
+  
+    FAIL  check_failed_fetch_leaves_install_intact: failure never names the unreachable source: '\x1b[0;31m✗\x1b[0m Unknown provider: claude\nAvailable providers:'
+strength: single-group
+```
+
+```yaml
+criterion: AC-12
+group: scripts/test_installer.py::check_update_without_record_warns
+outcome: red
+command: "python3 scripts/test_installer.py --check check_update_without_record_warns"
+code_state: "git:512c08793c802435ab7a3d4853540302581f7de2"
+output: |
+  exit 1
+  
+  test_installer.py [check_update_without_record_warns]: 1 failure(s)
+  
+    FAIL  check_update_without_record_warns: update never says edited-file protection was unavailable: 'ar/folders/zp/xp_qs4s54417fqk1jlr2dbfc0000gn/T/specs-installer-test-e5c2uzxb/source/skills/_template/SKILL.md\n  • Provider portability: .claude/conventions/provider-portability.md\n  • PR template: /var/folders/zp/xp_qs4s54417fqk1jlr2dbfc0000gn/T/specs-installer-test-e5c2uzxb/target/pr_description.md'
+strength: single-group
+```
+
+```yaml
+criterion: AC-17
+group: scripts/test_installer.py::check_update_keeps_pin
+outcome: red
+command: "python3 scripts/test_installer.py --check check_update_keeps_pin"
+code_state: "git:512c08793c802435ab7a3d4853540302581f7de2"
+output: |
+  exit 1
+  
+  test_installer.py [check_update_keeps_pin]: 1 failure(s)
+  
+    FAIL  check_update_keeps_pin: update exited 1: ✗ Unknown provider: claude
+  Available providers:
+strength: single-group
+```
+
+```yaml
+criterion: AC-18
+group: scripts/test_installer.py::check_update_moves_pin
+outcome: red
+command: "python3 scripts/test_installer.py --check check_update_moves_pin"
+code_state: "git:512c08793c802435ab7a3d4853540302581f7de2"
+output: |
+  exit 1
+  
+  test_installer.py [check_update_moves_pin]: 1 failure(s)
+  
+    FAIL  check_update_moves_pin: update exited 1: ✗ Unknown provider: claude
+  Available providers:
+strength: single-group
+```
+
+```yaml
+criterion: AC-5
+group: scripts/test_installer.py::check_update_fetches_new_revision
+outcome: green
+command: "python3 scripts/test_installer.py --check check_update_fetches_new_revision"
+code_state: "git:2f45a71226fc8727da9ec5ee5027393f2aa7a721"
+output: |
+  exit 0
+  test_installer.py [check_update_fetches_new_revision]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-6
+group: scripts/test_installer.py::check_update_without_source_argument
+outcome: green
+command: "python3 scripts/test_installer.py --check check_update_without_source_argument"
+code_state: "git:2f45a71226fc8727da9ec5ee5027393f2aa7a721"
+output: |
+  exit 0
+  test_installer.py [check_update_without_source_argument]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-7
+group: scripts/test_installer.py::check_repeat_update_is_stable
+outcome: green
+command: "python3 scripts/test_installer.py --check check_repeat_update_is_stable"
+code_state: "git:2f45a71226fc8727da9ec5ee5027393f2aa7a721"
+output: |
+  exit 0
+  test_installer.py [check_repeat_update_is_stable]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-8
+group: scripts/test_installer.py::check_failed_fetch_leaves_install_intact
+outcome: green
+command: "python3 scripts/test_installer.py --check check_failed_fetch_leaves_install_intact"
+code_state: "git:2f45a71226fc8727da9ec5ee5027393f2aa7a721"
+output: |
+  exit 0
+  test_installer.py [check_failed_fetch_leaves_install_intact]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-12
+group: scripts/test_installer.py::check_update_without_record_warns
+outcome: green
+command: "python3 scripts/test_installer.py --check check_update_without_record_warns"
+code_state: "git:2f45a71226fc8727da9ec5ee5027393f2aa7a721"
+output: |
+  exit 0
+  test_installer.py [check_update_without_record_warns]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-17
+group: scripts/test_installer.py::check_update_keeps_pin
+outcome: green
+command: "python3 scripts/test_installer.py --check check_update_keeps_pin"
+code_state: "git:2f45a71226fc8727da9ec5ee5027393f2aa7a721"
+output: |
+  exit 0
+  test_installer.py [check_update_keeps_pin]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-18
+group: scripts/test_installer.py::check_update_moves_pin
+outcome: green
+command: "python3 scripts/test_installer.py --check check_update_moves_pin"
+code_state: "git:2f45a71226fc8727da9ec5ee5027393f2aa7a721"
+output: |
+  exit 0
+  test_installer.py [check_update_moves_pin]: OK
+strength: single-group
+```
+

@@ -329,18 +329,20 @@ Make `--update` read the record, fetch, re-install, and rewrite the record. Per 
 **1. `setup.sh`** (modified)
 `--update` with no `--from` reads `source`, `ref`, and `track` from the record. When the record is absent, the update proceeds against `SCRIPT_DIR`, writes a record, and prints that edited-file protection was unavailable for the run (AC-12). `fetch_source` failures exit non-zero before any destination file is touched (AC-8) — the export completes before the first write, so a failed fetch cannot leave a partial install. A record with `pinned: true` and no explicit `--ref` re-resolves the pinned revision and reports the pin (AC-17); an explicit `--ref` replaces it (AC-18).
 
+**Deviation (in scope).** The AC-5 group first passed on contact because it supplied `--from`, which the fetch work already covered. A group that never fails is not evidence about the change, so it was rewritten to run the update with no source argument — the path this phase adds. No criterion text changed.
+
 **2. `scripts/test_installer.py`** (modified)
 Seven groups. The AC-8 group points the record at an unreachable path and asserts every installed file and the record are byte-identical afterwards. The AC-7 group runs the update twice and asserts the only difference in the record is `installed_at`.
 
 ### Success Criteria
 
 **Automated:**
-- [ ] All seven groups for AC-5, AC-6, AC-7, AC-8, AC-12, AC-17, AC-18 pass, each with red-then-green evidence
-- [ ] Phases 1 and 2 still pass
-- [ ] `python3 scripts/validate.py` passes
+- [x] All seven groups for AC-5, AC-6, AC-7, AC-8, AC-12, AC-17, AC-18 pass, each with red-then-green evidence
+- [x] Phases 1 and 2 still pass
+- [x] `python3 scripts/validate.py` passes
 
 **Manual:**
-- [ ] Run an update in a scratch install with the network disabled and confirm the failure message names the source and changes nothing
+- [x] Run an update in a scratch install with the network disabled and confirm the failure message names the source and changes nothing
 
 ---
 
