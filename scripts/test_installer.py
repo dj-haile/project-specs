@@ -608,6 +608,16 @@ def check_update_moves_pin() -> None:
 
 
 # --- Groups: protecting the developer's edits --------------------------------
+#
+# check_update_keeps_edited_file is bound to AC-9.
+#
+# The two groups after it are REGRESSION TESTS bound to no acceptance criterion.
+# Both passed before any of this work existed — the installer already replaced
+# every file wholesale, and already wrote specs.config.yaml only when absent — so
+# neither can carry the failing-first evidence the pairing gate requires. They
+# guard what the per-file copy engine must not break. Retired as criteria under
+# D-4 in the spec; kept here because a rewritten copy engine is exactly the kind
+# of change that quietly breaks them.
 
 EDITED_MARK = "\n<!-- edited by the developer -->\n"
 
@@ -651,8 +661,9 @@ def check_update_keeps_edited_file() -> None:
 
 
 def check_update_replaces_untouched_file() -> None:
-    """AC-10 — a file still matching its recorded fingerprint is replaced with
-    the source's version, so protection does not freeze the whole install."""
+    """Regression guard (no criterion) — a file still matching its recorded
+    fingerprint is replaced with the source's version, so protection does not
+    freeze the whole install."""
     g = "check_update_replaces_untouched_file"
     with sandbox() as (tmp, target, cache):
         src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
@@ -679,7 +690,8 @@ def check_update_replaces_untouched_file() -> None:
 
 
 def check_update_preserves_project_config() -> None:
-    """AC-11 — a customized project configuration file survives an update."""
+    """Regression guard (no criterion) — a customized project configuration file
+    survives an update."""
     g = "check_update_preserves_project_config"
     with sandbox() as (tmp, target, cache):
         src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)

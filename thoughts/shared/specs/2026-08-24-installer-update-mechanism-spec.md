@@ -100,14 +100,6 @@ Given an install record whose source repository cannot be reached, when the deve
 `mode: automated`
 Given an installed file whose current content fingerprint differs from the fingerprint in the install record, when the developer runs an update, then that file's content is unchanged and the installer's output names the file as kept.
 
-**AC-10 — An update replaces a file the developer did not edit.**
-`mode: automated`
-Given an installed file whose current content fingerprint matches the fingerprint in the install record, and the source repository has a different version of that file, when the developer runs an update, then the file on disk matches the source version.
-
-**AC-11 — An update never overwrites the project's own configuration file.**
-`mode: automated`
-Given a target repository whose project configuration file has been customized, when the developer runs an update, then that file's content is unchanged.
-
 **AC-12 — An update on an install made before this feature existed completes and says protection was unavailable.**
 `mode: automated`
 Given a target repository holding an install with no install record, when the developer runs an update, then the update completes, an install record is written, and the output states that edited-file protection could not be applied for this run.
@@ -168,7 +160,7 @@ Given the framework's main documentation, when it is read, then it contains a se
 `mode: automated`
 Given the documented list of paths a consumer repository is advised to keep out of git, when it is read, then the install record's path appears in it.
 
-**Retired identifiers:** none. AC-17b was inserted after the first draft under the suffix rule, so no identifier was renumbered.
+**Retired identifiers:** AC-10, AC-11 (retired 2026-08-24, see D-4). AC-17b was inserted after the first draft under the suffix rule, so no identifier was renumbered. Neither retired identifier is ever reused.
 
 ---
 
@@ -233,6 +225,7 @@ All questions raised during drafting are closed. Owner decisions, 2026-08-24, bi
 | **D-1** | The install record stays out of the consumer repository's git history, ignored alongside every other framework file. | AC-23 stands as written. No CI staleness gate is possible in a consumer repository, and that is accepted. |
 | **D-2** | An update fetches the source repository by default. No separate flag is needed for the common case. | AC-5 and AC-6 stand as written. AC-8 becomes the load-bearing failure path: an unreachable source must leave the install untouched and fail loudly. |
 | **D-3** | The staleness check reports a newer revision on a pinned install rather than staying silent. It reports; it never moves the pin. | New **AC-17b**. AC-17 is unchanged: an update on a pinned install still stays on its pinned revision. |
+| **D-4** | Two criteria describing behavior that already worked — an update replacing an untouched file, and an update preserving the project configuration file — are retired as acceptance criteria and kept as ordinary regression tests. | **AC-10 and AC-11 retired.** Both passed against the installer before any code was written, so neither could carry the failing-first evidence the pairing gate requires. They describe what this work must not break, not what it delivers. Their test groups stay in the installer test script, unbound to any criterion, and still run on every CI build. Decided during implementation, 2026-08-24. |
 
 No open questions remain.
 
@@ -247,10 +240,11 @@ Checked against the standards registry, filtered to the planning stage and to st
 
 ## 9. Verification of this spec
 
-- [x] Every criterion has a pass/fail test.
+- [x] Every remaining criterion has a pass/fail test.
 - [x] Every criterion carries a unique identifier and exactly one mode line.
 - [x] No criterion names a test, a file path, or a test framework.
 - [x] No criterion is `manual-only`, so no manual-only approval section is required.
 - [x] Scope boundaries state what is out of scope, with 11 entries.
+- [x] Retired criteria are recorded on the retired-identifiers line with the decision that retired them.
 - [x] Assumptions listed: 11 confirmed, 3 needing confirmation.
 - [x] **Open questions resolved** — all 3 closed by owner decision on 2026-08-24 and recorded in section 7 as D-1, D-2, and D-3.
