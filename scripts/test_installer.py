@@ -976,6 +976,46 @@ def check_link_mode_refused_with_fetched_source() -> None:
             fail(g, "installer neither refused link mode nor explained the fallback")
 
 
+def check_update_keeps_files_the_installer_never_wrote() -> None:
+    """Regression guard (no criterion) — an update must not delete or overwrite a
+    file the developer put inside an installed directory. Found by the
+    adversarial pass over the plan: the prune step removed anything absent from
+    the source, and install_dir_plain wiped whole directories before the
+    per-file sync could protect them."""
+    g = "check_update_keeps_files_the_installer_never_wrote"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        own = target / ".claude/commands/core/my_own_command.md"
+        own.write_text("---\nname: my_own_command\ndescription: local\n"
+                       "model: quick\n---\nProject-local workflow.\n",
+                       encoding="utf-8")
+        own_before = own.read_text(encoding="utf-8")
+
+        # An edit to an installed command, which lives under the same directory.
+        edited = target / ".claude/commands/core/commit.md"
+        edited.write_text(edited.read_text(encoding="utf-8") + EDITED_MARK,
+                          encoding="utf-8")
+        edited_before = edited.read_text(encoding="utf-8")
+
+        for attempt in (1, 2):
+            proc = run_setup(bare, target, "--update", cache=cache)
+            if proc.returncode != 0:
+                fail(g, f"update {attempt} exited {proc.returncode}: "
+                        f"{(proc.stdout + proc.stderr).strip()[-400:]}")
+                return
+            if not own.exists():
+                fail(g, f"update {attempt} deleted a file the developer added")
+                return
+            if own.read_text(encoding="utf-8") != own_before:
+                fail(g, f"update {attempt} overwrote a file the developer added")
+            if edited.read_text(encoding="utf-8") != edited_before:
+                fail(g, f"update {attempt} overwrote an edited command — "
+                        f"protection does not reach .claude/commands/")
+
+
 # --- Check registry ----------------------------------------------------------
 # Keyed by the group name used in a plan's Criterion Bindings table, so
 # `python3 scripts/test_installer.py --check <name>` runs exactly one bound group.
@@ -1006,6 +1046,7 @@ CHECKS: "dict[str, Callable[[], None]]" = {
     "check_readme_documents_updating":   check_readme_documents_updating,
     "check_documented_ignore_list_includes_record": check_documented_ignore_list_includes_record,
     "check_link_mode_refused_with_fetched_source": check_link_mode_refused_with_fetched_source,
+    "check_update_keeps_files_the_installer_never_wrote": check_update_keeps_files_the_installer_never_wrote,
 }
 
 

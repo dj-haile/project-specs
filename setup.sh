@@ -33,6 +33,10 @@ RECORD_NAME=".project-specs.json"
 # Paths an update left alone because the developer had edited them.
 KEPT_PATHS=()
 
+# Paths inside an installed directory that the installer never wrote. Left
+# untouched and kept out of the record, so a later run cannot prune them.
+FOREIGN_PATHS=()
+
 # Show help text
 show_help() {
   cat << 'EOF'
@@ -383,6 +387,10 @@ write_install_record() {
   if [[ ${#PROTECTED[@]} -gt 0 ]]; then
     for p in "${PROTECTED[@]}"; do kept_args+=(--kept "$p"); done
   fi
+  local excl_args=()
+  if [[ ${#FOREIGN_PATHS[@]} -gt 0 ]]; then
+    for p in "${FOREIGN_PATHS[@]}"; do excl_args+=(--exclude "$p"); done
+  fi
   local pin_args=()
   [[ "$REC_PINNED" == true ]] && pin_args+=(--pinned)
   local out
@@ -390,7 +398,7 @@ write_install_record() {
              --target "$TARGET_PATH" \
              --source "$REC_SOURCE" --ref "$REC_REF" --track "$REC_TRACK" \
              --commit "$REC_COMMIT" --provider "$PROVIDER" --mode "$MODE" \
-             "${pin_args[@]}" "${kept_args[@]}" "${path_args[@]}" 2>&1); then
+             "${pin_args[@]}" "${kept_args[@]}" "${excl_args[@]}" "${path_args[@]}" 2>&1); then
     print_success "Recorded install in $RECORD_NAME ($out files)"
   else
     print_warning "Could not write $RECORD_NAME: $out"
@@ -569,7 +577,10 @@ sync_into() {
     exit 1
   fi
   while IFS=$'\t' read -r action rel; do
-    [[ "$action" == "kept" ]] && KEPT_PATHS+=("$rel")
+    case "$action" in
+      kept)    KEPT_PATHS+=("$rel") ;;
+      foreign) FOREIGN_PATHS+=("$rel") ;;
+    esac
   done <<< "$out"
   # The loop's final read hits EOF and returns non-zero; without this the
   # function's exit status would take `set -e` down with it.
@@ -597,11 +608,15 @@ install_dir_plain() {
     return
   fi
   mkdir -p "$(dirname "$dest")"
-  [[ -e "$dest" ]] && rm -rf "$dest"
   if [[ "$MODE" == "link" ]]; then
+    # Replacing a real directory with a symlink; the directory has to go first.
+    [[ -e "$dest" || -L "$dest" ]] && rm -rf "$dest"
     ln -s "$src" "$dest"
     print_success "Symlinked $label → $BASE_DIR/$dest_rel/"
   else
+    # No rm -rf here. Wiping the directory first would delete the developer's
+    # edits and their own files before the per-file sync could protect them.
+    [[ -L "$dest" ]] && rm -f "$dest"   # a previous --link install
     sync_into "$src" "$dest"
     print_success "Installed $label → $BASE_DIR/$dest_rel/"
   fi
@@ -860,6 +875,11 @@ if [[ ${#KEPT_PATHS[@]} -gt 0 ]]; then
   echo
   print_warning "Kept your local changes (not overwritten):"
   printf '  • %s\n' "${KEPT_PATHS[@]}" | sort -u
+fi
+if [[ ${#FOREIGN_PATHS[@]} -gt 0 ]]; then
+  echo
+  print_status "Left alone (your own files, not installed by project-specs):"
+  printf '  • %s\n' "${FOREIGN_PATHS[@]}" | sort -u
 fi
 
 echo

@@ -15,7 +15,7 @@ dependency the installer did not already have.
 Subcommands:
   write-record   --target DIR --source URL --ref REF --track BRANCH
                  --commit SHA --provider NAME --mode MODE [--pinned]
-                 [--path REL ...] [--kept REL ...]
+                 [--path REL ...] [--kept REL ...] [--exclude REL ...]
                  Walk each --path under the target, fingerprint every regular
                  file, and write the record. Directories are walked; symlinks
                  are recorded without a fingerprint.
@@ -117,17 +117,20 @@ def assert_schema_supported(record) -> None:
         sys.exit(EXIT_FUTURE_SCHEMA)
 
 
-def collect_files(target: Path, rel_paths) -> "dict[str, str]":
+def collect_files(target: Path, rel_paths, exclude=()) -> "dict[str, str]":
     """Fingerprint every regular file under each given path.
 
     `rel_paths` are relative to the target root and may be files or directories.
     A symlink is recorded with an empty fingerprint: its content belongs to the
     source, not the target, so there is nothing here to protect or compare.
     """
+    exclude = set(exclude)
     files: "dict[str, str]" = {}
     for rel in rel_paths:
         rel = rel.strip().lstrip("/")
         if not rel:
+            continue
+        if rel in exclude:
             continue
         base = target / rel
         if base.is_symlink():
@@ -152,6 +155,8 @@ def collect_files(target: Path, rel_paths) -> "dict[str, str]":
             for name in sorted(filenames):
                 p = here / name
                 key = str(p.relative_to(target))
+                if key in exclude:
+                    continue      # the developer's own file; not ours to track
                 files[key] = "" if p.is_symlink() else file_hash(p)
     return files
 
@@ -179,12 +184,18 @@ def protected_paths(target: Path, record) -> "set[str]":
 
 
 def sync_tree(src: Path, dest: Path, target_root: Path,
-              protected: "set[str]") -> list:
-    """Copy every file under src to dest, leaving edited files alone.
+              protected: "set[str]", known: "set[str] | None" = None) -> list:
+    """Copy every file under src to dest, touching only what the installer owns.
 
     Replaces a directory-at-a-time copy, which cannot make a per-file decision.
-    Files present in dest but absent from src are removed, so a file dropped
-    upstream does not linger — unless the developer edited it.
+
+    `known` is the set of paths the record says the installer wrote. When it is
+    supplied, a file on disk that is not in it belongs to the developer: it is
+    never overwritten and never pruned. That is what keeps a project-local
+    command sitting in .claude/commands/ from being deleted by an update.
+
+    `known` is None on a first install, when there is no record to consult and
+    nothing on disk can be attributed to anyone.
     """
     results = []
     dest.mkdir(parents=True, exist_ok=True)
@@ -201,12 +212,19 @@ def sync_tree(src: Path, dest: Path, target_root: Path,
             if rel in protected:
                 results.append(("kept", rel, ""))
                 continue
+            # A file already here that the installer never wrote is not ours.
+            # Reported as "foreign" rather than "kept": it is not an edit to
+            # something we installed, and it must stay out of the record, or the
+            # next run would see it in `known` and prune it.
+            if known is not None and d.exists() and rel not in known:
+                results.append(("foreign", rel, ""))
+                continue
             if d.is_symlink():
                 d.unlink()
             shutil.copy2(s, d)
             results.append(("written", rel, file_hash(d)))
 
-    # Prune files this install no longer provides, keeping edited ones.
+    # Prune only what this installer previously wrote and no longer provides.
     for dirpath, _dirnames, filenames in os.walk(dest, topdown=False):
         here = Path(dirpath)
         for name in sorted(filenames):
@@ -214,6 +232,9 @@ def sync_tree(src: Path, dest: Path, target_root: Path,
             rel = str(d.relative_to(target_root))
             if rel in wanted or rel in protected:
                 continue
+            if known is not None and rel not in known:
+                results.append(("foreign", rel, ""))
+                continue          # the developer put it here; not ours to delete
             d.unlink()
         try:
             here.rmdir()          # only succeeds when the directory is empty
@@ -273,7 +294,7 @@ def cmd_write_record(args) -> int:
     if not target.is_dir():
         print(f"ERROR: target is not a directory: {target}", file=sys.stderr)
         return EXIT_ERROR
-    files = collect_files(target, args.path or [])
+    files = collect_files(target, args.path or [], exclude=args.exclude or [])
 
     # A fingerprint always describes the last content the INSTALLER wrote, never
     # what happens to be on disk. For a file the developer edited and this run
@@ -325,8 +346,10 @@ def cmd_sync(args) -> int:
     if not src.is_dir():
         print(f"ERROR: source is not a directory: {src}", file=sys.stderr)
         return EXIT_ERROR
-    protected = protected_paths(target, read_record(target))
-    for action, rel, _digest in sync_tree(src, dest, target, protected):
+    record = read_record(target)
+    protected = protected_paths(target, record)
+    known = set((record.get("files") or {}).keys()) if record else None
+    for action, rel, _digest in sync_tree(src, dest, target, protected, known):
         print(f"{action}\t{rel}")
     return EXIT_OK
 
@@ -371,6 +394,9 @@ def main() -> int:
     w.add_argument("--mode", required=True)
     w.add_argument("--pinned", action="store_true")
     w.add_argument("--path", action="append", default=[])
+    w.add_argument("--exclude", action="append", default=[],
+                   help="paths the installer does not manage (the developer put "
+                        "them there); kept out of the record entirely")
     w.add_argument("--kept", action="append", default=[],
                    help="paths this run left alone because the developer edited "
                         "them; they retain their previous fingerprint")
