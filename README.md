@@ -23,23 +23,33 @@ itself (commands, agents) has no runtime dependency on them.
 
 ### Install
 
-1. **Clone project-specs somewhere accessible:**
+1. **Get a copy of `setup.sh`.** Either clone the repo:
+
    ```bash
    git clone https://github.com/dj-haile/project-specs ~/.project-specs
    ```
+
+   or skip the clone entirely and let the installer fetch its own source with
+   `--from` (step 2). You only need `setup.sh` and `scripts/` on disk.
 
 2. **Run setup.sh to install into your project:**
    ```bash
    ~/.project-specs/setup.sh /path/to/your-project                 # Claude Code (default)
    ~/.project-specs/setup.sh /path/to/your-project --provider=codex   # OpenAI Codex CLI
    ~/.project-specs/setup.sh /path/to/your-project --provider=cursor  # Cursor
+
+   # No clone on this machine? Point at the repo instead:
+   ./setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs
    ```
 
    The installer copies `agents/`, `commands/`, and the `conventions/` they
    reference into the provider's location, writes a `specs.config.yaml` at your
    project root (with `provider` pre-set), and optionally creates a `thoughts/`
    directory. For Codex it transforms commands into Skills and agents into TOML;
-   see [Supported Providers](#supported-providers).
+   see [Supported Providers](#supported-providers). It also writes
+   `.project-specs.json`, which records what it installed so later runs can
+   update it and leave your edits alone — see
+   [Updating an install](#updating-an-install).
 
 3. **Customize specs.config.yaml** (created at your project root by setup.sh):
    ```bash
@@ -181,6 +191,7 @@ Two coupling points degrade gracefully by convention: subagent spawning ([subage
 | `create_handoff` | Package current context for another Claude session |
 | `resume_handoff` | Load prior handoff context and continue work |
 | `local_review` | Review changes against style guide and best practices |
+| `specs_update` | Report whether the installed framework is out of date, and upgrade it |
 
 ### Integration Commands
 

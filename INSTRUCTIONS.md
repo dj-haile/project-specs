@@ -4,7 +4,7 @@
 
 A standalone, reusable Claude Code spec framework that can be installed into any project. It extracts the three-layer architecture (agents → commands → skills) from `dj-haile/skills-app` into a generic, configurable system.
 
-**Distribution model:** Template repo with a setup script. Users can fork/clone to scaffold new projects, or run the setup script to install into an existing project. This is the current best practice — submodules add too much friction, and pure templates don't allow updates to propagate.
+**Distribution model:** Template repo with a setup script. Users can fork/clone to scaffold new projects, or run the setup script to install into an existing project — or point it at the repo URL and skip the clone. The installer records what it installed, so a later `--update` fetches its own source and keeps files the developer edited. Submodules and subtrees were considered and rejected; see `thoughts/decisions/framework-distribution-and-updates.md`.
 
 ---
 
@@ -164,8 +164,11 @@ The 5 skills-app skills (vp-orchestrator, project-tracker, data-query, visualize
 # Usage examples:
 ./setup.sh /path/to/my-project              # Install into existing project
 ./setup.sh /path/to/my-project --link       # Symlink (updates propagate)
-./setup.sh /path/to/my-project --copy       # Copy (independent snapshot)
-./setup.sh /path/to/my-project --update     # Update existing installation
+./setup.sh /path/to/my-project --copy       # Copy, tracked by an install record
+./setup.sh /path/to/my-project --update     # Fetch the recorded source and reinstall
+./setup.sh /path/to/my-project --check      # Report whether the install is behind
+./setup.sh /path/to/my-project --from=URL   # Install with no local clone
+./setup.sh /path/to/my-project --ref=NAME   # Install a branch, tag, or revision
 ```
 
 ### 7. AGENTS.md follows ETH Zurich guidance
