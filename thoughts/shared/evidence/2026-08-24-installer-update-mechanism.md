@@ -386,3 +386,117 @@ output: |
 strength: single-group
 ```
 
+
+## Phase 5 — Staleness report
+
+```yaml
+criterion: AC-13
+group: scripts/test_installer.py::check_staleness_reports_distance
+outcome: red
+command: "python3 scripts/test_installer.py --check check_staleness_reports_distance"
+code_state: "git:bc4a30d0c9cb0b30dedf748bc3183f48eed497b4"
+output: |
+  exit 1
+  
+  test_installer.py [check_staleness_reports_distance]: 2 failure(s)
+  
+    FAIL  check_staleness_reports_distance: report never says the install is behind: '\x1b[0;31m✗\x1b[0m Unknown flag: --check'
+    FAIL  check_staleness_reports_distance: report never names the number of revisions behind (2): '\x1b[0;31m✗\x1b[0m Unknown flag: --check'
+strength: single-group
+```
+
+```yaml
+criterion: AC-14
+group: scripts/test_installer.py::check_staleness_lists_changelog_entries
+outcome: red
+command: "python3 scripts/test_installer.py --check check_staleness_lists_changelog_entries"
+code_state: "git:bc4a30d0c9cb0b30dedf748bc3183f48eed497b4"
+output: |
+  exit 1
+  
+  test_installer.py [check_staleness_lists_changelog_entries]: 1 failure(s)
+  
+    FAIL  check_staleness_lists_changelog_entries: report does not include the change-log entry added since the install: '\x1b[0;31m✗\x1b[0m Unknown flag: --check'
+strength: single-group
+```
+
+```yaml
+criterion: AC-15
+group: scripts/test_installer.py::check_staleness_exit_status
+outcome: red
+command: "python3 scripts/test_installer.py --check check_staleness_exit_status"
+code_state: "git:bc4a30d0c9cb0b30dedf748bc3183f48eed497b4"
+output: |
+  exit 1
+  
+  test_installer.py [check_staleness_exit_status]: 2 failure(s)
+  
+    FAIL  check_staleness_exit_status: check exited 1 on an up-to-date install: ✗ Unknown flag: --check
+    FAIL  check_staleness_exit_status: check never says the install is current: '\x1b[0;31m✗\x1b[0m Unknown flag: --check'
+strength: single-group
+```
+
+```yaml
+criterion: AC-17b
+group: scripts/test_installer.py::check_staleness_reports_on_pinned_install
+outcome: red
+command: "python3 scripts/test_installer.py --check check_staleness_reports_on_pinned_install"
+code_state: "git:bc4a30d0c9cb0b30dedf748bc3183f48eed497b4"
+output: |
+  exit 1
+  
+  test_installer.py [check_staleness_reports_on_pinned_install]: 2 failure(s)
+  
+    FAIL  check_staleness_reports_on_pinned_install: report never says the install is pinned: '\x1b[0;31m✗\x1b[0m Unknown flag: --check'
+    FAIL  check_staleness_reports_on_pinned_install: report never names the newer revision available on the tracked branch: '\x1b[0;31m✗\x1b[0m Unknown flag: --check'
+strength: single-group
+```
+
+```yaml
+criterion: AC-13
+group: scripts/test_installer.py::check_staleness_reports_distance
+outcome: green
+command: "python3 scripts/test_installer.py --check check_staleness_reports_distance"
+code_state: "git:19b8aa833ed3d29acaf7f7f7ba12ae5b60c5f08a"
+output: |
+  exit 0
+  test_installer.py [check_staleness_reports_distance]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-14
+group: scripts/test_installer.py::check_staleness_lists_changelog_entries
+outcome: green
+command: "python3 scripts/test_installer.py --check check_staleness_lists_changelog_entries"
+code_state: "git:19b8aa833ed3d29acaf7f7f7ba12ae5b60c5f08a"
+output: |
+  exit 0
+  test_installer.py [check_staleness_lists_changelog_entries]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-15
+group: scripts/test_installer.py::check_staleness_exit_status
+outcome: green
+command: "python3 scripts/test_installer.py --check check_staleness_exit_status"
+code_state: "git:19b8aa833ed3d29acaf7f7f7ba12ae5b60c5f08a"
+output: |
+  exit 0
+  test_installer.py [check_staleness_exit_status]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-17b
+group: scripts/test_installer.py::check_staleness_reports_on_pinned_install
+outcome: green
+command: "python3 scripts/test_installer.py --check check_staleness_reports_on_pinned_install"
+code_state: "git:19b8aa833ed3d29acaf7f7f7ba12ae5b60c5f08a"
+output: |
+  exit 0
+  test_installer.py [check_staleness_reports_on_pinned_install]: OK
+strength: single-group
+```
+
