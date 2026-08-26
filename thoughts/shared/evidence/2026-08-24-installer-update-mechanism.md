@@ -564,3 +564,51 @@ output: |
 strength: single-group
 ```
 
+```yaml
+criterion: AC-19
+group: scripts/test_installer.py::check_link_mode_covers_conventions_and_standards
+outcome: green
+command: "python3 scripts/test_installer.py --check check_link_mode_covers_conventions_and_standards"
+code_state: "git:e8f270e1ff72c3d60c1a2287778a56f23a0e28b2"
+output: |
+  exit 0
+  test_installer.py [check_link_mode_covers_conventions_and_standards]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-21
+group: scripts/test_installer.py::check_update_command_exists_and_parses
+outcome: green
+command: "python3 scripts/test_installer.py --check check_update_command_exists_and_parses"
+code_state: "git:e8f270e1ff72c3d60c1a2287778a56f23a0e28b2"
+output: |
+  exit 0
+  test_installer.py [check_update_command_exists_and_parses]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-22
+group: scripts/test_installer.py::check_readme_documents_updating
+outcome: green
+command: "python3 scripts/test_installer.py --check check_readme_documents_updating"
+code_state: "git:e8f270e1ff72c3d60c1a2287778a56f23a0e28b2"
+output: |
+  exit 0
+  test_installer.py [check_readme_documents_updating]: OK
+strength: single-group
+```
+
+```yaml
+criterion: AC-23
+group: scripts/test_installer.py::check_documented_ignore_list_includes_record
+outcome: green
+command: "python3 scripts/test_installer.py --check check_documented_ignore_list_includes_record"
+code_state: "git:e8f270e1ff72c3d60c1a2287778a56f23a0e28b2"
+output: |
+  exit 0
+  test_installer.py [check_documented_ignore_list_includes_record]: OK
+strength: single-group
+```
+
