@@ -314,9 +314,15 @@ Common workflows are documented in [conventions/workflow-patterns.md](./conventi
 
 ## Versioning
 
-project-specs follows [Semantic Versioning](https://semver.org/). Breaking changes to the specs.config.yaml schema or agent/command interfaces will increment the major version.
+project-specs follows [Semantic Versioning](https://semver.org/). Breaking changes to the specs.config.yaml schema, the installer's flags, or agent/command interfaces increment the major version.
 
-Current version: **1.0.0**
+For the current version and what changed, see [CHANGELOG.md](./CHANGELOG.md) or the [releases page](https://github.com/dj-haile/project-specs/releases). This README deliberately does not name a version — a number written here goes stale the moment it is written.
+
+To pin a project to one version, install it with `--ref`:
+
+```bash
+./setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs --ref=v2.0.0
+```
 
 ## License
 
