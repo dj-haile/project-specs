@@ -500,3 +500,67 @@ output: |
 strength: single-group
 ```
 
+
+## Phase 6 — Link mode, the command, and the documentation
+
+```yaml
+criterion: AC-19
+group: scripts/test_installer.py::check_link_mode_covers_conventions_and_standards
+outcome: red
+command: "python3 scripts/test_installer.py --check check_link_mode_covers_conventions_and_standards"
+code_state: "git:68f1eb5d9cfcc1e9d15fbd9cd2601285df57e595"
+output: |
+  exit 1
+  
+  test_installer.py [check_link_mode_covers_conventions_and_standards]: 2 failure(s)
+  
+    FAIL  check_link_mode_covers_conventions_and_standards: .claude/conventions/naming-conventions.md does not follow the source — link mode copied it instead of linking it
+    FAIL  check_link_mode_covers_conventions_and_standards: standards/statements.json does not follow the source — link mode copied it instead of linking it
+strength: single-group
+```
+
+```yaml
+criterion: AC-21
+group: scripts/test_installer.py::check_update_command_exists_and_parses
+outcome: red
+command: "python3 scripts/test_installer.py --check check_update_command_exists_and_parses"
+code_state: "git:68f1eb5d9cfcc1e9d15fbd9cd2601285df57e595"
+output: |
+  exit 1
+  
+  test_installer.py [check_update_command_exists_and_parses]: 1 failure(s)
+  
+    FAIL  check_update_command_exists_and_parses: no command describes checking for or applying framework updates
+strength: single-group
+```
+
+```yaml
+criterion: AC-22
+group: scripts/test_installer.py::check_readme_documents_updating
+outcome: red
+command: "python3 scripts/test_installer.py --check check_readme_documents_updating"
+code_state: "git:68f1eb5d9cfcc1e9d15fbd9cd2601285df57e595"
+output: |
+  exit 1
+  
+  test_installer.py [check_readme_documents_updating]: 1 failure(s)
+  
+    FAIL  check_readme_documents_updating: README has no section on updating an existing install
+strength: single-group
+```
+
+```yaml
+criterion: AC-23
+group: scripts/test_installer.py::check_documented_ignore_list_includes_record
+outcome: red
+command: "python3 scripts/test_installer.py --check check_documented_ignore_list_includes_record"
+code_state: "git:68f1eb5d9cfcc1e9d15fbd9cd2601285df57e595"
+output: |
+  exit 1
+  
+  test_installer.py [check_documented_ignore_list_includes_record]: 1 failure(s)
+  
+    FAIL  check_documented_ignore_list_includes_record: README documents no list of paths to keep out of git
+strength: single-group
+```
+

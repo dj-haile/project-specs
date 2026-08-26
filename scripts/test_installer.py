@@ -806,6 +806,32 @@ def check_staleness_reports_on_pinned_install() -> None:
 
 # --- Groups: link mode, the command, and the documentation --------------------
 
+def doc_section(text: str, pattern: str):
+    """The body under the first heading matching `pattern`, up to the next
+    heading. Lines inside fenced code blocks are never treated as headings —
+    a shell or gitignore comment starts with '#' too."""
+    import re
+    lines = text.splitlines()
+    start = None
+    fenced = False
+    heads = []
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        if re.match(r"^#{1,6} ", line):
+            heads.append(i)
+            if start is None and re.search(pattern, line, re.I):
+                start = i
+    if start is None:
+        return None
+    after = [i for i in heads if i > start]
+    end = after[0] if after else len(lines)
+    return "\n".join(lines[start + 1:end])
+
+
 def check_link_mode_covers_conventions_and_standards() -> None:
     """AC-19 — in link mode the convention documents and the standards registry
     follow the source, so a change upstream is visible without reinstalling."""
@@ -880,7 +906,9 @@ def check_update_command_exists_and_parses() -> None:
         except yaml.YAMLError:
             continue
         desc = str(fm.get("description", "")).lower()
-        if "update" in desc and ("framework" in desc or "install" in desc):
+        says_change = any(w in desc for w in ("update", "upgrade", "out of date"))
+        says_target = any(w in desc for w in ("framework", "install", "project-specs"))
+        if says_change and says_target:
             found = (path, fm)
             break
     if not found:
@@ -904,15 +932,11 @@ def check_readme_documents_updating() -> None:
     """AC-22 — the main documentation explains how to update an existing
     install, naming the check, the update, and how to pin."""
     g = "check_readme_documents_updating"
-    import re
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    m = re.search(r"^#+ .*Updating an install.*$", text, re.M | re.I)
-    if not m:
+    section = doc_section(text, r"Updating an install")
+    if section is None:
         fail(g, "README has no section on updating an existing install")
         return
-    rest = text[m.end():]
-    nxt = re.search(r"^#{1,3} ", rest, re.M)
-    section = rest[: nxt.start()] if nxt else rest
     for token, why in (("--check", "the staleness check"),
                        ("--update", "the update"),
                        ("--ref", "pinning a reference")):
@@ -924,15 +948,11 @@ def check_documented_ignore_list_includes_record() -> None:
     """AC-23 — the documented list of paths a project should keep out of git
     includes the install record."""
     g = "check_documented_ignore_list_includes_record"
-    import re
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    m = re.search(r"^#+ .*(gitignore|keep out of git|ignore).*$", text, re.M | re.I)
-    if not m:
+    section = doc_section(text, r"gitignore|keep .*out of git|ignore")
+    if section is None:
         fail(g, "README documents no list of paths to keep out of git")
         return
-    rest = text[m.end():]
-    nxt = re.search(r"^#{1,3} ", rest, re.M)
-    section = rest[: nxt.start()] if nxt else rest
     if RECORD_NAME not in section:
         fail(g, f"the documented ignore list does not include {RECORD_NAME}")
 

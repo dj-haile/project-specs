@@ -506,6 +506,13 @@ if [[ "$MODE" == "link" && "$TRANSFORM" != "copy" ]]; then
   MODE="copy"
 fi
 
+# A fetched source is a temporary export removed when this script exits, so
+# linking to it would leave the project full of dangling symlinks.
+if [[ "$MODE" == "link" && -n "$EXPORT_DIR" ]]; then
+  print_warning "--link needs a source that stays on disk; a fetched source does not. Using copy."
+  MODE="copy"
+fi
+
 # Check if install dir already exists
 if [[ -d "$INSTALL_DIR" ]]; then
   if [[ "$MODE" == "update" ]]; then
@@ -721,8 +728,14 @@ if [[ -d "$SRC_DIR/conventions" ]]; then
     CONV_DEST="$INSTALL_DIR/conventions"
   fi
   mkdir -p "$(dirname "$CONV_DEST")"
-  sync_into "$SRC_DIR/conventions" "$CONV_DEST"
-  print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+  if [[ "$MODE" == "link" ]]; then
+    [[ -e "$CONV_DEST" || -L "$CONV_DEST" ]] && rm -rf "$CONV_DEST"
+    ln -s "$SRC_DIR/conventions" "$CONV_DEST"
+    print_success "Linked convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+  else
+    sync_into "$SRC_DIR/conventions" "$CONV_DEST"
+    print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+  fi
   RECORD_PATHS+=("${CONV_DEST#$TARGET_PATH/}")
 fi
 
@@ -734,8 +747,16 @@ fi
 if [[ -d "$SRC_DIR/standards" ]]; then
   STD_DEST="$TARGET_PATH/standards"
   mkdir -p "$STD_DEST"
-  sync_file_into "$SRC_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
-  sync_file_into "$SRC_DIR/standards/statements.json" "$STD_DEST/statements.json"
+  if [[ "$MODE" == "link" ]]; then
+    # Linked one file at a time: the target may keep its own files in standards/.
+    for f in extractor.py statements.json; do
+      [[ -e "$STD_DEST/$f" || -L "$STD_DEST/$f" ]] && rm -f "$STD_DEST/$f"
+      ln -s "$SRC_DIR/standards/$f" "$STD_DEST/$f"
+    done
+  else
+    sync_file_into "$SRC_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
+    sync_file_into "$SRC_DIR/standards/statements.json" "$STD_DEST/statements.json"
+  fi
   print_success "Installed standards registry → standards/"
   RECORD_PATHS+=("standards/extractor.py" "standards/statements.json")
 fi

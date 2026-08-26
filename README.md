@@ -49,6 +49,79 @@ itself (commands, agents) has no runtime dependency on them.
    `ticket_integration` (`mcp`/`cli`/`none`). See
    [conventions/provider-portability.md](./conventions/provider-portability.md).
 
+### Updating an install
+
+Every install records where it came from, at `.project-specs.json` in your
+project root. That lets the installer fetch its own source, so you never need to
+remember where your clone of project-specs lives — or have one at all.
+
+**Am I behind?**
+
+```bash
+/path/to/setup.sh /path/to/your-project --check
+```
+
+It fetches the source recorded at install time and reports the revision your
+project is on, how far behind it is, and the change-log entries added since.
+Exit status is 1 when a newer revision exists and 0 when you are current, so CI
+can gate on it.
+
+**Bring it up to date:**
+
+```bash
+/path/to/setup.sh /path/to/your-project --update
+```
+
+The update fetches before it copies. If the source cannot be reached, nothing in
+your project changes.
+
+**Files you edited are kept.** The record holds a fingerprint of every file the
+installer wrote. A file whose content no longer matches is left alone, and the
+installer lists it under "Kept your local changes" when it finishes. Your
+`specs.config.yaml` is never overwritten.
+
+**Pin a project to one version:**
+
+```bash
+/path/to/setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs --ref=v1.0.0
+```
+
+A `--ref` naming a branch follows that branch. A tag or a revision pins the
+install: later updates hold it there, and `--check` tells you a newer revision
+exists without moving you. Move it by naming a different reference:
+`--update --ref=main`.
+
+**Install on a machine with no clone:**
+
+```bash
+/path/to/setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs
+```
+
+The source is cached under `$XDG_CACHE_HOME/project-specs` (override with
+`SPECS_CACHE`), and one revision is exported for the install.
+
+From inside an agent session, `/specs_update` runs the check, reports what
+changed in plain language, and applies the update when you ask for it.
+
+### What to put in .gitignore
+
+The framework is local tooling for your project, not part of what your project
+ships, so keep it out of your project's git history. Add these:
+
+```gitignore
+# project-specs framework (local tooling)
+.claude/
+.project-specs.json
+specs.config.yaml
+standards/
+thoughts/
+pr_description.md
+```
+
+Adjust the first line for your provider (`.cursor/`, or `.codex/` plus
+`.agents/` and `AGENTS.md`). Keep `thoughts/` tracked instead if you want plans
+and handoffs shared with your team — see [Thoughts Directory](#thoughts-directory).
+
 ### Install the read-only agents as skills (any agent tool)
 
 The **read-only agents** — the six research agents (`codebase-locator`,
