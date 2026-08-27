@@ -21,6 +21,14 @@ NC='\033[0m' # No Color
 
 # Determine source directory (where setup.sh lives)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Where the framework files are READ from. Same as SCRIPT_DIR for a local
+# install; a fetched export once --from/--update fetches its own source.
+SRC_DIR="$SCRIPT_DIR"
+
+# Every path (relative to the target) the installer wrote this run. Feeds the
+# install record so a later update knows what it put there.
+RECORD_PATHS=()
+RECORD_NAME=".project-specs.json"
 
 # Show help text
 show_help() {
@@ -106,6 +114,59 @@ else:
 PY
 }
 
+# --- Install record ----------------------------------------------------------
+# The record lives at <target>/.project-specs.json and says what was installed
+# from where. scripts/installer_support.py owns its format; this file only
+# gathers the inputs. See conventions/... via README "Updating an install".
+
+SUPPORT="$SCRIPT_DIR/scripts/installer_support.py"
+
+# Stop before writing anything if the target holds a record from a newer
+# installer — rewriting it here would silently drop fields we don't know about.
+assert_record_readable() {
+  [[ -f "$SUPPORT" ]] || return 0
+  [[ -f "$TARGET_PATH/$RECORD_NAME" ]] || return 0
+  if ! python3 "$SUPPORT" assert-schema --target "$TARGET_PATH"; then
+    exit 1
+  fi
+}
+
+# Describe the source this run installed from: its revision, its origin URL, and
+# the branch it was on. Empty fields when the source is not a git working copy.
+resolve_record_metadata() {
+  REC_SOURCE=""; REC_REF=""; REC_TRACK=""; REC_COMMIT=""; REC_PINNED=false
+  if git -C "$SRC_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+    REC_COMMIT="$(git -C "$SRC_DIR" rev-parse HEAD 2>/dev/null || true)"
+    REC_SOURCE="$(git -C "$SRC_DIR" remote get-url origin 2>/dev/null || true)"
+    REC_REF="$(git -C "$SRC_DIR" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+    REC_TRACK="$REC_REF"
+  fi
+  [[ -z "$REC_SOURCE" ]] && REC_SOURCE="$SRC_DIR"
+  return 0
+}
+
+write_install_record() {
+  if [[ ! -f "$SUPPORT" ]]; then
+    print_warning "scripts/installer_support.py not found in source; no install record written"
+    return 0
+  fi
+  resolve_record_metadata
+  local path_args=() p
+  for p in "${RECORD_PATHS[@]}"; do path_args+=(--path "$p"); done
+  local pin_args=()
+  [[ "$REC_PINNED" == true ]] && pin_args+=(--pinned)
+  local out
+  if out=$(python3 "$SUPPORT" write-record \
+             --target "$TARGET_PATH" \
+             --source "$REC_SOURCE" --ref "$REC_REF" --track "$REC_TRACK" \
+             --commit "$REC_COMMIT" --provider "$PROVIDER" --mode "$MODE" \
+             "${pin_args[@]}" "${path_args[@]}" 2>&1); then
+    print_success "Recorded install in $RECORD_NAME ($out files)"
+  else
+    print_warning "Could not write $RECORD_NAME: $out"
+  fi
+}
+
 # --- Argument parsing --------------------------------------------------------
 if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]]; then
   show_help
@@ -166,6 +227,8 @@ check_required_command ln
 check_required_command python3
 
 # Resolve manifest values
+assert_record_readable
+
 BASE_DIR="$(manifest_get "$MANIFEST" install.base_dir)"
 AGENTS_SUBDIR="$(manifest_get "$MANIFEST" install.agents_subdir)"
 COMMANDS_SUBDIR="$(manifest_get "$MANIFEST" install.commands_subdir)"
@@ -231,6 +294,7 @@ install_dir_plain() {
     cp -r "$src" "$dest"
     print_success "Copied $label → $BASE_DIR/$dest_rel/"
   fi
+  RECORD_PATHS+=("$BASE_DIR/$dest_rel")
 }
 
 # Transform each command markdown file into a Codex Skill folder:
@@ -274,6 +338,7 @@ for root, _, files in os.walk(src):
 print(count)
 PY
   print_success "Transformed commands → $skills_rel/<name>/SKILL.md (as Codex Skills)"
+  RECORD_PATHS+=("$skills_rel")
 }
 
 # Transform each agent markdown file into a Codex TOML subagent def:
@@ -317,6 +382,7 @@ for fn in os.listdir(src):
 print(count)
 PY
   print_success "Transformed agents → $agents_rel/<name>.toml (as Codex subagents)"
+  RECORD_PATHS+=("$BASE_DIR/$agents_rel")
 }
 
 # --- Install agents + commands per transform type ----------------------------
@@ -354,6 +420,7 @@ if [[ -d "$SCRIPT_DIR/conventions" ]]; then
   mkdir -p "$(dirname "$CONV_DEST")"
   cp -r "$SCRIPT_DIR/conventions" "$CONV_DEST"
   print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+  RECORD_PATHS+=("${CONV_DEST#$TARGET_PATH/}")
 fi
 
 # --- Install standards registry + extractor ----------------------------------
@@ -367,6 +434,7 @@ if [[ -d "$SCRIPT_DIR/standards" ]]; then
   cp "$SCRIPT_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
   cp "$SCRIPT_DIR/standards/statements.json" "$STD_DEST/statements.json"
   print_success "Installed standards registry → standards/"
+  RECORD_PATHS+=("standards/extractor.py" "standards/statements.json")
 fi
 
 # --- Provider-specific artifacts --------------------------------------------
@@ -387,8 +455,10 @@ See specs.config.yaml for configuration and the installed commands/agents.
 EOF
       print_success "Created $ROOT_INSTRUCTIONS stub at project root"
     fi
+    RECORD_PATHS+=("$ROOT_INSTRUCTIONS")
   else
     print_warning "$ROOT_INSTRUCTIONS already exists, skipping"
+    RECORD_PATHS+=("$ROOT_INSTRUCTIONS")
   fi
 fi
 
@@ -399,6 +469,7 @@ if [[ -n "$SETTINGS_TEMPLATE" ]]; then
     cp "$SRC_SETTINGS" "$INSTALL_DIR/$SETTINGS_TEMPLATE"
     print_success "Copied $SETTINGS_TEMPLATE → $BASE_DIR/"
   fi
+  [[ -f "$INSTALL_DIR/$SETTINGS_TEMPLATE" ]] && RECORD_PATHS+=("$BASE_DIR/$SETTINGS_TEMPLATE")
 fi
 
 # Copy specs.config.yaml if not present
@@ -417,6 +488,7 @@ PY
   else
     print_warning "specs.config.yaml already exists at project root, skipping"
   fi
+  RECORD_PATHS+=("specs.config.yaml")
 else
   print_warning "specs.config.example.yaml not found in source"
 fi
@@ -425,6 +497,7 @@ fi
 if [[ -f "$SCRIPT_DIR/templates/pr_description.md" ]]; then
   cp "$SCRIPT_DIR/templates/pr_description.md" "$TARGET_PATH/pr_description.md"
   print_success "Copied pr_description.md to project root"
+  RECORD_PATHS+=("pr_description.md")
 else
   print_warning "templates/pr_description.md not found in source"
 fi
@@ -454,6 +527,9 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 else
   print_status "Skipped thoughts/ directory"
 fi
+
+# Record what this run installed, so an update knows what it can replace.
+write_install_record
 
 # Print summary
 echo
