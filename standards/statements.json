@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "extracted_at": "2026-08-16T13:15:43Z",
+  "extracted_at": "2026-08-25T13:35:41Z",
   "statements": [
     {
       "slug": "must-acceptance-criterion-bound-exactly-individually-runnable-named",
@@ -30,12 +30,12 @@
       "status": "approved"
     },
     {
-      "slug": "must-evidence-record-contain-command-codestate-result-three",
+      "slug": "must-evidence-record-contain-command-codestate-output-three",
       "source": "conventions/criterion-binding.md",
       "domain": "verification",
       "sdlc_stage": "all",
       "level": "MUST",
-      "text": "Every evidence record MUST contain command, code_state, and result — the three required elements.",
+      "text": "Every evidence record MUST contain command, code_state, and output — the three required elements.",
       "status": "approved"
     },
     {

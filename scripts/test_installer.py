@@ -115,6 +115,25 @@ def run_setup(src: Path, target: Path, *extra: str,
     )
 
 
+def make_bare_installer(root: Path, src: Path, name: str = "bare") -> Path:
+    """A directory holding ONLY the installer and its support scripts.
+
+    Nothing else from the framework is present, so an install run from here can
+    only succeed if the content came from the fetched source — which is what
+    "no pre-existing local clone" has to mean in a test.
+    """
+    bare = root / name
+    (bare / "scripts").mkdir(parents=True)
+    shutil.copy2(src / "setup.sh", bare / "setup.sh")
+    for script in sorted((src / "scripts").glob("*.py")):
+        shutil.copy2(script, bare / "scripts" / script.name)
+    return bare
+
+
+def file_url(path: Path) -> str:
+    return "file://" + str(path)
+
+
 @contextmanager
 def sandbox():
     """One temporary root holding the source repo, the target, and the cache."""
@@ -265,6 +284,109 @@ def check_future_schema_refused() -> None:
             fail(g, f"files changed despite the refusal: {changed[:5]}")
 
 
+# --- Groups: fetching from a source repository -------------------------------
+
+def check_install_from_url_without_clone() -> None:
+    """AC-4 — the installer installs from a source repository location with no
+    pre-existing local clone, and records that location."""
+    g = "check_install_from_url_without_clone"
+    with sandbox() as (tmp, target, cache):
+        src = make_source(tmp)
+        head = git(src, "rev-parse", "HEAD").stdout.strip()
+        bare = make_bare_installer(tmp, src)
+        url = file_url(src)
+
+        # Sanity: the bare installer really has no framework content of its own.
+        if (bare / "commands").exists() or (bare / "conventions").exists():
+            fail(g, "fixture is wrong: the bare installer carries framework content")
+            return
+
+        proc = run_setup(bare, target, f"--from={url}", "--copy", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"installer exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        for rel in (".claude/commands/core/create_plan.md",
+                    ".claude/conventions/criterion-binding.md",
+                    "standards/statements.json"):
+            if not (target / rel).exists():
+                fail(g, f"{rel} was not installed — content did not come from the fetch")
+        rec = read_record(target)
+        if rec is None:
+            fail(g, f"no {RECORD_NAME} written")
+            return
+        if rec.get("source") != url:
+            fail(g, f"record source is {rec.get('source')!r}, expected {url!r}")
+        if rec.get("commit") != head:
+            fail(g, f"record commit {rec.get('commit')!r} != source HEAD {head!r}")
+
+
+def check_install_named_reference() -> None:
+    """AC-16 — a developer can install a named reference; the record states both
+    the reference asked for and the revision it resolved to."""
+    g = "check_install_named_reference"
+    with sandbox() as (tmp, target, cache):
+        src = make_source(tmp)
+        pinned_rev = git(src, "rev-parse", "HEAD").stdout.strip()
+        git(src, "tag", "v-test")
+        marker = "\n<!-- only on main -->\n"
+        main_rev = advance_source(
+            src, "advance main",
+            {"conventions/naming-conventions.md": marker},
+        )
+        if pinned_rev == main_rev:
+            fail(g, "fixture is wrong: main did not advance past the tag")
+            return
+        bare = make_bare_installer(tmp, src)
+        url = file_url(src)
+
+        proc = run_setup(bare, target, f"--from={url}", "--ref=v-test", "--copy",
+                         cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"tag install exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        rec = read_record(target)
+        if rec is None:
+            fail(g, f"no {RECORD_NAME} written")
+            return
+        if rec.get("ref") != "v-test":
+            fail(g, f"record ref is {rec.get('ref')!r}, expected 'v-test'")
+        if rec.get("commit") != pinned_rev:
+            fail(g, f"record commit {rec.get('commit')!r} != the tag's revision "
+                    f"{pinned_rev!r}")
+        if rec.get("pinned") is not True:
+            fail(g, f"record pinned is {rec.get('pinned')!r}; a tag is not a branch, "
+                    f"so the install is pinned")
+        installed = (target / ".claude/conventions/naming-conventions.md").read_text(
+            encoding="utf-8")
+        if "only on main" in installed:
+            fail(g, "installed content carries a change made after the tag — the "
+                    "reference was not honoured")
+
+        # A branch name is not a pin, and resolves to that branch's head.
+        target2 = tmp / "target-branch"
+        target2.mkdir()
+        proc2 = run_setup(bare, target2, f"--from={url}", "--ref=main", "--copy",
+                          cache=cache)
+        if proc2.returncode != 0:
+            fail(g, f"branch install exited {proc2.returncode}: "
+                    f"{(proc2.stdout + proc2.stderr).strip()[-500:]}")
+            return
+        rec2 = read_record(target2)
+        if rec2 is None:
+            fail(g, f"no {RECORD_NAME} written for the branch install")
+            return
+        if rec2.get("ref") != "main":
+            fail(g, f"branch install ref is {rec2.get('ref')!r}, expected 'main'")
+        if rec2.get("commit") != main_rev:
+            fail(g, f"branch install commit {rec2.get('commit')!r} != main head "
+                    f"{main_rev!r}")
+        if rec2.get("pinned") is not False:
+            fail(g, f"branch install pinned is {rec2.get('pinned')!r}; a branch is "
+                    f"not a pin")
+
+
 # --- Check registry ----------------------------------------------------------
 # Keyed by the group name used in a plan's Criterion Bindings table, so
 # `python3 scripts/test_installer.py --check <name>` runs exactly one bound group.
@@ -273,6 +395,8 @@ CHECKS: "dict[str, Callable[[], None]]" = {
     "check_fresh_install_writes_record": check_fresh_install_writes_record,
     "check_record_hashes_match_disk":    check_record_hashes_match_disk,
     "check_future_schema_refused":       check_future_schema_refused,
+    "check_install_from_url_without_clone": check_install_from_url_without_clone,
+    "check_install_named_reference":     check_install_named_reference,
 }
 
 

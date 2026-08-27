@@ -48,10 +48,10 @@ so running the whole script is still single-group for it (Decision 3).
 ```yaml
 criterion: AC-22
 group: scripts/validate.py
-edge: red
+outcome: red
 command: "python3 scripts/validate.py"
 code_state: "git:53b15a5ac752b74f5578e9100617df7b989c9edc"
-result: |
+output: |
   exit 1
   validate.py: 14 error(s) across 26 agent/command files
     ERROR   commands/core/spec.md: section 'Common Shortcuts to Avoid' never mentions the 'pairing gate' obligation — see conventions/criterion-binding.md
@@ -79,10 +79,10 @@ recorded_at: "2026-08-07T18:18:26Z"
 ```yaml
 criterion: AC-24
 group: scripts/run_evals.py::check_core_command_coverage
-edge: red
+outcome: red
 command: "python3 scripts/run_evals.py --check check_core_command_coverage"
 code_state: "git:53b15a5ac752b74f5578e9100617df7b989c9edc"
-result: |
+output: |
   exit 1
   run_evals.py [check_core_command_coverage]: 1 failure(s)
     FAIL  evals/cases/validate_plan.json: missing — every core routed command needs a case file
@@ -97,10 +97,10 @@ The token `pairing gate` appears in no core command's Common Shortcuts / Red Fla
 ```yaml
 criterion: AC-27
 group: scripts/validate.py::check_gate_sections
-edge: red
+outcome: red
 command: "python3 scripts/validate.py --check check_gate_sections"
 code_state: "git:53b15a5ac752b74f5578e9100617df7b989c9edc"
-result: |
+output: |
   exit 1
   validate.py [check_gate_sections]: 12 error(s)
     ERROR   commands/core/spec.md: section 'Common Shortcuts to Avoid' never mentions the 'pairing gate' obligation — see conventions/criterion-binding.md
@@ -126,10 +126,10 @@ recorded_at: "2026-08-07T18:18:26Z"
 ```yaml
 criterion: AC-28
 group: scripts/validate.py::check_gate_single_source
-edge: red
+outcome: red
 command: "python3 scripts/validate.py --check check_gate_single_source"
 code_state: "git:53b15a5ac752b74f5578e9100617df7b989c9edc"
-result: |
+output: |
   exit 1
   validate.py [check_gate_single_source]: 1 error(s)
     ERROR   conventions/criterion-binding.md: the pairing gate's single normative source does not exist
@@ -144,10 +144,10 @@ recorded_at: "2026-08-07T18:18:26Z"
 ```yaml
 criterion: AC-29
 group: scripts/validate.py::check_command_size_budget
-edge: red
+outcome: red
 command: "python3 scripts/validate.py --check check_command_size_budget"
 code_state: "git:53b15a5ac752b74f5578e9100617df7b989c9edc"
-result: |
+output: |
   exit 1
   validate.py [check_command_size_budget]: 1 error(s)
     ERROR   commands/core/create_plan.md: 549 lines exceeds the 500-line ceiling — extract body text to a convention or reference file (conventions/three-layer-architecture.md:182-185)
