@@ -10,7 +10,7 @@ tags:
 
 # Installer Update Mechanism — Implementation Plan
 
-**Grades against:** `thoughts/shared/specs/2026-08-24-installer-update-mechanism-spec.md`, criteria AC-1 … AC-23 (24 including AC-17b). Every phase cites the criteria it satisfies.
+**Grades against:** `thoughts/shared/specs/2026-08-24-installer-update-mechanism-spec.md`, 22 criteria (AC-1 … AC-23, including AC-17b; AC-10 and AC-11 retired under D-4). Every phase cites the criteria it satisfies.
 **Decision record:** `thoughts/decisions/framework-distribution-and-updates.md` (ADR-001, Option D).
 **Open questions:** none. The spec's three questions were closed as D-1, D-2, and D-3 on 2026-08-24.
 
@@ -92,8 +92,6 @@ Stakes domains are filled from the keyword table in `conventions/criterion-bindi
 | `AC-17` | `scripts/test_installer.py::check_update_keeps_pin` | `python3 scripts/test_installer.py --check check_update_keeps_pin` | `none` | 3 |
 | `AC-18` | `scripts/test_installer.py::check_update_moves_pin` | `python3 scripts/test_installer.py --check check_update_moves_pin` | `none` | 3 |
 | `AC-9` | `scripts/test_installer.py::check_update_keeps_edited_file` | `python3 scripts/test_installer.py --check check_update_keeps_edited_file` | `none` | 4 |
-| `AC-10` | `scripts/test_installer.py::check_update_replaces_untouched_file` | `python3 scripts/test_installer.py --check check_update_replaces_untouched_file` | `none` | 4 |
-| `AC-11` | `scripts/test_installer.py::check_update_preserves_project_config` | `python3 scripts/test_installer.py --check check_update_preserves_project_config` | `none` | 4 |
 | `AC-13` | `scripts/test_installer.py::check_staleness_reports_distance` | `python3 scripts/test_installer.py --check check_staleness_reports_distance` | `none` | 5 |
 | `AC-14` | `scripts/test_installer.py::check_staleness_lists_changelog_entries` | `python3 scripts/test_installer.py --check check_staleness_lists_changelog_entries` | `none` | 5 |
 | `AC-15` | `scripts/test_installer.py::check_staleness_exit_status` | `python3 scripts/test_installer.py --check check_staleness_exit_status` | `none` | 5 |
@@ -107,6 +105,8 @@ Stakes domains are filled from the keyword table in `conventions/criterion-bindi
 **Evidence file**: `thoughts/shared/evidence/2026-08-24-installer-update-mechanism.md`
 
 **Manual-only criteria**: none. The spec carries no `manual-only` criterion, so no approval record applies.
+
+**Regression tests, bound to no criterion.** Two groups in the same script guard behavior that predates this work: `check_update_replaces_untouched_file` and `check_update_preserves_project_config`. Both passed before any code was written, so neither can carry failing-first evidence. They were retired as acceptance criteria under D-4 and kept as tests. They run on every CI build; nothing binds to them, and nothing in this plan is checked off on their result.
 
 ---
 
@@ -348,7 +348,7 @@ Seven groups. The AC-8 group points the record at an unreachable path and assert
 
 ## Phase 4: Keep the files the developer edited
 
-Satisfies **AC-9, AC-10, AC-11**.
+Satisfies **AC-9**. Also lands two regression tests bound to no criterion (see D-4).
 
 ### Overview
 
@@ -359,21 +359,24 @@ Replace the directory-at-a-time copy with a per-file sync that compares each des
 **1. `scripts/installer_support.py`** (modified)
 Implement `protected_paths` and `sync_tree`. A file is protected when the record holds a hash for it and the file on disk hashes differently. With no record, nothing is protected and the caller reports that (already handled in phase 3).
 
+**Deviation (in scope).** Three defects surfaced during this phase and were fixed here: resolved and unresolved forms of a macOS temp path made every relative-path calculation fail; that failure was silent because the helper ran inside a process substitution, so the installer reported success having copied nothing; and a kept file had its edited content recorded as the new baseline, which would have let the following update overwrite it. The kept set is now computed before any write and passed to the record writer rather than re-derived after.
+
 **2. `setup.sh`** (modified)
-Replace `install_dir_plain`'s copy branch with `sync_tree`. Route conventions, standards, and the PR description template through it as well, removing the unconditional `cp` at `setup.sh:425-428`. Print a "kept your local changes" list in the summary. The project configuration file keeps its existing write-only-when-absent behavior (AC-11) — this phase adds the test, not new behavior.
+Replace `install_dir_plain`'s copy branch with `sync_tree`. Route conventions, standards, and the PR description template through it as well, removing the unconditional `cp` at `setup.sh:425-428`. Print a "kept your local changes" list in the summary. The project configuration file keeps its existing write-only-when-absent behavior — this phase adds a regression test for it, not new behavior.
 
 **3. `scripts/test_installer.py`** (modified)
-Three groups. The AC-10 group must edit the source between installs so a replacement is observable.
+Three groups: one for AC-9, plus two regression tests that guard behavior predating this work.
 
 ### Success Criteria
 
 **Automated:**
-- [ ] Groups for AC-9, AC-10, AC-11 pass with red-then-green evidence
-- [ ] Phases 1 through 3 still pass
-- [ ] The existing `install-smoke-test` job still passes for all three providers — the copy engine changed underneath it
+- [x] The AC-9 group passes with red-then-green evidence
+- [x] Both regression groups pass; neither is treated as evidence for any criterion
+- [x] Phases 1 through 3 still pass
+- [x] The existing `install-smoke-test` job still passes for all three providers — the copy engine changed underneath it
 
 **Manual:**
-- [ ] Edit an installed convention by hand, run an update, and confirm the edit survives and the summary names the file
+- [x] Edit an installed convention by hand, run an update, and confirm the edit survives and the summary names the file
 
 ---
 

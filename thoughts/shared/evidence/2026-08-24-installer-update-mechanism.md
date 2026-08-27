@@ -354,3 +354,35 @@ output: |
 strength: single-group
 ```
 
+
+## Phase 4 — Keeping the developer's edits
+
+```yaml
+criterion: AC-9
+group: scripts/test_installer.py::check_update_keeps_edited_file
+outcome: red
+command: "python3 scripts/test_installer.py --check check_update_keeps_edited_file"
+code_state: "git:9babcbfd552c0ba20f3522ad6a22a45938e04e6e"
+output: |
+  exit 1
+  
+  test_installer.py [check_update_keeps_edited_file]: 3 failure(s)
+  
+    FAIL  check_update_keeps_edited_file: pr_description.md was overwritten despite being edited
+    FAIL  check_update_keeps_edited_file: .claude/conventions/naming-conventions.md was overwritten despite being edited
+    FAIL  check_update_keeps_edited_file: output never names .claude/conventions/naming-conventions.md as kept
+strength: single-group
+```
+
+```yaml
+criterion: AC-9
+group: scripts/test_installer.py::check_update_keeps_edited_file
+outcome: green
+command: "python3 scripts/test_installer.py --check check_update_keeps_edited_file"
+code_state: "git:a026b25a698338a997aa42d6edbc7351d5966a74"
+output: |
+  exit 0
+  test_installer.py [check_update_keeps_edited_file]: OK
+strength: single-group
+```
+
