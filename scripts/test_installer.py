@@ -711,6 +711,99 @@ def check_update_preserves_project_config() -> None:
             fail(g, "specs.config.yaml was overwritten by the update")
 
 
+# --- Groups: reporting staleness ---------------------------------------------
+
+def check_staleness_reports_distance() -> None:
+    """AC-13 — the report says the install is behind and by how many revisions."""
+    g = "check_staleness_reports_distance"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        advance_source(src, "second upstream change",
+                       {"conventions/model-selection.md": "\n<!-- second -->\n"})
+
+        proc = run_setup(bare, target, "--check", cache=cache)
+        combined = proc.stdout + proc.stderr
+        low = combined.lower()
+        if "behind" not in low:
+            fail(g, f"report never says the install is behind: {combined.strip()[-300:]!r}")
+        if "2" not in combined:
+            fail(g, f"report never names the number of revisions behind (2): "
+                    f"{combined.strip()[-300:]!r}")
+
+
+def check_staleness_lists_changelog_entries() -> None:
+    """AC-14 — the report lists the change-log entries added since the install."""
+    g = "check_staleness_lists_changelog_entries"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        entry = "- Added a widget that reticulates splines"
+        advance_source(src, "changelog entry", {"CHANGELOG.md": f"\n{entry}\n"})
+
+        proc = run_setup(bare, target, "--check", cache=cache)
+        combined = proc.stdout + proc.stderr
+        if "reticulates splines" not in combined:
+            fail(g, "report does not include the change-log entry added since the "
+                    f"install: {combined.strip()[-400:]!r}")
+
+
+def check_staleness_exit_status() -> None:
+    """AC-15 — behind exits non-zero; current exits zero and says so."""
+    g = "check_staleness_exit_status"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        behind = run_setup(bare, target, "--check", cache=cache)
+        if behind.returncode == 0:
+            fail(g, "check exited 0 on an install that is behind")
+
+        # Bring it up to date, then the same check must pass.
+        if run_setup(bare, target, "--update", cache=cache).returncode != 0:
+            fail(g, "update failed, cannot test the current case")
+            return
+        current = run_setup(bare, target, "--check", cache=cache)
+        if current.returncode != 0:
+            fail(g, f"check exited {current.returncode} on an up-to-date install: "
+                    f"{(current.stdout + current.stderr).strip()[-300:]}")
+        if "current" not in (current.stdout + current.stderr).lower():
+            fail(g, "check never says the install is current: "
+                    f"{(current.stdout + current.stderr).strip()[-300:]!r}")
+
+
+def check_staleness_reports_on_pinned_install() -> None:
+    """AC-17b — a pinned install is told a newer revision exists, and the check
+    changes no installed file."""
+    g = "check_staleness_reports_on_pinned_install"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(
+            tmp, target, cache, ref="v-test")
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        before = snapshot(target)
+        proc = run_setup(bare, target, "--check", cache=cache)
+        after = snapshot(target)
+        combined = proc.stdout + proc.stderr
+        low = combined.lower()
+
+        if "pinned" not in low:
+            fail(g, f"report never says the install is pinned: {combined.strip()[-300:]!r}")
+        if second[:10] not in combined and "behind" not in low:
+            fail(g, "report never names the newer revision available on the tracked "
+                    f"branch: {combined.strip()[-300:]!r}")
+        changed = [k for k in sorted(set(before) | set(after))
+                   if before.get(k) != after.get(k)]
+        if changed:
+            fail(g, f"the check modified the install: {changed[:5]}")
+
+
 # --- Check registry ----------------------------------------------------------
 # Keyed by the group name used in a plan's Criterion Bindings table, so
 # `python3 scripts/test_installer.py --check <name>` runs exactly one bound group.
@@ -731,6 +824,10 @@ CHECKS: "dict[str, Callable[[], None]]" = {
     "check_update_keeps_edited_file":    check_update_keeps_edited_file,
     "check_update_replaces_untouched_file": check_update_replaces_untouched_file,
     "check_update_preserves_project_config": check_update_preserves_project_config,
+    "check_staleness_reports_distance":  check_staleness_reports_distance,
+    "check_staleness_lists_changelog_entries": check_staleness_lists_changelog_entries,
+    "check_staleness_exit_status":       check_staleness_exit_status,
+    "check_staleness_reports_on_pinned_install": check_staleness_reports_on_pinned_install,
 }
 
 

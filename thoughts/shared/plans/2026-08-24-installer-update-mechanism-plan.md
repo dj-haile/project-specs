@@ -402,12 +402,12 @@ Four groups. The AC-14 fixture must add a change-log entry in the advancing comm
 ### Success Criteria
 
 **Automated:**
-- [ ] Groups for AC-13, AC-14, AC-15, AC-17b pass with red-then-green evidence
-- [ ] The AC-17b group asserts no installed file changed during the check
-- [ ] Phases 1 through 4 still pass
+- [x] Groups for AC-13, AC-14, AC-15, AC-17b pass with red-then-green evidence
+- [x] The AC-17b group asserts no installed file changed during the check
+- [x] Phases 1 through 4 still pass
 
 **Manual:**
-- [ ] Run the check against the real install in `agent-readiness-cli` and confirm the report reads clearly
+- [x] Run the check against the real install in `agent-readiness-cli` and confirm the report reads clearly
 
 ---
 

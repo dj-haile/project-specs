@@ -46,6 +46,7 @@ USAGE:
   ./setup.sh /path/to/project --provider=NAME    Install for a provider (claude|codex|cursor)
   ./setup.sh /path/to/project --from=GIT_URL     Fetch the framework from a git repo (no local clone needed)
   ./setup.sh /path/to/project --ref=NAME         Install a branch, tag, or revision (default: the source's HEAD branch)
+  ./setup.sh /path/to/project --check            Report whether the install is behind, then stop (exit 1 when behind)
   ./setup.sh /path/to/project --yes              Non-interactive: overwrite if exists, skip optional prompts (CI)
   ./setup.sh --help                              Show this help
 
@@ -79,6 +80,8 @@ EXAMPLES:
   ./setup.sh ~/my-project --link
   ./setup.sh ~/my-project --from=https://github.com/dj-haile/project-specs
   ./setup.sh ~/my-project --from=https://github.com/dj-haile/project-specs --ref=v1.0.0
+  ./setup.sh ~/my-project --check
+  ./setup.sh ~/my-project --update
 EOF
   exit 0
 }
@@ -154,27 +157,37 @@ cache_dir_for() {
 }
 
 # Fetch $1 at ref $2, export it, and set SRC_DIR plus the REC_* record fields.
-fetch_source() {
-  local url="$1" ref="$2"
+# Make sure the mirror for $1 exists and is current. Sets MIRROR on success.
+# Separate from fetch_source because the staleness check needs the refs without
+# exporting a tree.
+fetch_mirror() {
+  local url="$1"
   check_required_command git
-  check_required_command tar
-
-  local mirror; mirror="$(cache_dir_for "$url")"
-  mkdir -p "$(dirname "$mirror")"
-  if [[ -d "$mirror" ]]; then
-    print_status "Refreshing cached source: $mirror"
-    if ! git -C "$mirror" fetch --prune --quiet 2>/dev/null; then
+  MIRROR="$(cache_dir_for "$url")"
+  mkdir -p "$(dirname "$MIRROR")"
+  if [[ -d "$MIRROR" ]]; then
+    print_status "Refreshing cached source: $MIRROR"
+    if ! git -C "$MIRROR" fetch --prune --quiet 2>/dev/null; then
       print_error "Could not fetch from $url"
       return 1
     fi
   else
-    print_status "Fetching source into cache: $mirror"
-    if ! git clone --mirror --quiet "$url" "$mirror" 2>/dev/null; then
+    print_status "Fetching source into cache: $MIRROR"
+    if ! git clone --mirror --quiet "$url" "$MIRROR" 2>/dev/null; then
       print_error "Could not clone $url"
-      rm -rf "$mirror"
+      rm -rf "$MIRROR"
       return 1
     fi
   fi
+  return 0
+}
+
+fetch_source() {
+  local url="$1" ref="$2"
+  check_required_command tar
+
+  fetch_mirror "$url" || return 1
+  local mirror="$MIRROR"
 
   # The source's own default branch, used as the tracking branch for a pin.
   local default_branch
@@ -252,6 +265,74 @@ resolve_source() {
   fi
 }
 
+# --- Staleness report --------------------------------------------------------
+# Reads the record, refreshes the cache, and says whether the installed revision
+# is behind the branch it tracks. Writes nothing to the target. Exit 1 when a
+# newer revision exists, so CI can gate on it.
+
+cmd_check() {
+  local rec_source rec_commit rec_ref rec_track rec_pinned
+  rec_source="$(record_field source)"
+  rec_commit="$(record_field commit)"
+  rec_ref="$(record_field ref)"
+  rec_track="$(record_field track)"
+  rec_pinned="$(record_field pinned)"
+
+  if [[ ! -f "$TARGET_PATH/$RECORD_NAME" ]]; then
+    print_error "No $RECORD_NAME in $TARGET_PATH — nothing to compare against."
+    echo "Run an install or an update first; it writes the record this reads."
+    exit 1
+  fi
+  if [[ -z "$rec_source" || -z "$rec_commit" ]]; then
+    print_error "$RECORD_NAME does not say where this install came from."
+    exit 1
+  fi
+  [[ -z "$rec_track" ]] && rec_track="$rec_ref"
+
+  fetch_mirror "$rec_source" || exit 1
+
+  local head
+  if ! head="$(git -C "$MIRROR" rev-parse --verify --quiet "${rec_track}^{commit}")"; then
+    print_error "Tracked reference not found in $rec_source: $rec_track"
+    exit 1
+  fi
+
+  local behind
+  behind="$(git -C "$MIRROR" rev-list --count "${rec_commit}..${head}" 2>/dev/null || echo "")"
+  if [[ -z "$behind" ]]; then
+    print_error "Cannot compare $rec_commit against $rec_track — the installed revision is not in $rec_source."
+    exit 1
+  fi
+
+  echo
+  echo "Installed: $(printf '%.10s' "$rec_commit") ($rec_ref)"
+  echo "Tracking:  $rec_track in $rec_source"
+
+  if [[ "$behind" -eq 0 ]]; then
+    print_success "This install is current."
+    exit 0
+  fi
+
+  if [[ "$rec_pinned" == "true" ]]; then
+    print_warning "This install is pinned to $rec_ref and stays there."
+    print_warning "$rec_track is $behind revision(s) ahead, at $(printf '%.10s' "$head")."
+    echo "To move it: re-run with --update --ref=<name>"
+  else
+    print_warning "This install is behind by $behind revision(s)."
+    print_warning "Newest on $rec_track: $(printf '%.10s' "$head")"
+    echo "To update: re-run with --update"
+  fi
+
+  local entries
+  entries="$(python3 "$SUPPORT" changelog --mirror "$MIRROR" --old "$rec_commit" --new "$head" 2>/dev/null || true)"
+  if [[ -n "$entries" ]]; then
+    echo
+    echo "Change log entries added since this install:"
+    echo "$entries" | sed 's/^/  /'
+  fi
+  exit 1
+}
+
 # --- Install record ----------------------------------------------------------
 # The record lives at <target>/.project-specs.json and says what was installed
 # from where. scripts/installer_support.py owns its format; this file only
@@ -325,6 +406,7 @@ TARGET_PATH=""
 MODE="copy"
 PROVIDER="claude"
 ASSUME_YES=false
+CHECK_ONLY=false   # --check: report staleness and exit, writing nothing
 SOURCE_URL=""      # --from: fetch the framework from here instead of SCRIPT_DIR
 REQ_REF=""         # --ref: which branch, tag, or revision to install
 
@@ -334,6 +416,7 @@ for arg in "$@"; do
     --copy)           MODE="copy" ;;
     --link)           MODE="link" ;;
     --update)         MODE="update" ;;
+    --check)          CHECK_ONLY=true ;;
     --yes|-y)         ASSUME_YES=true ;;
     --provider=*)     PROVIDER="${arg#--provider=}" ;;
     --from=*)         SOURCE_URL="${arg#--from=}" ;;
@@ -373,9 +456,15 @@ assert_record_readable
 
 # An install predating the record has no fingerprints to compare against, so
 # this run cannot tell an edited file from an untouched one.
-if [[ "$MODE" == "update" && ! -f "$TARGET_PATH/$RECORD_NAME" ]]; then
+if [[ "$MODE" == "update" && "$CHECK_ONLY" == false && ! -f "$TARGET_PATH/$RECORD_NAME" ]]; then
   print_warning "No $RECORD_NAME in $TARGET_PATH — edited-file protection is unavailable for this run"
   print_warning "This run writes one, so the next update can protect your edits"
+fi
+
+# Report staleness and stop. Runs before anything is fetched for install or
+# written, so a check can never modify the target.
+if [[ "$CHECK_ONLY" == true ]]; then
+  cmd_check
 fi
 
 # Decide where framework files are read from. Everything below reads SRC_DIR,

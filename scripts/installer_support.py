@@ -37,6 +37,9 @@ Subcommands:
                  developer edited. Prints one "action<TAB>relpath" line per
                  file: written, kept, or linked.
 
+  changelog      --mirror DIR --old SHA --new SHA [--path FILE]
+                 Print the lines the change log gained between two revisions.
+
   record-field   --target DIR --field NAME
                  Print one top-level field, for shell to read. Booleans print
                  as true/false. Exit 2 when there is no record.
@@ -50,6 +53,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -218,6 +222,28 @@ def sync_tree(src: Path, dest: Path, target_root: Path,
     return results
 
 
+def changelog_between(mirror: Path, old: str, new: str, path: str) -> str:
+    """The lines `path` gained between two revisions, with diff markers removed.
+
+    Read out of the cached mirror rather than the target, so the report says
+    what upstream added, not what the installed copy happens to contain.
+    """
+    proc = subprocess.run(
+        ["git", "-C", str(mirror), "diff", f"{old}..{new}", "--", path],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        return ""
+    added = []
+    for line in proc.stdout.splitlines():
+        if line.startswith("+++") or not line.startswith("+"):
+            continue
+        text = line[1:].rstrip()
+        if text:
+            added.append(text)
+    return "\n".join(added)
+
+
 def write_record(target: Path, *, source: str, ref: str, track: str, commit: str,
                  provider: str, mode: str, pinned: bool,
                  files: "dict[str, str]") -> None:
@@ -305,6 +331,13 @@ def cmd_sync(args) -> int:
     return EXIT_OK
 
 
+def cmd_changelog(args) -> int:
+    out = changelog_between(Path(args.mirror), args.old, args.new, args.path)
+    if out:
+        print(out)
+    return EXIT_OK
+
+
 def cmd_record_field(args) -> int:
     rec = read_record(Path(args.target).resolve())
     if rec is None:
@@ -356,6 +389,13 @@ def main() -> int:
     sy.add_argument("--src", required=True)
     sy.add_argument("--dest", required=True)
     sy.set_defaults(func=cmd_sync)
+
+    c = sub.add_parser("changelog")
+    c.add_argument("--mirror", required=True)
+    c.add_argument("--old", required=True)
+    c.add_argument("--new", required=True)
+    c.add_argument("--path", default="CHANGELOG.md")
+    c.set_defaults(func=cmd_changelog)
 
     f = sub.add_parser("record-field")
     f.add_argument("--target", required=True)
