@@ -23,23 +23,33 @@ itself (commands, agents) has no runtime dependency on them.
 
 ### Install
 
-1. **Clone project-specs somewhere accessible:**
+1. **Get a copy of `setup.sh`.** Either clone the repo:
+
    ```bash
    git clone https://github.com/dj-haile/project-specs ~/.project-specs
    ```
+
+   or skip the clone entirely and let the installer fetch its own source with
+   `--from` (step 2). You only need `setup.sh` and `scripts/` on disk.
 
 2. **Run setup.sh to install into your project:**
    ```bash
    ~/.project-specs/setup.sh /path/to/your-project                 # Claude Code (default)
    ~/.project-specs/setup.sh /path/to/your-project --provider=codex   # OpenAI Codex CLI
    ~/.project-specs/setup.sh /path/to/your-project --provider=cursor  # Cursor
+
+   # No clone on this machine? Point at the repo instead:
+   ./setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs
    ```
 
    The installer copies `agents/`, `commands/`, and the `conventions/` they
    reference into the provider's location, writes a `specs.config.yaml` at your
    project root (with `provider` pre-set), and optionally creates a `thoughts/`
    directory. For Codex it transforms commands into Skills and agents into TOML;
-   see [Supported Providers](#supported-providers).
+   see [Supported Providers](#supported-providers). It also writes
+   `.project-specs.json`, which records what it installed so later runs can
+   update it and leave your edits alone — see
+   [Updating an install](#updating-an-install).
 
 3. **Customize specs.config.yaml** (created at your project root by setup.sh):
    ```bash
@@ -48,6 +58,79 @@ itself (commands, agents) has no runtime dependency on them.
    Set `provider`, map model tiers under `models:`, and choose
    `ticket_integration` (`mcp`/`cli`/`none`). See
    [conventions/provider-portability.md](./conventions/provider-portability.md).
+
+### Updating an install
+
+Every install records where it came from, at `.project-specs.json` in your
+project root. That lets the installer fetch its own source, so you never need to
+remember where your clone of project-specs lives — or have one at all.
+
+**Am I behind?**
+
+```bash
+/path/to/setup.sh /path/to/your-project --check
+```
+
+It fetches the source recorded at install time and reports the revision your
+project is on, how far behind it is, and the change-log entries added since.
+Exit status is 1 when a newer revision exists and 0 when you are current, so CI
+can gate on it.
+
+**Bring it up to date:**
+
+```bash
+/path/to/setup.sh /path/to/your-project --update
+```
+
+The update fetches before it copies. If the source cannot be reached, nothing in
+your project changes.
+
+**Files you edited are kept.** The record holds a fingerprint of every file the
+installer wrote. A file whose content no longer matches is left alone, and the
+installer lists it under "Kept your local changes" when it finishes. Your
+`specs.config.yaml` is never overwritten.
+
+**Pin a project to one version:**
+
+```bash
+/path/to/setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs --ref=v1.0.0
+```
+
+A `--ref` naming a branch follows that branch. A tag or a revision pins the
+install: later updates hold it there, and `--check` tells you a newer revision
+exists without moving you. Move it by naming a different reference:
+`--update --ref=main`.
+
+**Install on a machine with no clone:**
+
+```bash
+/path/to/setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs
+```
+
+The source is cached under `$XDG_CACHE_HOME/project-specs` (override with
+`SPECS_CACHE`), and one revision is exported for the install.
+
+From inside an agent session, `/specs_update` runs the check, reports what
+changed in plain language, and applies the update when you ask for it.
+
+### What to put in .gitignore
+
+The framework is local tooling for your project, not part of what your project
+ships, so keep it out of your project's git history. Add these:
+
+```gitignore
+# project-specs framework (local tooling)
+.claude/
+.project-specs.json
+specs.config.yaml
+standards/
+thoughts/
+pr_description.md
+```
+
+Adjust the first line for your provider (`.cursor/`, or `.codex/` plus
+`.agents/` and `AGENTS.md`). Keep `thoughts/` tracked instead if you want plans
+and handoffs shared with your team — see [Thoughts Directory](#thoughts-directory).
 
 ### Install the read-only agents as skills (any agent tool)
 
@@ -108,6 +191,7 @@ Two coupling points degrade gracefully by convention: subagent spawning ([subage
 | `create_handoff` | Package current context for another Claude session |
 | `resume_handoff` | Load prior handoff context and continue work |
 | `local_review` | Review changes against style guide and best practices |
+| `specs_update` | Report whether the installed framework is out of date, and upgrade it |
 
 ### Integration Commands
 
@@ -230,9 +314,15 @@ Common workflows are documented in [conventions/workflow-patterns.md](./conventi
 
 ## Versioning
 
-project-specs follows [Semantic Versioning](https://semver.org/). Breaking changes to the specs.config.yaml schema or agent/command interfaces will increment the major version.
+project-specs follows [Semantic Versioning](https://semver.org/). Breaking changes to the specs.config.yaml schema, the installer's flags, or agent/command interfaces increment the major version.
 
-Current version: **1.0.0**
+For the current version and what changed, see [CHANGELOG.md](./CHANGELOG.md) or the [releases page](https://github.com/dj-haile/project-specs/releases). This README deliberately does not name a version — a number written here goes stale the moment it is written.
+
+To pin a project to one version, install it with `--ref`:
+
+```bash
+./setup.sh /path/to/your-project --from=https://github.com/dj-haile/project-specs --ref=v2.0.0
+```
 
 ## License
 

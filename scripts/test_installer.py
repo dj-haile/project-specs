@@ -804,6 +804,218 @@ def check_staleness_reports_on_pinned_install() -> None:
             fail(g, f"the check modified the install: {changed[:5]}")
 
 
+# --- Groups: link mode, the command, and the documentation --------------------
+
+def doc_section(text: str, pattern: str):
+    """The body under the first heading matching `pattern`, up to the next
+    heading. Lines inside fenced code blocks are never treated as headings —
+    a shell or gitignore comment starts with '#' too."""
+    import re
+    lines = text.splitlines()
+    start = None
+    fenced = False
+    heads = []
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        if re.match(r"^#{1,6} ", line):
+            heads.append(i)
+            if start is None and re.search(pattern, line, re.I):
+                start = i
+    if start is None:
+        return None
+    after = [i for i in heads if i > start]
+    end = after[0] if after else len(lines)
+    return "\n".join(lines[start + 1:end])
+
+
+def check_link_mode_covers_conventions_and_standards() -> None:
+    """AC-19 — in link mode the convention documents and the standards registry
+    follow the source, so a change upstream is visible without reinstalling."""
+    g = "check_link_mode_covers_conventions_and_standards"
+    with sandbox() as (tmp, target, cache):
+        src = make_source(tmp)
+        proc = run_setup(src, target, "--link", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"link install exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+
+        marker = "<!-- changed in the source after installing -->"
+        (src / "conventions/naming-conventions.md").write_text(
+            "# naming\n" + marker + "\n", encoding="utf-8")
+        (src / "standards/statements.json").write_text(
+            '{"statements": [], "note": "' + marker + '"}\n', encoding="utf-8")
+
+        for rel in (".claude/conventions/naming-conventions.md",
+                    "standards/statements.json"):
+            path = target / rel
+            if not path.exists():
+                fail(g, f"{rel} is not installed at all")
+                continue
+            if marker not in path.read_text(encoding="utf-8"):
+                fail(g, f"{rel} does not follow the source — link mode copied it "
+                        f"instead of linking it")
+
+
+def check_link_mode_refused_for_transform_provider() -> None:
+    """AC-20 — a provider whose install converts formats cannot be linked; the
+    installer says so and completes by copying."""
+    g = "check_link_mode_refused_for_transform_provider"
+    with sandbox() as (tmp, target, cache):
+        src = make_source(tmp)
+        proc = run_setup(src, target, "--link", "--provider=codex", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"install exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        combined = (proc.stdout + proc.stderr).lower()
+        if "link" not in combined or ("not supported" not in combined
+                                      and "unavailable" not in combined):
+            fail(g, "installer never says link mode is unavailable for this "
+                    f"provider: {(proc.stdout + proc.stderr).strip()[-300:]!r}")
+        links = [p for p in target.rglob("*") if p.is_symlink()]
+        if links:
+            fail(g, f"install created symlinks despite needing a format "
+                    f"conversion: {[str(p.relative_to(target)) for p in links][:5]}")
+        if not (target / "AGENTS.md").exists():
+            fail(g, "the codex install did not complete by copying")
+
+
+def check_update_command_exists_and_parses() -> None:
+    """AC-21 — a command exists whose stated purpose is checking for and
+    applying framework updates, carrying the frontmatter every command needs."""
+    g = "check_update_command_exists_and_parses"
+    import re
+    try:
+        import yaml
+    except ImportError:
+        fail(g, "PyYAML is required")
+        return
+    candidates = sorted((ROOT / "commands").rglob("*.md"))
+    found = None
+    for path in candidates:
+        m = re.match(r"^---\n(.*?)\n---\n", path.read_text(encoding="utf-8"), re.S)
+        if not m:
+            continue
+        try:
+            fm = yaml.safe_load(m.group(1)) or {}
+        except yaml.YAMLError:
+            continue
+        desc = str(fm.get("description", "")).lower()
+        says_change = any(w in desc for w in ("update", "upgrade", "out of date"))
+        says_target = any(w in desc for w in ("framework", "install", "project-specs"))
+        if says_change and says_target:
+            found = (path, fm)
+            break
+    if not found:
+        fail(g, "no command describes checking for or applying framework updates")
+        return
+    path, fm = found
+    rel = path.relative_to(ROOT)
+    for field in ("name", "description", "model"):
+        if not fm.get(field):
+            fail(g, f"{rel}: frontmatter missing {field}")
+    if fm.get("name") != path.stem:
+        fail(g, f"{rel}: frontmatter name {fm.get('name')!r} != file stem "
+                f"{path.stem!r}")
+    if fm.get("model") not in {"planning", "analysis", "quick"}:
+        fail(g, f"{rel}: model {fm.get('model')!r} is not a semantic tier")
+    if not re.fullmatch(r"[a-z0-9]+(_[a-z0-9]+)*", path.stem):
+        fail(g, f"{rel}: command filenames must be snake_case")
+
+
+def check_readme_documents_updating() -> None:
+    """AC-22 — the main documentation explains how to update an existing
+    install, naming the check, the update, and how to pin."""
+    g = "check_readme_documents_updating"
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    section = doc_section(text, r"Updating an install")
+    if section is None:
+        fail(g, "README has no section on updating an existing install")
+        return
+    for token, why in (("--check", "the staleness check"),
+                       ("--update", "the update"),
+                       ("--ref", "pinning a reference")):
+        if token not in section:
+            fail(g, f"the updating section never names {token} ({why})")
+
+
+def check_documented_ignore_list_includes_record() -> None:
+    """AC-23 — the documented list of paths a project should keep out of git
+    includes the install record."""
+    g = "check_documented_ignore_list_includes_record"
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    section = doc_section(text, r"gitignore|keep .*out of git|ignore")
+    if section is None:
+        fail(g, "README documents no list of paths to keep out of git")
+        return
+    if RECORD_NAME not in section:
+        fail(g, f"the documented ignore list does not include {RECORD_NAME}")
+
+
+def check_link_mode_refused_with_fetched_source() -> None:
+    """Regression guard (no criterion) — link mode against a fetched source would
+    point every symlink at a temporary export that is deleted when the installer
+    exits, leaving the project full of dangling links."""
+    g = "check_link_mode_refused_with_fetched_source"
+    with sandbox() as (tmp, target, cache):
+        src = make_source(tmp)
+        bare = make_bare_installer(tmp, src)
+        proc = run_setup(bare, target, f"--from={file_url(src)}", "--link", cache=cache)
+        dangling = [p for p in target.rglob("*")
+                    if p.is_symlink() and not p.resolve().exists()]
+        if dangling:
+            fail(g, f"install left dangling symlinks: "
+                    f"{[str(p.relative_to(target)) for p in dangling][:5]}")
+        combined = (proc.stdout + proc.stderr).lower()
+        if proc.returncode == 0 and "link" not in combined:
+            fail(g, "installer neither refused link mode nor explained the fallback")
+
+
+def check_update_keeps_files_the_installer_never_wrote() -> None:
+    """Regression guard (no criterion) — an update must not delete or overwrite a
+    file the developer put inside an installed directory. Found by the
+    adversarial pass over the plan: the prune step removed anything absent from
+    the source, and install_dir_plain wiped whole directories before the
+    per-file sync could protect them."""
+    g = "check_update_keeps_files_the_installer_never_wrote"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        own = target / ".claude/commands/core/my_own_command.md"
+        own.write_text("---\nname: my_own_command\ndescription: local\n"
+                       "model: quick\n---\nProject-local workflow.\n",
+                       encoding="utf-8")
+        own_before = own.read_text(encoding="utf-8")
+
+        # An edit to an installed command, which lives under the same directory.
+        edited = target / ".claude/commands/core/commit.md"
+        edited.write_text(edited.read_text(encoding="utf-8") + EDITED_MARK,
+                          encoding="utf-8")
+        edited_before = edited.read_text(encoding="utf-8")
+
+        for attempt in (1, 2):
+            proc = run_setup(bare, target, "--update", cache=cache)
+            if proc.returncode != 0:
+                fail(g, f"update {attempt} exited {proc.returncode}: "
+                        f"{(proc.stdout + proc.stderr).strip()[-400:]}")
+                return
+            if not own.exists():
+                fail(g, f"update {attempt} deleted a file the developer added")
+                return
+            if own.read_text(encoding="utf-8") != own_before:
+                fail(g, f"update {attempt} overwrote a file the developer added")
+            if edited.read_text(encoding="utf-8") != edited_before:
+                fail(g, f"update {attempt} overwrote an edited command — "
+                        f"protection does not reach .claude/commands/")
+
+
 # --- Check registry ----------------------------------------------------------
 # Keyed by the group name used in a plan's Criterion Bindings table, so
 # `python3 scripts/test_installer.py --check <name>` runs exactly one bound group.
@@ -828,6 +1040,13 @@ CHECKS: "dict[str, Callable[[], None]]" = {
     "check_staleness_lists_changelog_entries": check_staleness_lists_changelog_entries,
     "check_staleness_exit_status":       check_staleness_exit_status,
     "check_staleness_reports_on_pinned_install": check_staleness_reports_on_pinned_install,
+    "check_link_mode_covers_conventions_and_standards": check_link_mode_covers_conventions_and_standards,
+    "check_link_mode_refused_for_transform_provider": check_link_mode_refused_for_transform_provider,
+    "check_update_command_exists_and_parses": check_update_command_exists_and_parses,
+    "check_readme_documents_updating":   check_readme_documents_updating,
+    "check_documented_ignore_list_includes_record": check_documented_ignore_list_includes_record,
+    "check_link_mode_refused_with_fetched_source": check_link_mode_refused_with_fetched_source,
+    "check_update_keeps_files_the_installer_never_wrote": check_update_keeps_files_the_installer_never_wrote,
 }
 
 

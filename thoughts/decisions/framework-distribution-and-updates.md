@@ -1,6 +1,6 @@
 # ADR-001: Keeping an installed project-specs up to date in a consumer repo
 
-**Status:** Proposed
+**Status:** Accepted — implemented 2026-08-24 on `feature/installer-update-mechanism`
 **Date:** 2026-08-24
 **Deciders:** Dj Haile (framework owner)
 **Reference install:** `~/projects/agent-readiness-cli`
@@ -260,15 +260,15 @@ which currently says nothing about updating an existing install.
 9. [ ] Add a CI job that installs into a fixture repo, commits an upstream change, runs `--update`, and asserts the change landed and a locally-edited file survived.
 10. [ ] Add the stamp path to the recommended `.gitignore` block in the docs.
 
-## Interim answer (works today, no code changes)
+## What shipped
 
-Until the above lands, this two-part command updates an existing install:
+Option D was built. Action items 2 through 10 are done; item 1 (cut a first
+release tag) is not, and is the remaining follow-up. The update path is now:
 
 ```bash
-git -C ~/projects/project-specs pull && \
-  ~/projects/project-specs/setup.sh ~/projects/agent-readiness-cli --update --yes
+~/projects/project-specs/setup.sh ~/projects/agent-readiness-cli --check
+~/projects/project-specs/setup.sh ~/projects/agent-readiness-cli --update
 ```
 
-`--update --yes` keeps `specs.config.yaml` and skips the `thoughts/` prompt. It
-does overwrite `pr_description.md`, `.claude/conventions/`, and `standards/`, so
-check for local edits to those before running it.
+No pull first, no source argument, and files you edited are kept rather than
+overwritten. The old workaround this section used to carry is obsolete.

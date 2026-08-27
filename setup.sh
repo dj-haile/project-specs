@@ -33,6 +33,10 @@ RECORD_NAME=".project-specs.json"
 # Paths an update left alone because the developer had edited them.
 KEPT_PATHS=()
 
+# Paths inside an installed directory that the installer never wrote. Left
+# untouched and kept out of the record, so a later run cannot prune them.
+FOREIGN_PATHS=()
+
 # Show help text
 show_help() {
   cat << 'EOF'
@@ -383,6 +387,10 @@ write_install_record() {
   if [[ ${#PROTECTED[@]} -gt 0 ]]; then
     for p in "${PROTECTED[@]}"; do kept_args+=(--kept "$p"); done
   fi
+  local excl_args=()
+  if [[ ${#FOREIGN_PATHS[@]} -gt 0 ]]; then
+    for p in "${FOREIGN_PATHS[@]}"; do excl_args+=(--exclude "$p"); done
+  fi
   local pin_args=()
   [[ "$REC_PINNED" == true ]] && pin_args+=(--pinned)
   local out
@@ -390,7 +398,7 @@ write_install_record() {
              --target "$TARGET_PATH" \
              --source "$REC_SOURCE" --ref "$REC_REF" --track "$REC_TRACK" \
              --commit "$REC_COMMIT" --provider "$PROVIDER" --mode "$MODE" \
-             "${pin_args[@]}" "${kept_args[@]}" "${path_args[@]}" 2>&1); then
+             "${pin_args[@]}" "${kept_args[@]}" "${excl_args[@]}" "${path_args[@]}" 2>&1); then
     print_success "Recorded install in $RECORD_NAME ($out files)"
   else
     print_warning "Could not write $RECORD_NAME: $out"
@@ -506,6 +514,13 @@ if [[ "$MODE" == "link" && "$TRANSFORM" != "copy" ]]; then
   MODE="copy"
 fi
 
+# A fetched source is a temporary export removed when this script exits, so
+# linking to it would leave the project full of dangling symlinks.
+if [[ "$MODE" == "link" && -n "$EXPORT_DIR" ]]; then
+  print_warning "--link needs a source that stays on disk; a fetched source does not. Using copy."
+  MODE="copy"
+fi
+
 # Check if install dir already exists
 if [[ -d "$INSTALL_DIR" ]]; then
   if [[ "$MODE" == "update" ]]; then
@@ -562,7 +577,10 @@ sync_into() {
     exit 1
   fi
   while IFS=$'\t' read -r action rel; do
-    [[ "$action" == "kept" ]] && KEPT_PATHS+=("$rel")
+    case "$action" in
+      kept)    KEPT_PATHS+=("$rel") ;;
+      foreign) FOREIGN_PATHS+=("$rel") ;;
+    esac
   done <<< "$out"
   # The loop's final read hits EOF and returns non-zero; without this the
   # function's exit status would take `set -e` down with it.
@@ -590,11 +608,15 @@ install_dir_plain() {
     return
   fi
   mkdir -p "$(dirname "$dest")"
-  [[ -e "$dest" ]] && rm -rf "$dest"
   if [[ "$MODE" == "link" ]]; then
+    # Replacing a real directory with a symlink; the directory has to go first.
+    [[ -e "$dest" || -L "$dest" ]] && rm -rf "$dest"
     ln -s "$src" "$dest"
     print_success "Symlinked $label → $BASE_DIR/$dest_rel/"
   else
+    # No rm -rf here. Wiping the directory first would delete the developer's
+    # edits and their own files before the per-file sync could protect them.
+    [[ -L "$dest" ]] && rm -f "$dest"   # a previous --link install
     sync_into "$src" "$dest"
     print_success "Installed $label → $BASE_DIR/$dest_rel/"
   fi
@@ -721,8 +743,14 @@ if [[ -d "$SRC_DIR/conventions" ]]; then
     CONV_DEST="$INSTALL_DIR/conventions"
   fi
   mkdir -p "$(dirname "$CONV_DEST")"
-  sync_into "$SRC_DIR/conventions" "$CONV_DEST"
-  print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+  if [[ "$MODE" == "link" ]]; then
+    [[ -e "$CONV_DEST" || -L "$CONV_DEST" ]] && rm -rf "$CONV_DEST"
+    ln -s "$SRC_DIR/conventions" "$CONV_DEST"
+    print_success "Linked convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+  else
+    sync_into "$SRC_DIR/conventions" "$CONV_DEST"
+    print_success "Installed convention docs → ${CONV_DEST#$TARGET_PATH/}/"
+  fi
   RECORD_PATHS+=("${CONV_DEST#$TARGET_PATH/}")
 fi
 
@@ -734,8 +762,16 @@ fi
 if [[ -d "$SRC_DIR/standards" ]]; then
   STD_DEST="$TARGET_PATH/standards"
   mkdir -p "$STD_DEST"
-  sync_file_into "$SRC_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
-  sync_file_into "$SRC_DIR/standards/statements.json" "$STD_DEST/statements.json"
+  if [[ "$MODE" == "link" ]]; then
+    # Linked one file at a time: the target may keep its own files in standards/.
+    for f in extractor.py statements.json; do
+      [[ -e "$STD_DEST/$f" || -L "$STD_DEST/$f" ]] && rm -f "$STD_DEST/$f"
+      ln -s "$SRC_DIR/standards/$f" "$STD_DEST/$f"
+    done
+  else
+    sync_file_into "$SRC_DIR/standards/extractor.py" "$STD_DEST/extractor.py"
+    sync_file_into "$SRC_DIR/standards/statements.json" "$STD_DEST/statements.json"
+  fi
   print_success "Installed standards registry → standards/"
   RECORD_PATHS+=("standards/extractor.py" "standards/statements.json")
 fi
@@ -839,6 +875,11 @@ if [[ ${#KEPT_PATHS[@]} -gt 0 ]]; then
   echo
   print_warning "Kept your local changes (not overwritten):"
   printf '  • %s\n' "${KEPT_PATHS[@]}" | sort -u
+fi
+if [[ ${#FOREIGN_PATHS[@]} -gt 0 ]]; then
+  echo
+  print_status "Left alone (your own files, not installed by project-specs):"
+  printf '  • %s\n' "${FOREIGN_PATHS[@]}" | sort -u
 fi
 
 echo

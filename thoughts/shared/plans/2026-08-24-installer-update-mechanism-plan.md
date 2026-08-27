@@ -10,7 +10,7 @@ tags:
 
 # Installer Update Mechanism — Implementation Plan
 
-**Grades against:** `thoughts/shared/specs/2026-08-24-installer-update-mechanism-spec.md`, 22 criteria (AC-1 … AC-23, including AC-17b; AC-10 and AC-11 retired under D-4). Every phase cites the criteria it satisfies.
+**Grades against:** `thoughts/shared/specs/2026-08-24-installer-update-mechanism-spec.md`, 21 criteria (AC-1 … AC-23, including AC-17b; AC-10, AC-11, and AC-20 retired under D-4). Every phase cites the criteria it satisfies.
 **Decision record:** `thoughts/decisions/framework-distribution-and-updates.md` (ADR-001, Option D).
 **Open questions:** none. The spec's three questions were closed as D-1, D-2, and D-3 on 2026-08-24.
 
@@ -97,7 +97,6 @@ Stakes domains are filled from the keyword table in `conventions/criterion-bindi
 | `AC-15` | `scripts/test_installer.py::check_staleness_exit_status` | `python3 scripts/test_installer.py --check check_staleness_exit_status` | `none` | 5 |
 | `AC-17b` | `scripts/test_installer.py::check_staleness_reports_on_pinned_install` | `python3 scripts/test_installer.py --check check_staleness_reports_on_pinned_install` | `none` | 5 |
 | `AC-19` | `scripts/test_installer.py::check_link_mode_covers_conventions_and_standards` | `python3 scripts/test_installer.py --check check_link_mode_covers_conventions_and_standards` | `none` | 6 |
-| `AC-20` | `scripts/test_installer.py::check_link_mode_refused_for_transform_provider` | `python3 scripts/test_installer.py --check check_link_mode_refused_for_transform_provider` | `none` | 6 |
 | `AC-21` | `scripts/test_installer.py::check_update_command_exists_and_parses` | `python3 scripts/test_installer.py --check check_update_command_exists_and_parses` | `auth` | 6 |
 | `AC-22` | `scripts/test_installer.py::check_readme_documents_updating` | `python3 scripts/test_installer.py --check check_readme_documents_updating` | `none` | 6 |
 | `AC-23` | `scripts/test_installer.py::check_documented_ignore_list_includes_record` | `python3 scripts/test_installer.py --check check_documented_ignore_list_includes_record` | `none` | 6 |
@@ -106,7 +105,7 @@ Stakes domains are filled from the keyword table in `conventions/criterion-bindi
 
 **Manual-only criteria**: none. The spec carries no `manual-only` criterion, so no approval record applies.
 
-**Regression tests, bound to no criterion.** Two groups in the same script guard behavior that predates this work: `check_update_replaces_untouched_file` and `check_update_preserves_project_config`. Both passed before any code was written, so neither can carry failing-first evidence. They were retired as acceptance criteria under D-4 and kept as tests. They run on every CI build; nothing binds to them, and nothing in this plan is checked off on their result.
+**Regression tests, bound to no criterion.** Four groups in the same script guard behavior that predates this work or protects a footgun: `check_update_replaces_untouched_file`, `check_update_preserves_project_config`, `check_link_mode_refused_for_transform_provider`, and `check_link_mode_refused_with_fetched_source`. The first three passed before any code was written, so none can carry failing-first evidence; they were retired as acceptance criteria under D-4 and kept as tests. The fourth guards a defect this phase would otherwise have introduced. They run on every CI build; nothing binds to them, and nothing in this plan is checked off on their result.
 
 ---
 
@@ -413,7 +412,7 @@ Four groups. The AC-14 fixture must add a change-log entry in the advancing comm
 
 ## Phase 6: Link mode coverage, the command, and the documentation
 
-Satisfies **AC-19, AC-20, AC-21, AC-22, AC-23**.
+Satisfies **AC-19, AC-21, AC-22, AC-23**. AC-20 retired under D-4; its test stays as a regression guard.
 
 ### Overview
 
@@ -438,14 +437,14 @@ Five groups. AC-21 asserts a command file exists whose description states an upd
 ### Success Criteria
 
 **Automated:**
-- [ ] Groups for AC-19, AC-20, AC-21, AC-22, AC-23 pass with red-then-green evidence
-- [ ] `python3 scripts/validate.py` passes, including the link check on the new command file
-- [ ] `python3 scripts/run_evals.py` passes — the new description collides with nothing
-- [ ] All 24 groups pass in one run: `python3 scripts/test_installer.py`
-- [ ] `python3 standards/extractor.py --check` passes
+- [x] Groups for AC-19, AC-21, AC-22, AC-23 pass with red-then-green evidence
+- [x] `python3 scripts/validate.py` passes, including the link check on the new command file
+- [x] `python3 scripts/run_evals.py` passes — the new description collides with nothing
+- [x] All 25 groups pass in one run: `python3 scripts/test_installer.py`
+- [x] `python3 standards/extractor.py --check` passes
 
 **Manual:**
-- [ ] Invoke the new command in a scratch install and confirm it reports and updates as documented
+- [x] Invoke the new command in a scratch install and confirm it reports and updates as documented
 
 ---
 
