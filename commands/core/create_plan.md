@@ -241,7 +241,7 @@ After structure and program design approval:
 ### Key Types & Signatures
 [Types and method signatures for the main new functions — no implementation]
 
-## Slice 1: [Descriptive Name — tracer bullet through full stack]
+## Phase 1: [Descriptive Name — one thin path through the full stack]
 
 ### Overview
 [What this phase accomplishes]
@@ -357,7 +357,7 @@ When creating a plan, you will be tempted to rationalize skipping steps. These a
 | "The user seems to want this fast, so I'll skip the structure review." | Speed without structure produces rework. Present the outline, get buy-in, then move fast on the right plan. |
 | "I'll leave these open questions for the implementation phase." | No. Open questions in a plan become wrong assumptions in code. Resolve or ask now. |
 | "Program design is overkill for this task." | If you're changing more than 3 files or introducing a new abstraction, the call-stack and file-tree diffs take 5 minutes. Skipping them means the reviewer discovers your structural decisions inside a 500-line PR, where changing your mind costs hours. |
-| "I'll build all the database layers first, then the API, then the frontend." | That's horizontal slicing. You'll produce 2K lines before anything works end-to-end. Build a vertical tracer bullet through the full stack first, reviewed at 100-200 lines. |
+| "I'll build all the database layers first, then the API, then the frontend." | That's building one layer at a time. You'll produce 2K lines before anything works end-to-end. Build a tracer bullet through the full stack first, reviewed at 100-200 lines. |
 | "Every criterion maps to a phase, so the plan is done." | A phase is a unit of work, not a check. The pairing gate wants one named test group per automated criterion; a criterion that only maps to a phase is still unbound and can be dropped without anything going red. |
 
 ## Important Guidelines
@@ -434,22 +434,22 @@ When creating a plan, you will be tempted to rationalize skipping steps. These a
 
 ## Common Patterns
 
-### Vertical Slices (preferred for all non-trivial work)
+### End-to-End Phases (preferred for all non-trivial work)
 
-Plan implementation as **vertical slices** — each slice cuts through the full stack and produces a working, reviewable increment of 100–200 lines:
+Plan implementation as **end-to-end phases** — each phase cuts through the full stack and produces a working, reviewable increment of 100–200 lines:
 
-1. **First slice: tracer bullet.** Build one thin path through the entire stack — API contract with mock data → frontend consuming it → service layer → DB migration → business logic → error handling. This proves the integration works end-to-end before you build out breadth.
-2. **Subsequent slices** add cases, edge handling, and breadth to the working tracer bullet.
+1. **First phase: tracer bullet.** Build one thin path through the entire stack — API contract with mock data → frontend consuming it → service layer → DB migration → business logic → error handling. This proves the integration works end-to-end before you build out breadth.
+2. **Later phases** add cases, edge handling, and breadth to the working tracer bullet.
 
-**Do NOT plan horizontal slices** (all DB migrations first, then all services, then all API endpoints, then all frontend). Horizontal slicing is what agents naturally produce, and it results in 2,000+ lines of code before anything works end-to-end — unreviewable, untestable, and impossible to course-correct mid-flight.
+**Do NOT plan one layer at a time** (all DB migrations first, then all services, then all API endpoints, then all frontend). Building a layer at a time is what agents naturally produce, and it results in 2,000+ lines of code before anything works end-to-end — unreviewable, untestable, and impossible to course-correct mid-flight.
 
-| Horizontal (avoid) | Vertical (prefer) |
+| One layer at a time (avoid) | End to end (prefer) |
 |---|---|
-| Phase 1: All migrations | Slice 1: One entity, full stack, mock data |
-| Phase 2: All store methods | Slice 2: Real data + validation for that entity |
-| Phase 3: All API endpoints | Slice 3: Second entity, full stack |
-| Phase 4: All frontend | Slice 4: Edge cases + error handling |
-| Review: 2K+ lines, nothing works yet | Review: 100-200 lines per slice, each one works |
+| Phase 1: All migrations | Phase 1: One entity, full stack, mock data |
+| Phase 2: All store methods | Phase 2: Real data + validation for that entity |
+| Phase 3: All API endpoints | Phase 3: Second entity, full stack |
+| Phase 4: All frontend | Phase 4: Edge cases + error handling |
+| Review: 2K+ lines, nothing works yet | Review: 100-200 lines per phase, each one works |
 
 ### For Refactoring:
 - Document current behavior

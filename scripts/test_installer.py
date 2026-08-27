@@ -387,6 +387,226 @@ def check_install_named_reference() -> None:
                     f"not a pin")
 
 
+# --- Groups: updating ---------------------------------------------------------
+
+def _install_then_advance(tmp, target, cache, ref=None):
+    """Install from a file:// source, then move the source forward one commit.
+
+    Returns (src, bare, url, first_rev, second_rev, marker).
+    """
+    src = make_source(tmp)
+    first = git(src, "rev-parse", "HEAD").stdout.strip()
+    git(src, "tag", "v-test")
+    bare = make_bare_installer(tmp, src)
+    url = file_url(src)
+    args = [f"--from={url}", "--copy"]
+    if ref:
+        args.append(f"--ref={ref}")
+    proc = run_setup(bare, target, *args, cache=cache)
+    if proc.returncode != 0:
+        return None, None, None, None, None, (proc.stdout + proc.stderr)
+    marker = "\n<!-- landed after the install -->\n"
+    second = advance_source(src, "upstream change",
+                            {"conventions/naming-conventions.md": marker})
+    return src, bare, url, first, second, None
+
+
+def check_update_fetches_new_revision() -> None:
+    """AC-5 — an update fetches the source before copying, so the installed
+    files match the source's current revision, not a stale local copy."""
+    g = "check_update_fetches_new_revision"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        # No --from: an update that does not fetch on its own would copy whatever
+        # sits beside the installer, which here is nothing at all.
+        proc = run_setup(bare, target, "--update", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        rec = read_record(target)
+        if rec is None or rec.get("commit") != second:
+            fail(g, f"record commit is {rec and rec.get('commit')!r}, expected the "
+                    f"advanced revision {second!r}")
+        installed = (target / ".claude/conventions/naming-conventions.md").read_text(
+            encoding="utf-8")
+        if "landed after the install" not in installed:
+            fail(g, "installed file does not carry the upstream change — the update "
+                    "did not fetch before copying")
+
+
+def check_update_without_source_argument() -> None:
+    """AC-6 — an update run from inside the target with no source given uses the
+    source recorded at install time."""
+    g = "check_update_without_source_argument"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        proc = run_setup(bare, target, "--update", cache=cache)   # no --from
+        if proc.returncode != 0:
+            fail(g, f"update with no --from exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        rec = read_record(target)
+        if rec is None or rec.get("commit") != second:
+            fail(g, f"record commit is {rec and rec.get('commit')!r}, expected "
+                    f"{second!r} — the recorded source was not used")
+        if rec and rec.get("source") != url:
+            fail(g, f"record source changed to {rec.get('source')!r}, expected {url!r}")
+
+
+def check_repeat_update_is_stable() -> None:
+    """AC-7 — running the same update twice changes nothing the second time,
+    apart from the recorded install time."""
+    g = "check_repeat_update_is_stable"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        if run_setup(bare, target, "--update", cache=cache).returncode != 0:
+            fail(g, "first update failed")
+            return
+        before_files = snapshot(target)
+        before_rec = read_record(target)
+        proc = run_setup(bare, target, "--update", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"second update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-400:]}")
+            return
+        after_rec = read_record(target)
+        after_files = snapshot(target)
+
+        # The record itself is expected to differ only in its timestamp.
+        for k in sorted(set(before_rec) | set(after_rec)):
+            if k == "installed_at":
+                continue
+            if before_rec.get(k) != after_rec.get(k):
+                fail(g, f"record field {k!r} changed across an identical update")
+        changed = [k for k in sorted(set(before_files) | set(after_files))
+                   if k != RECORD_NAME and before_files.get(k) != after_files.get(k)]
+        if changed:
+            fail(g, f"files changed across an identical update: {changed[:5]}")
+
+
+def check_failed_fetch_leaves_install_intact() -> None:
+    """AC-8 — when the source cannot be reached, every installed file and the
+    record keep their previous content, and the failure names the source."""
+    g = "check_failed_fetch_leaves_install_intact"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(tmp, target, cache)
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        before = snapshot(target)
+        shutil.rmtree(src)                       # the source is now unreachable
+        proc = run_setup(bare, target, "--update", cache=cache)
+        after = snapshot(target)
+
+        if proc.returncode == 0:
+            fail(g, "update reported success against an unreachable source")
+        combined = proc.stdout + proc.stderr
+        if str(src) not in combined and url not in combined:
+            fail(g, f"failure never names the unreachable source: "
+                    f"{combined.strip()[-300:]!r}")
+        changed = [k for k in sorted(set(before) | set(after))
+                   if before.get(k) != after.get(k)]
+        if changed:
+            fail(g, f"install was modified despite the failed fetch: {changed[:5]}")
+
+
+def check_update_without_record_warns() -> None:
+    """AC-12 — an update against an install made before records existed
+    completes, writes a record, and says protection was unavailable."""
+    g = "check_update_without_record_warns"
+    with sandbox() as (tmp, target, cache):
+        src = make_source(tmp)
+        if run_setup(src, target, "--copy", cache=cache).returncode != 0:
+            fail(g, "initial install failed")
+            return
+        (target / RECORD_NAME).unlink()          # an install from before records
+        proc = run_setup(src, target, "--update", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-400:]}")
+            return
+        if read_record(target) is None:
+            fail(g, f"update wrote no {RECORD_NAME}")
+        combined = (proc.stdout + proc.stderr).lower()
+        if "protection" not in combined:
+            fail(g, "update never says edited-file protection was unavailable: "
+                    f"{(proc.stdout + proc.stderr).strip()[-300:]!r}")
+
+
+def check_update_keeps_pin() -> None:
+    """AC-17 — an update on a pinned install stays on its pinned revision and
+    reports the pin."""
+    g = "check_update_keeps_pin"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(
+            tmp, target, cache, ref="v-test")
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        proc = run_setup(bare, target, "--update", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        rec = read_record(target)
+        if rec is None:
+            fail(g, "no record after update")
+            return
+        if rec.get("commit") != first:
+            fail(g, f"pinned install moved: commit is {rec.get('commit')!r}, "
+                    f"expected the pinned revision {first!r}")
+        if rec.get("pinned") is not True:
+            fail(g, f"record pinned is {rec.get('pinned')!r} after updating a pin")
+        installed = (target / ".claude/conventions/naming-conventions.md").read_text(
+            encoding="utf-8")
+        if "landed after the install" in installed:
+            fail(g, "pinned install picked up a change made after the pin")
+        if "pinned" not in (proc.stdout + proc.stderr).lower():
+            fail(g, "update never reports that the install is pinned")
+
+
+def check_update_moves_pin() -> None:
+    """AC-18 — naming a different reference on an update moves the install to
+    it, and the record says so."""
+    g = "check_update_moves_pin"
+    with sandbox() as (tmp, target, cache):
+        src, bare, url, first, second, err = _install_then_advance(
+            tmp, target, cache, ref="v-test")
+        if err:
+            fail(g, f"setup failed: {err.strip()[-400:]}")
+            return
+        proc = run_setup(bare, target, "--update", "--ref=main", cache=cache)
+        if proc.returncode != 0:
+            fail(g, f"update exited {proc.returncode}: "
+                    f"{(proc.stdout + proc.stderr).strip()[-500:]}")
+            return
+        rec = read_record(target)
+        if rec is None:
+            fail(g, "no record after update")
+            return
+        if rec.get("ref") != "main":
+            fail(g, f"record ref is {rec.get('ref')!r}, expected 'main'")
+        if rec.get("commit") != second:
+            fail(g, f"record commit is {rec.get('commit')!r}, expected main head "
+                    f"{second!r}")
+        if rec.get("pinned") is not False:
+            fail(g, f"record pinned is {rec.get('pinned')!r} after moving to a branch")
+        installed = (target / ".claude/conventions/naming-conventions.md").read_text(
+            encoding="utf-8")
+        if "landed after the install" not in installed:
+            fail(g, "install did not move to the named branch's content")
+
+
 # --- Check registry ----------------------------------------------------------
 # Keyed by the group name used in a plan's Criterion Bindings table, so
 # `python3 scripts/test_installer.py --check <name>` runs exactly one bound group.
@@ -397,6 +617,13 @@ CHECKS: "dict[str, Callable[[], None]]" = {
     "check_future_schema_refused":       check_future_schema_refused,
     "check_install_from_url_without_clone": check_install_from_url_without_clone,
     "check_install_named_reference":     check_install_named_reference,
+    "check_update_fetches_new_revision": check_update_fetches_new_revision,
+    "check_update_without_source_argument": check_update_without_source_argument,
+    "check_repeat_update_is_stable":     check_repeat_update_is_stable,
+    "check_failed_fetch_leaves_install_intact": check_failed_fetch_leaves_install_intact,
+    "check_update_without_record_warns": check_update_without_record_warns,
+    "check_update_keeps_pin":            check_update_keeps_pin,
+    "check_update_moves_pin":            check_update_moves_pin,
 }
 
 

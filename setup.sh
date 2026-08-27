@@ -216,8 +216,33 @@ fetch_source() {
 # record. Runs before anything is written to the target.
 resolve_source() {
   REC_SOURCE=""; REC_REF=""; REC_TRACK=""; REC_COMMIT=""; REC_PINNED=false
-  if [[ -n "$SOURCE_URL" ]]; then
-    fetch_source "$SOURCE_URL" "$REQ_REF" || exit 1
+
+  # An update with no --from re-fetches whatever the record says it came from,
+  # so a developer never has to remember where the framework lives. --ref given
+  # here overrides the recorded reference and moves the install to it.
+  local url="$SOURCE_URL" ref="$REQ_REF"
+  if [[ -z "$url" && "$MODE" == "update" ]]; then
+    url="$(record_field source)"
+    if [[ -z "$ref" ]]; then
+      ref="$(record_field ref)"
+      if [[ "$(record_field pinned)" == "true" ]]; then
+        # A pin is held until the developer names a different reference.
+        ref="$(record_field commit)"
+        print_status "Install is pinned to $(record_field ref); staying there"
+      fi
+    fi
+  fi
+
+  if [[ -n "$url" ]]; then
+    fetch_source "$url" "$ref" || exit 1
+    # A pinned install keeps the reference name the developer originally chose;
+    # fetch_source resolved a bare revision and cannot know that name.
+    if [[ -z "$SOURCE_URL" && -z "$REQ_REF" && "$MODE" == "update" \
+          && "$(record_field pinned)" == "true" ]]; then
+      REC_REF="$(record_field ref)"
+      REC_PINNED=true
+      REC_TRACK="$(record_field track)"
+    fi
   else
     SRC_DIR="$SCRIPT_DIR"
     resolve_record_metadata
@@ -230,6 +255,13 @@ resolve_source() {
 # gathers the inputs. See conventions/... via README "Updating an install".
 
 SUPPORT="$SCRIPT_DIR/scripts/installer_support.py"
+
+# Read one top-level field out of the target's record. Empty when absent.
+record_field() {
+  [[ -f "$SUPPORT" ]] || return 0
+  [[ -f "$TARGET_PATH/$RECORD_NAME" ]] || return 0
+  python3 "$SUPPORT" record-field --target "$TARGET_PATH" --field "$1" 2>/dev/null || true
+}
 
 # Stop before writing anything if the target holds a record from a newer
 # installer — rewriting it here would silently drop fields we don't know about.
@@ -329,6 +361,13 @@ check_required_command python3
 
 # Refuse a target recorded by a newer installer before fetching or writing.
 assert_record_readable
+
+# An install predating the record has no fingerprints to compare against, so
+# this run cannot tell an edited file from an untouched one.
+if [[ "$MODE" == "update" && ! -f "$TARGET_PATH/$RECORD_NAME" ]]; then
+  print_warning "No $RECORD_NAME in $TARGET_PATH — edited-file protection is unavailable for this run"
+  print_warning "This run writes one, so the next update can protect your edits"
+fi
 
 # Decide where framework files are read from. Everything below reads SRC_DIR,
 # which is this script's own directory unless --from fetched a source.

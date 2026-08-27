@@ -27,6 +27,10 @@ Subcommands:
                  Exit 0 when the record is absent or readable by this version.
                  Exit 3 when it was written by a newer installer.
 
+  record-field   --target DIR --field NAME
+                 Print one top-level field, for shell to read. Booleans print
+                 as true/false. Exit 2 when there is no record.
+
 Exit codes: 0 = ok, 2 = no record, 3 = record from a newer installer,
 1 = usage or I/O error.
 """
@@ -185,6 +189,20 @@ def cmd_read_record(args) -> int:
     return EXIT_OK
 
 
+def cmd_record_field(args) -> int:
+    rec = read_record(Path(args.target).resolve())
+    if rec is None:
+        return EXIT_NO_RECORD
+    value = rec.get(args.field, "")
+    if isinstance(value, bool):
+        print("true" if value else "false")
+    elif isinstance(value, (dict, list)):
+        print(json.dumps(value, sort_keys=True))
+    else:
+        print(value)
+    return EXIT_OK
+
+
 def cmd_assert_schema(args) -> int:
     assert_schema_supported(read_record(Path(args.target).resolve()))
     return EXIT_OK
@@ -209,6 +227,11 @@ def main() -> int:
     r = sub.add_parser("read-record")
     r.add_argument("--target", required=True)
     r.set_defaults(func=cmd_read_record)
+
+    f = sub.add_parser("record-field")
+    f.add_argument("--target", required=True)
+    f.add_argument("--field", required=True)
+    f.set_defaults(func=cmd_record_field)
 
     a = sub.add_parser("assert-schema")
     a.add_argument("--target", required=True)
